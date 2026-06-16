@@ -2,6 +2,8 @@
 
 An interactive, evidence-based learning platform tailored to Martin Kleppmann's *Designing Data-Intensive Applications*. The platform implements the **2026 pedagogical consensus on learning science**, shifting learning from passive reading to effortful cognitive processing, retrieval practice, and spaced repetition.
 
+![Dashboard Preview](assets/dashboard_screenshot.png)
+
 ---
 
 ## Core Features
@@ -29,6 +31,8 @@ Each chapter folder hosts an independent web application implementing three rese
 - **Exam Testing UI**: Sticky sidebar with a ticking timer, progress meter, flagged status checkbox, and a grid question-number map (green for answered, yellow for flagged, outline for current).
 - **Deferred Evaluation**: Feedback is deferred; scores, correct/wrong selections, explanations, and model answers are only revealed after the exam is submitted.
 - **One-Click AI Grading**: Grade all exam write-in questions in one click. Displays the average score directly in the results modal and renders strengths, weaknesses, and tutor guidance inline when reviewing questions.
+
+![One-Click Exam AI Grading](assets/exam_grading_screenshot.png)
 
 ### 3. Integrated Dashboard Landing Page
 - Serves as the central navigation hub.
