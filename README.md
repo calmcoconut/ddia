@@ -1,4 +1,6 @@
-# Designing Data-Intensive Applications (DDIA) — Applied Learning Platform
+# Interactive Workbook for Designing Data-Intensive Applications
+
+*No association with the author or publisher. This is a site I built for my own learning.* 
 
 An interactive, evidence-based learning platform tailored to Martin Kleppmann's *Designing Data-Intensive Applications*. The platform implements the **2026 pedagogical consensus on learning science**, shifting learning from passive reading to effortful cognitive processing, retrieval practice, and spaced repetition.
 
