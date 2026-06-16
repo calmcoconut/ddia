@@ -2112,3 +2112,37 @@ body {
   to { transform: scale(1); opacity: 1; }
 }
 
+/* ── Inline AI Feedback Card ── */
+.ai-grade-feedback {
+  background: rgba(99, 102, 241, 0.05);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  margin-top: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  animation: scaleUp 0.3s ease-out;
+}
+.ai-grade-feedback .grade-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+.ai-grade-feedback .grade-title {
+  font-weight: 700;
+  color: var(--accent-indigo);
+  font-size: 0.95rem;
+}
+.ai-grade-feedback .grade-score {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--accent-indigo);
+  font-size: 0.95rem;
+}
+.ai-grade-feedback .grade-body {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+

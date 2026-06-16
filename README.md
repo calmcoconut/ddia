@@ -15,7 +15,8 @@ Each chapter folder hosts an independent web application implementing three rese
 - **Phase 2: Post-Activity (Retrieve)**
   - *Timed Brain Dump*: A 5-minute timed recall area to perform free-recall consolidation immediately after reading.
   - *30-Question Interleaved Quiz*: Exactly 30 questions (18 multiple choice, 12 write-ins) interleaving different chapter sub-sections to build categorization strength.
-  - *LLM Exporter*: Export write-in answers alongside canonical rubrics to copy/paste into ChatGPT, Claude, or Gemini for 1-5 scoring and feedback.
+  - *Inline AI Grading*: Grade write-ins instantly via a local Flask server connected to the Gemini API. 1-5 scores and tutor reviews are saved and displayed inline.
+  - *LLM Exporter*: Export write-in answers alongside canonical rubrics to copy/paste into external LLM interfaces if desired.
 - **Phase 3: Sustained Practice (Retain)**
   - *Spaced Repetition Calendar*: An 8-step review schedule using expanding intervals (Today, +1d, +3d, +1w, +2w, +1m).
   - *Self-Rated Flashcards*: 12–15 flashcards with self-rating buttons (1-4 scale) to track memory strength.
@@ -27,10 +28,11 @@ Each chapter folder hosts an independent web application implementing three rese
 - **Final Exam (Chapters 1 to 14)**: Selects a randomized pool of 60 questions (35 Multiple Choice, 25 Write-In) from all 420 questions. Starts a 90-minute countdown.
 - **Exam Testing UI**: Sticky sidebar with a ticking timer, progress meter, flagged status checkbox, and a grid question-number map (green for answered, yellow for flagged, outline for current).
 - **Deferred Evaluation**: Feedback is deferred; scores, correct/wrong selections, explanations, and model answers are only revealed after the exam is submitted.
+- **One-Click AI Grading**: Grade all exam write-in questions in one click. Displays the average score directly in the results modal and renders strengths, weaknesses, and tutor guidance inline when reviewing questions.
 
 ### 3. Integrated Dashboard Landing Page
 - Serves as the central navigation hub.
-- Displays aggregate metrics dynamically computed from browser `localStorage`:
+- Displays aggregate metrics dynamically computed from the browser SQLite database (`db.js` / WASM):
   - *Overall Mastery*: The average score percentage across all chapters.
   - *Questions Answered*: The aggregate count of answered questions (out of 420 total).
   - *Cards Reviewed*: Total cards rated across all learning sessions.
@@ -57,44 +59,72 @@ Each chapter folder hosts an independent web application implementing three rese
 
 ## How to Run Locally
 
-The application is written entirely in Vanilla HTML, CSS, and JS. It requires no build tools, frameworks, or NPM dependencies.
+The application runs a Flask-based backend server that supports serving static files and handling interactive AI grading features.
 
-To run the application, navigate to the root directory in your terminal and start a local web server using Python's built-in module:
+To start the server, execute the launch script from the root directory:
 
 ```bash
-# Run server pointing to the learning-app folder
-python3 -m http.server 8080 --directory learning-app/
+# Launch the web app on default port 8080
+./launch.sh
+
+# Or start it on a custom port (e.g., 8085)
+./launch.sh 8085
 ```
 
 ### Accessing the Site
-Once the server is running, open your web browser and navigate to:
-👉 **[http://localhost:8080/index.html](http://localhost:8080/index.html)**
-
-*Note: If port `8080` is occupied by another process on your machine, launch the server on an alternative port:*
-```bash
-python3 -m http.server 8085 --directory learning-app/
-# Open http://localhost:8085/index.html
-```
+The launch script will automatically open the platform in your browser, or you can navigate directly to:
+👉 http://localhost:8080/index.html
 
 ---
 
-## Automated AI Grading
+## Environment Configuration (.env)
 
-Use the `grade_responses.py` script to automatically evaluate your write-in answers across all chapters and cumulative exams using the Gemini API:
+To enable live AI grading (either inline from the browser or using the command-line grading script), you need to configure your Gemini API Key and optionally select a Gemini model.
 
-1. **Install SDK**: `pip install google-generativeai`
-2. **Export Progress**: Click **📥 Export Progress** in the app header and save `ddia_progress.json` in the project root.
-3. **Run Script**:
+1. Create a `.env` file in the project root:
    ```bash
-   export GEMINI_API_KEY="your-api-key-here"
-   python3 grade_responses.py
+   touch .env
+   ```
+2. Open `.env` and add your settings:
+   ```env
+   GEMINI_KEY="foo..."
+   GEMINI_MODEL="gemini-3.5-flash"
+   ```
+   - **`GEMINI_KEY`**: Your Gemini API Key (required for AI grading).
+   - **`GEMINI_MODEL`**: The Gemini model to use (defaults to `gemini-3.5-flash` if not specified).
+   
+   *Note: Enclosing quotes (single or double) and trailing whitespace are automatically stripped from these values to prevent connection errors.*
+
+---
+
+## Automated AI Grading (CLI)
+
+You can run automated grading of your answers directly from the terminal. The `grade.sh` helper script will automatically set up a Python virtual environment, install dependencies, and execute the grader.
+
+1. **Export Progress**: Click **📥 Export Progress** in the browser app header and save the `ddia_progress.json` file in the project root directory.
+2. **Run the Grader**:
+   ```bash
+   # Run AI grading using default parameters (uses GEMINI_MODEL from .env)
+   ./grade.sh
+   
+   # Or run with a custom model override (e.g. gemini-1.5-pro)
+   ./grade.sh grade --model gemini-1.5-pro
+   
+   # Or run with optional parameters (e.g. custom output report file)
+   ./grade.sh grade --output my_grades_report.md
    ```
 
-The script queries `gemini-2.5-flash` to grade answers (1-5 scale) against the model rubrics and outputs a detailed feedback report to `ddia_grades_report.md`.
+The script queries the configured Gemini model to grade answers (1-5 scale) against the model rubrics and outputs a detailed markdown feedback report (default: `ddia_grades_report.md`).
 
 ---
 
-## Technology Stack & State Management
-- **Frontend**: Pure Semantic HTML5, CSS Variables, and Vanilla ES6 JavaScript.
-- **Styling**: Sleek dark-mode, glassmorphism UI with custom transitions, frosted panels, and ambient orbs (`@keyframes`).
-- **State Isolation**: Progress is persisted in browser `localStorage`. Each chapter and exam operates under its own isolated key (`ddia_ch01_learning` to `ddia_ch14_learning`, and `ddia_exam_midterm` / `ddia_exam_final`), preventing state collisions and data corruption.
+## Resetting the Database
+
+If you want to clear your local progress files, exported databases, and grader log history to start from a completely fresh database condition, run:
+
+```bash
+./reset_database
+```
+
+This clears `ddia_progress.json`, deletes any exported `ddia_progress.db` files, removes `ddia_grades_report.md`, and empties the log files inside the `logs/` directory.
+

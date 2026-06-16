@@ -497,6 +497,36 @@ function renderWriteIn(q, container, isSubmitted) {
     modelAnsDiv.querySelector('#modelSpan').textContent = q.modelAnswer;
     container.appendChild(modelAnsDiv);
   }
+
+  // Show AI feedback if submitted and grades exist
+  const feedbackDivId = 'aiFeedbackDisplay';
+  let feedbackDiv = document.getElementById(feedbackDivId);
+  if (feedbackDiv) feedbackDiv.remove();
+
+  if (isSubmitted && examState.aiGrades && examState.aiGrades[currentQuestionIndex]) {
+    const grade = examState.aiGrades[currentQuestionIndex];
+    feedbackDiv = document.createElement('div');
+    feedbackDiv.id = feedbackDivId;
+    feedbackDiv.className = 'ai-grade-feedback';
+    feedbackDiv.style.marginTop = '1.5rem';
+    
+    const scoreStars = "★".repeat(grade.score) + "☆".repeat(5 - grade.score);
+    feedbackDiv.innerHTML = `
+      <div class="grade-header">
+        <span class="grade-title">🤖 AI Grading Feedback</span>
+        <span class="grade-score">${scoreStars} (${grade.score}/5)</span>
+      </div>
+      <div class="grade-body">
+        <div style="margin-bottom: 0.5rem;"><strong>Strengths:</strong> <span id="gradeStrengths"></span></div>
+        <div style="margin-bottom: 0.5rem;"><strong>Weaknesses/Gaps:</strong> <span id="gradeWeaknesses"></span></div>
+        <div><strong>Tutor Feedback:</strong> <span id="gradeFeedback"></span></div>
+      </div>
+    `;
+    feedbackDiv.querySelector('#gradeStrengths').textContent = grade.strengths || 'N/A';
+    feedbackDiv.querySelector('#gradeWeaknesses').textContent = grade.weaknesses || 'N/A';
+    feedbackDiv.querySelector('#gradeFeedback').textContent = grade.feedback || 'N/A';
+    container.appendChild(feedbackDiv);
+  }
 }
 
 // ── Submission & Scoring ────────────────────────────
@@ -566,7 +596,37 @@ function showResultsModal() {
     }
   });
   
-  document.getElementById('resultsWriteInCount').textContent = `${completedWriteInCount} / ${totalWriteInCount}`;
+  const label = document.querySelector('#resultsScoreBlock .comparison-panel:nth-child(2) .score-label:last-child');
+  const gradeBtn = document.getElementById('gradeExamWriteInsBtn');
+
+  if (examState.aiGrades) {
+    let writeInScoreSum = 0;
+    let writeInCount = 0;
+    Object.keys(examState.aiGrades).forEach(k => {
+      writeInScoreSum += examState.aiGrades[k].score;
+      writeInCount++;
+    });
+    const avgWriteInScore = writeInCount > 0 ? (writeInScoreSum / writeInCount).toFixed(1) : "0.0";
+    document.getElementById('resultsWriteInCount').textContent = `${avgWriteInScore} / 5`;
+    document.getElementById('resultsWriteInCount').style.color = 'var(--accent-indigo)';
+    if (label) label.textContent = 'Avg Score (LLM Graded)';
+    
+    if (gradeBtn) {
+      gradeBtn.textContent = '✓ Graded with LLM';
+      gradeBtn.disabled = true;
+      gradeBtn.style.background = 'var(--bg-hover)';
+    }
+  } else {
+    document.getElementById('resultsWriteInCount').textContent = `${completedWriteInCount} / ${totalWriteInCount}`;
+    document.getElementById('resultsWriteInCount').style.color = 'var(--accent-purple)';
+    if (label) label.textContent = 'Pending LLM Evaluation';
+    
+    if (gradeBtn) {
+      gradeBtn.textContent = '📋 Grade Write-Ins with LLM (One-Click)';
+      gradeBtn.disabled = false;
+      gradeBtn.style.background = 'var(--gradient-primary)';
+    }
+  }
   
   // Time Used calculation
   const limitSecs = examState.examType === 'midterm' ? 60 * 60 : 90 * 60;
@@ -714,6 +774,83 @@ async function init() {
       console.log(promptText);
     });
   });
+
+  const gradeExamBtn = document.getElementById('gradeExamWriteInsBtn');
+  if (gradeExamBtn) {
+    gradeExamBtn.addEventListener('click', async () => {
+      const originalText = gradeExamBtn.textContent;
+      gradeExamBtn.textContent = 'Grading...';
+      gradeExamBtn.disabled = true;
+      
+      const statusEl = document.getElementById('examGradingStatus');
+      statusEl.textContent = 'Contacting Gemini API for grading...';
+      statusEl.className = 'save-confirmation'; // show it (remove hidden)
+      
+      try {
+        const examQuestionsToGrade = [];
+        examState.questions.forEach((q, idx) => {
+          if (q.type === 'write') {
+            const studentAns = examState.writeIns[idx] || '';
+            examQuestionsToGrade.push({
+              idx: idx.toString(),
+              q: q.q,
+              modelAnswer: q.modelAnswer,
+              studentAnswer: studentAns,
+              chapterNum: q.chapterNum,
+              section: q.section
+            });
+          }
+        });
+
+        if (examQuestionsToGrade.length === 0) {
+          throw new Error('No write-in questions to grade.');
+        }
+
+        const response = await fetch('/grade', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            chapterKey: getStorageKey(),
+            username: sessionStorage.getItem('ddia_active_user') || 'anonymous',
+            isExam: true,
+            questions: examQuestionsToGrade
+          })
+        });
+
+        if (!response.ok) {
+          const err = await response.json();
+          throw new Error(err.error || `HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        examState.aiGrades = data.grades;
+        saveExamState(examState);
+        
+        statusEl.textContent = '✓ Grading completed successfully!';
+        statusEl.style.color = 'var(--accent-emerald)';
+        statusEl.style.background = 'rgba(16, 185, 129, 0.1)';
+        
+        // Refresh modal display and active question to reflect grading
+        showResultsModal();
+        renderActiveQuestion();
+        
+        setTimeout(() => {
+          statusEl.classList.add('hidden');
+        }, 5000);
+
+      } catch (err) {
+        console.error('Error during exam grading:', err);
+        statusEl.textContent = '❌ Grading failed: ' + err.message;
+        statusEl.style.color = 'var(--accent-rose)';
+        statusEl.style.background = 'rgba(244, 63, 94, 0.1)';
+        gradeExamBtn.textContent = originalText;
+        gradeExamBtn.disabled = false;
+      }
+    });
+  }
   
   document.getElementById('closeResultsModalBtn').addEventListener('click', () => {
     window.location.href = '../index.html';

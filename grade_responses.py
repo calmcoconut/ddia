@@ -18,6 +18,35 @@ except ImportError:
     else:
         genai = None
 
+try:
+    from bs4 import BeautifulSoup
+    import warnings
+    from bs4 import XMLParsedAsHTMLWarning
+    warnings.filterwarnings("ignore", category=XMLParsedAsHTMLWarning)
+    HAS_BS4 = True
+except ImportError:
+    BeautifulSoup = None
+    HAS_BS4 = False
+
+# Load .env variables
+if os.path.exists(".env"):
+    try:
+        with open(".env", "r") as f:
+            for line in f:
+                line_clean = line.strip()
+                if line_clean.startswith("GEMINI_KEY="):
+                    val = line_clean.split("=", 1)[1].strip()
+                    if (val.startswith('"') and val.endswith('"')) or (val.startswith("'") and val.endswith("'")):
+                        val = val[1:-1].strip()
+                    os.environ["GEMINI_API_KEY"] = val
+                elif line_clean.startswith("GEMINI_MODEL="):
+                    val = line_clean.split("=", 1)[1].strip()
+                    if (val.startswith('"') and val.endswith('"')) or (val.startswith("'") and val.endswith("'")):
+                        val = val[1:-1].strip()
+                    os.environ["GEMINI_MODEL"] = val
+    except Exception:
+        pass
+
 # Chapter list matching index.html
 CHAPTERS_LIST = {
     1: {"dir": "ch01", "title": "Trade-Offs in Data Systems Architecture"},
@@ -48,10 +77,11 @@ def parse_args():
         default="ddia_grades_report.md",
         help="Path to save the generated grading report (default: ddia_grades_report.md)"
     )
+    default_model = os.environ.get("GEMINI_MODEL", "gemini-3.5-flash").strip()
     parser.add_argument(
         "--model", 
-        default="gemini-2.5-flash",
-        help="Gemini model to use for evaluation (default: gemini-2.5-flash)"
+        default=default_model,
+        help=f"Gemini model to use for evaluation (default: {default_model})"
     )
     return parser.parse_args()
 
@@ -87,10 +117,76 @@ def load_questions_from_app_js(dir_name):
         print(f"Error parsing questions for {dir_name}: {e}")
         return []
 
+def extract_book_chapter_text(ch_num):
+    if not HAS_BS4:
+        return ""
+    
+    # Locate matching HTML file in chapters/
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    chapters_dir = os.path.join(base_dir, "chapters")
+    
+    import glob
+    pattern = os.path.join(chapters_dir, f"*_chapter_{ch_num}_*.html")
+    files = glob.glob(pattern)
+    if not files:
+        pattern = os.path.join(chapters_dir, f"*_{ch_num}_*.html")
+        files = glob.glob(pattern)
+        if not files:
+            return ""
+
+    html_file = files[0]
+    try:
+        with open(html_file, "r", encoding="utf-8") as f:
+            soup = BeautifulSoup(f.read(), "html.parser")
+            return soup.get_text(separator="\n", strip=True)
+    except Exception:
+        return ""
+
+def parse_context_desc(context_desc):
+    ch_num = None
+    section_name = None
+    if not context_desc:
+        return None, None
+        
+    # Match "Chapter 1" or "Ch 1"
+    ch_match = re.search(r'(?:Chapter|Ch\b)\s*(\d+)', context_desc, re.IGNORECASE)
+    if ch_match:
+        ch_num = int(ch_match.group(1))
+        
+    # Match "section: <name>"
+    sec_match = re.search(r'section:\s*(.*)', context_desc, re.IGNORECASE)
+    if sec_match:
+        section_name = sec_match.group(1).strip()
+    else:
+        # Match "Ch 1 (<name>)"
+        sec_match2 = re.search(r'Ch\s*\d+\s*\(([^)]+)\)', context_desc, re.IGNORECASE)
+        if sec_match2:
+            section_name = sec_match2.group(1).strip()
+            
+    return ch_num, section_name
+
 def grade_question(model, q_text, model_answer, student_answer, context_desc=""):
+    if not student_answer or not student_answer.strip():
+        return {
+            "score": 0,
+            "strengths": "",
+            "weaknesses": "No response was provided.",
+            "feedback": "Empty response. Please provide an answer to receive grading feedback."
+        }
+    ch_num, _ = parse_context_desc(context_desc)
+    
+    book_chapter_text = ""
+    if ch_num:
+        book_chapter_text = extract_book_chapter_text(ch_num)
+        
+    if book_chapter_text:
+        prompt_context = f"{context_desc}\n\nTEXTBOOK CHAPTER {ch_num} FULL CONTENT:\n{book_chapter_text}"
+    else:
+        prompt_context = context_desc
+
     prompt = f"""You are a senior database systems tutor grading a graduate-level student response to a questions on Designing Data-Intensive Applications by Martin Kleppmann.
 
-CONTEXT: {context_desc}
+CONTEXT: {prompt_context}
 QUESTION: {q_text}
 MODEL ANSWER (RUBRIC): {model_answer}
 STUDENT RESPONSE: {student_answer}
@@ -105,15 +201,19 @@ Grade the student's response on a scale of 1 to 5:
 Provide your grading in the following structured JSON format:
 {{
   "score": <integer from 1 to 5>,
-  "strengths": "<brief description of what they got right>",
-  "weaknesses": "<description of missing trade-offs, conceptual errors, or details>",
-  "feedback": "<constructive guidance and corrected explanation targeting their specific gaps>"
+  "strengths": "<brief description of what they got right, citing specific details from the response and textbook content if applicable>",
+  "weaknesses": "<description of missing trade-offs, conceptual errors, or details in comparison to the model answer and textbook content>",
+  "feedback": "<constructive guidance and corrected explanation targeting their specific gaps, clarifying the concepts using terminology from the textbook content>"
 }}
 
 Output ONLY the JSON object. Do not wrap it in markdown code blocks or add preamble.
 """
     try:
-        response = model.generate_content(prompt)
+        response = model.generate_content(
+            prompt,
+            generation_config={"response_mime_type": "application/json"},
+            request_options={"timeout": 300.0}
+        )
         text = response.text.strip()
         # Clean markdown wrappers if returned
         if text.startswith("```json"):
@@ -133,18 +233,7 @@ Output ONLY the JSON object. Do not wrap it in markdown code blocks or add pream
 def main():
     args = parse_args()
     
-    # Try loading GEMINI_KEY from .env if GEMINI_API_KEY is not in env
-    if not os.environ.get("GEMINI_API_KEY") and os.path.exists(".env"):
-        try:
-            with open(".env", "r") as f:
-                for line in f:
-                    if line.strip().startswith("GEMINI_KEY="):
-                        val = line.strip().split("=", 1)[1]
-                        os.environ["GEMINI_API_KEY"] = val
-                        break
-        except Exception as e:
-            print(f"Error reading .env file: {e}")
-            sys.exit(1)
+
 
     # Check API key
     api_key = os.environ.get("GEMINI_API_KEY")
@@ -154,6 +243,8 @@ def main():
         print("  export GEMINI_API_KEY=\"your-api-key-here\"")
         sys.exit(1)
         
+    api_key = api_key.strip()
+    os.environ["GEMINI_API_KEY"] = api_key
     genai.configure(api_key=api_key)
     model = genai.GenerativeModel(args.model)
     
@@ -190,8 +281,8 @@ def main():
         
         # Check if there are write-in answers
         write_ins = ch_state.get("writeInAnswers", {})
-        # Filter out empty answers
-        answered_write_ins = {k: v for k, v in write_ins.items() if v and v.strip()}
+        # Keep all write-in answers, even empty ones (which get automatically graded as 0)
+        answered_write_ins = {k: v for k, v in write_ins.items()}
         
         if not answered_write_ins:
             continue
@@ -258,8 +349,8 @@ def main():
             
         e_type = "Midterm Exam" if "midterm" in e_key else "Final Exam"
         questions = e_state.get("questions", [])
-        write_ins = e_state.get("writeIns", {})
-        answered_write_ins = {k: v for k, v in write_ins.items() if v and v.strip()}
+        # Keep all write-in answers, even empty ones
+        answered_write_ins = {k: v for k, v in write_ins.items()}
         
         if not answered_write_ins:
             continue

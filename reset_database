@@ -1,0 +1,33 @@
+#!/bin/bash
+
+# reset_database - Resets local progress files, exported databases, and log files to a fresh condition.
+
+echo "Resetting DDIA Applied Learning Platform database state and logs..."
+
+# 1. Clear exported progress JSON
+if [ -f "ddia_progress.json" ]; then
+    echo "Clearing ddia_progress.json..."
+    echo "{}" > ddia_progress.json
+fi
+
+# 2. Clear all SQLite databases (*.db and *.sqlite) in the root directory (deletes all users and progress)
+find . -maxdepth 1 -name "*.db" -o -name "*.sqlite" | while read -r db_file; do
+    if [ -f "$db_file" ]; then
+        echo "Removing database: $db_file..."
+        rm "$db_file"
+    fi
+done
+
+# 3. Clear generated grading reports
+if [ -f "ddia_grades_report.md" ]; then
+    echo "Removing ddia_grades_report.md..."
+    rm "ddia_grades_report.md"
+fi
+
+# 4. Clear logs directory
+if [ -d "logs" ]; then
+    echo "Clearing log files..."
+    rm -rf logs/*
+fi
+
+echo "All local state databases, users, and logs have been reset to a fresh condition."

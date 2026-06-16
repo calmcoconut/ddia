@@ -16,23 +16,34 @@ log = configure_logging()
 
 app = Flask(__name__, static_folder="learning-app", static_url_path="")
 
-# Load GEMINI_KEY from .env if GEMINI_API_KEY not already set
-if not os.environ.get("GEMINI_API_KEY") and os.path.exists(".env"):
+# Load .env variables
+if os.path.exists(".env"):
     try:
         with open(".env", "r") as f:
             for line in f:
-                if line.strip().startswith("GEMINI_KEY="):
-                    val = line.strip().split("=", 1)[1]
+                line_clean = line.strip()
+                if line_clean.startswith("GEMINI_KEY="):
+                    val = line_clean.split("=", 1)[1].strip()
+                    if (val.startswith('"') and val.endswith('"')) or (val.startswith("'") and val.endswith("'")):
+                        val = val[1:-1].strip()
                     os.environ["GEMINI_API_KEY"] = val
-                    break
+                elif line_clean.startswith("GEMINI_MODEL="):
+                    val = line_clean.split("=", 1)[1].strip()
+                    if (val.startswith('"') and val.endswith('"')) or (val.startswith("'") and val.endswith("'")):
+                        val = val[1:-1].strip()
+                    os.environ["GEMINI_MODEL"] = val
     except Exception as exc:
         log.error("error_reading_env_file", extra={"error": str(exc)}, exc_info=True)
 
 # Configure Gemini
 api_key = os.environ.get("GEMINI_API_KEY")
 if api_key:
+    api_key = api_key.strip()
+    os.environ["GEMINI_API_KEY"] = api_key
     genai.configure(api_key=api_key)
-model = genai.GenerativeModel("gemini-2.5-flash")
+
+model_name = os.environ.get("GEMINI_MODEL", "gemini-3.5-flash").strip()
+model = genai.GenerativeModel(model_name)
 
 @app.route("/")
 def index():
@@ -58,8 +69,68 @@ def grade():
     ch_key     = payload.get("chapterKey", "")
     write_ins  = payload.get("writeIns", {})
     username   = payload.get("username", "anonymous")   # forward from browser
+    is_exam    = payload.get("isExam", False)
 
-    answered = {k: v for k, v in write_ins.items() if v and v.strip()}
+    if is_exam:
+        exam_questions = payload.get("questions", [])
+        log.info("grade_request_received", extra={
+            "request_id":   request_id,
+            "username":     username,
+            "chapter_key":  ch_key,
+            "question_count": len(exam_questions),
+        })
+
+        results = {}
+        for item in exam_questions:
+            q_idx_str = str(item.get("idx"))
+            student_ans = item.get("studentAnswer", "")
+            q_text = item.get("q", "")
+            model_ans = item.get("modelAnswer", "")
+            ch_num = item.get("chapterNum")
+            section = item.get("section", "General")
+            
+            q_start = time.monotonic()
+            context = f"Chapter {ch_num}, section: {section}"
+            
+            try:
+                grade_result = grade_question(model, q_text, model_ans, student_ans, context)
+            except Exception as exc:
+                log.error("gemini_api_error", extra={
+                    "request_id": request_id,
+                    "q_idx":      q_idx_str,
+                    "error":      str(exc),
+                }, exc_info=True)
+                grade_result = {"score": 0, "strengths": "", "weaknesses": "", "feedback": str(exc)}
+
+            elapsed_ms = round((time.monotonic() - q_start) * 1000)
+
+            log.info("question_graded", extra={
+                "request_id":   request_id,
+                "username":     username,
+                "chapter_key":  ch_key,
+                "q_idx":        q_idx_str,
+                "section":      section,
+                "student_ans_preview": student_ans[:300],
+                "score":        grade_result["score"],
+                "strengths":    grade_result["strengths"],
+                "weaknesses":   grade_result["weaknesses"],
+                "feedback":     grade_result["feedback"],
+                "latency_ms":   elapsed_ms,
+            })
+            results[q_idx_str] = grade_result
+
+        total_ms = round((time.monotonic() - start_time) * 1000)
+        log.info("grade_request_complete", extra={
+            "request_id":      request_id,
+            "username":        username,
+            "chapter_key":     ch_key,
+            "graded_count":    len(results),
+            "avg_score":       round(sum(r["score"] for r in results.values()) / len(results), 2) if results else None,
+            "total_latency_ms": total_ms,
+        })
+        return jsonify({"grades": results})
+
+    answered = {k: v for k, v in write_ins.items()}
 
     log.info("grade_request_received", extra={
         "request_id":   request_id,
@@ -147,7 +218,7 @@ if __name__ == "__main__":
     import sys
     # Ensure genai is configured if the model is recreated/run
     if os.environ.get("GEMINI_API_KEY"):
-        genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
+        genai.configure(api_key=os.environ.get("GEMINI_API_KEY").strip())
     
     port = 8080
     if len(sys.argv) > 1:

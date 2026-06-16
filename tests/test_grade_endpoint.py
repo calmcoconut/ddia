@@ -16,6 +16,28 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
+# Load .env variables
+if os.path.exists(".env"):
+    try:
+        with open(".env", "r") as f:
+            for line in f:
+                line_clean = line.strip()
+                if line_clean.startswith("GEMINI_KEY="):
+                    val = line_clean.split("=", 1)[1].strip()
+                    if (val.startswith('"') and val.endswith('"')) or (val.startswith("'") and val.endswith("'")):
+                        val = val[1:-1].strip()
+                    os.environ["GEMINI_API_KEY"] = val
+                elif line_clean.startswith("GEMINI_MODEL="):
+                    val = line_clean.split("=", 1)[1].strip()
+                    if (val.startswith('"') and val.endswith('"')) or (val.startswith("'") and val.endswith("'")):
+                        val = val[1:-1].strip()
+                    os.environ["GEMINI_MODEL"] = val
+    except Exception:
+        pass
+
+if os.environ.get("GEMINI_API_KEY"):
+    os.environ["GEMINI_API_KEY"] = os.environ["GEMINI_API_KEY"].strip()
+
 # ── Fixtures ────────────────────────────────────────────────────────────────
 
 @pytest.fixture
@@ -62,15 +84,15 @@ class TestEndpointContract:
         assert res.status_code == 400
         print("--> Finished test_invalid_chapter_number_returns_404", flush=True)
 
-    def test_empty_write_ins_returns_empty_grades(self, client, monkeypatch):
-        """All blank answers → empty grades dict, no API call made."""
-        print("\n--> Starting test_empty_write_ins_returns_empty_grades", flush=True)
-        import server, grade_responses
-        def fail_on_call(*args, **kwargs):
-            raise AssertionError("Should not call API")
-        print("--> Patching grade_question to fail on call...", flush=True)
-        monkeypatch.setattr(grade_responses, "grade_question", fail_on_call)
-        monkeypatch.setattr(server, "grade_question", fail_on_call)
+    def test_empty_write_ins_returns_zero_grades(self, client, monkeypatch):
+        """All blank answers → score of 0, no API call made."""
+        print("\n--> Starting test_empty_write_ins_returns_zero_grades", flush=True)
+        import server
+        
+        # Patch the model's generate_content to fail, ensuring no live API call is made
+        def fail_on_api_call(*args, **kwargs):
+            raise AssertionError("Should not make API call for empty responses")
+        monkeypatch.setattr(server.model, "generate_content", fail_on_api_call)
 
         print("--> Sending POST request with empty write-ins...", flush=True)
         res = client.post("/grade", json={
@@ -79,8 +101,12 @@ class TestEndpointContract:
         })
         print(f"--> Received response status {res.status_code}", flush=True)
         assert res.status_code == 200
-        assert res.get_json()["grades"] == {}
-        print("--> Finished test_empty_write_ins_returns_empty_grades", flush=True)
+        
+        grades = res.get_json()["grades"]
+        assert grades["2"]["score"] == 0
+        assert grades["5"]["score"] == 0
+        assert "empty response" in grades["2"]["feedback"].lower()
+        print("--> Finished test_empty_write_ins_returns_zero_grades", flush=True)
 
     def test_response_shape_with_mock(self, client, monkeypatch):
         """Mock grade_question → verify response JSON has correct shape."""
@@ -124,8 +150,8 @@ class TestEndpointContract:
 # ── Live Integration Test (opt-in, skipped without real key) ────────────────
 
 @pytest.mark.skipif(
-    not os.environ.get("GEMINI_API_KEY", "").strip().startswith("AIzaSy"),
-    reason="Set GEMINI_API_KEY starting with AIzaSy to run live integration test"
+    not os.environ.get("GEMINI_API_KEY") or "placeholder" in os.environ.get("GEMINI_API_KEY", ""),
+    reason="Set GEMINI_API_KEY to run live integration test"
 )
 class TestLiveGrading:
     def test_live_grade_returns_valid_score(self, client):
@@ -243,3 +269,20 @@ class TestLogging:
         lines = [l for l in log_file.read_text().strip().splitlines() if l]
         assert any(json.loads(l)["level"] == "ERROR" for l in lines)
         print("--> Finished test_api_error_is_logged_to_error_level", flush=True)
+
+
+def test_book_context_extraction_integration():
+    """Verify that chapter numbers are parsed correctly, and full chapter text is retrieved."""
+    print("\n--> Starting test_book_context_extraction_integration", flush=True)
+    from grade_responses import parse_context_desc, extract_book_chapter_text
+    
+    ch_num, sec_name = parse_context_desc("Chapter 1 (Trade-Offs), section: Data Warehouses")
+    assert ch_num == 1
+    assert sec_name == "Data Warehouses"
+    
+    text = extract_book_chapter_text(1)
+    assert text != ""
+    assert "data warehouse" in text.lower()
+    assert "Thomas Sowell" in text
+    print("--> Finished test_book_context_extraction_integration", flush=True)
+

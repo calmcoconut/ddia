@@ -677,6 +677,10 @@ function renderQuiz() {
   // Show results or submit button
   if (graded) {
     showQuizResultsPanel(loadState());
+    const cachedState = loadState();
+    if (cachedState.aiGrades) {
+      renderAiGrades(cachedState.aiGrades);
+    }
   } else {
     // Render submit row
     const submitRow = document.createElement('div');
@@ -789,13 +793,54 @@ async function gradeWriteIns() {
     body: JSON.stringify({
       chapterKey: STATE_KEY,
       writeIns:   answered,
-      username:   getCurrentUsername()   // returns the active username from db.js
+      username:   getCurrentUsername()
     })
   });
   if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
+    const err = await response.json();
+    throw new Error(err.error || `HTTP error! status: ${response.status}`);
   }
-  return await response.json();
+  const data = await response.json();
+  const currentState = loadState();
+  currentState.aiGrades = data.grades;
+  saveState(currentState);
+  renderAiGrades(data.grades);
+  return data;
+}
+
+function renderAiGrades(grades) {
+  if (!grades) return;
+  Object.keys(grades).forEach(idxStr => {
+    const idx = parseInt(idxStr);
+    const grade = grades[idxStr];
+    const questionDiv = document.querySelector(`.quiz-question[data-q-index="${idx}"]`);
+    if (!questionDiv) return;
+    
+    const existing = questionDiv.querySelector('.ai-grade-feedback');
+    if (existing) existing.remove();
+    
+    const feedbackDiv = document.createElement('div');
+    feedbackDiv.className = 'ai-grade-feedback';
+    feedbackDiv.style.marginTop = '1rem';
+    
+    const scoreStars = "★".repeat(grade.score) + "☆".repeat(5 - grade.score);
+    feedbackDiv.innerHTML = `
+      <div class="grade-header">
+        <span class="grade-title">🤖 AI Grading Feedback</span>
+        <span class="grade-score">${scoreStars} (${grade.score}/5)</span>
+      </div>
+      <div class="grade-body">
+        <div style="margin-bottom: 0.4rem;"><strong>Strengths:</strong> <span class="grade-strengths"></span></div>
+        <div style="margin-bottom: 0.4rem;"><strong>Weaknesses/Gaps:</strong> <span class="grade-weaknesses"></span></div>
+        <div><strong>Tutor Feedback:</strong> <span class="grade-feedback-text"></span></div>
+      </div>
+    `;
+    feedbackDiv.querySelector('.grade-strengths').textContent = grade.strengths || 'None';
+    feedbackDiv.querySelector('.grade-weaknesses').textContent = grade.weaknesses || 'None';
+    feedbackDiv.querySelector('.grade-feedback-text').textContent = grade.feedback || 'None';
+    
+    questionDiv.appendChild(feedbackDiv);
+  });
 }
 
 function setupLLMGrading() {
@@ -808,8 +853,7 @@ function setupLLMGrading() {
       try {
         const data = await gradeWriteIns();
         if (data && data.grades) {
-          alert('Grading completed successfully! Check the console or logs.');
-          console.log('Grades:', data.grades);
+          alert('Grading completed successfully!');
         }
       } catch (err) {
         console.error('Error during grading:', err);
