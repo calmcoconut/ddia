@@ -33,8 +33,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Explain why a predictive analytics model trained on historical data is likely to amplify discrimination, even if protected traits (like race) are explicitly omitted from the features.",
-    hint: "Consider proxy variables, correlation, and how algorithms treat statistical patterns.",
+    q: "A credit card company removes 'race' and 'gender' fields from their applicant dataset before training a model to assess creditworthiness. However, during a compliance audit, the system is still found to discriminate against minority neighborhoods. Explain how the model managed to learn and amplify this bias, and how proxy variables play a role.",
+    hint: "Consider how geographical or social markers correlate with protected traits, allowing the model to reconstruct and reinforce historical discrimination under a veneer of mathematical neutrality.",
     modelAnswer: "Even if protected traits like race, gender, or religion are excluded, other features in the dataset act as strong proxies. For example, in racially segregated neighborhoods, a user's postal code, IP address, or school is highly correlated with race. The algorithm detects these statistical patterns and continues to make discriminatory predictions, effectively laundering the bias and compounding historical inequalities under the guise of mathematical neutrality.",
     section: "Bias and Discrimination"
   },
@@ -66,8 +66,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Analyze how a feedback loop is created when employers use credit scores to screen potential job applicants.",
-    hint: "Trace the relationship between joblessness, financial stability, and credit scores.",
+    q: "An automated HR screening system automatically rejects job applicants with credit scores below 600. During a systems-thinking workshop, you are asked to diagram the feedback loop this introduces between economic hardship, employment opportunities, and credit metrics. Describe how this loop functions.",
+    hint: "Trace the relationship and downward spiral where a low credit score denies a user job opportunities, which prevents them from earning income to pay down debt, further damaging their credit score.",
     modelAnswer: "A feedback loop is created because a credit score reflects past financial difficulties. When an employer screens out an applicant due to a low credit score, they deny that person a source of income. This joblessness worsens the applicant's financial situation, causing them to miss more payments, which further lowers their credit score. This makes them even less likely to find work in the future, creating a self-reinforcing downward spiral.",
     section: "Feedback Loops"
   },
@@ -86,15 +86,15 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Explain the purpose and effect of Daniel J. Bernstein's thought experiment where the word 'data' is replaced with 'surveillance'.",
-    hint: "Consider phrases like 'data warehouse', 'data science', and how it changes one's perception of technology.",
+    q: "An engineer during a lunch-and-learn session proposes that we adopt Daniel J. Bernstein's vocabulary experiment: substituting the word 'data' with 'surveillance' in all our system design documents. Explain what this substitution reveals about the power dynamics between companies collecting information and the users generating it.",
+    hint: "Contrast benign-sounding terms like 'data collection' and 'data warehouse' with 'surveillance collection' and 'surveillance warehouse,' noting how it shifts the perception of consent.",
     modelAnswer: "The purpose of the thought experiment is to strip away the neutral, benign connotations of the word 'data' and reveal the power asymmetry inherent in its collection. By substituting 'data' with 'surveillance' (e.g. converting 'data warehouse' to 'surveillance warehouse' or 'data science' to 'surveillance science'), engineers and users are forced to confront the fact that behavioral tracking is not a passive, harmless byproduct, but a form of active monitoring that serves the interests of the collector over the subject.",
     section: "Surveillance"
   },
   {
     type: "write",
-    q: "Contrast the relationship between a user and a company when storing explicitly entered data versus when tracking behavioral data as a side effect.",
-    hint: "Think about customer-vendor dynamics, alignment of interests, and the monetization model.",
+    q: "Your marketing department wants to start tracking user click timing, scroll depths, and hover durations to build user profiles for targeted advertising. As a privacy advocate on the team, explain how the alignment of interests between the company and the user changes when transitioning from explicitly entered data (like shipping addresses) to behavioral tracking.",
+    hint: "Contrast serving the user as a paying customer with treating the user as a source of behavioral raw material to serve advertisers.",
     modelAnswer: "When a system only stores data that a user explicitly enters to perform a task, the company is performing a service for the user, who is the customer. However, when behavioral data is tracked as a side effect (e.g. clicks, viewing duration, search history), the company's interests often diverge from the user's. In ad-funded models, the advertisers are the actual customers, and user tracking serves to build detailed profiles for marketing, turning the relationship into one of surveillance.",
     section: "Privacy and Tracking"
   },
@@ -113,15 +113,15 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Why is a user's choice to accept a tracking policy often considered 'not free' in practice for popular online platforms, and how do network effects play a role?",
-    hint: "Think about what happens if a user decides to opt out of an essential social network.",
+    q: "A social media platform argues that because users clicked 'I Agree' on a 50-page privacy policy, they have freely consented to extensive tracking. How do you argue that this choice is not truly free in the modern digital economy, and what role do network effects play?",
+    hint: "Think about the professional or social isolation costs a user faces if they decide to opt out of major digital public squares.",
     modelAnswer: "A user's choice to accept a tracking policy is not truly free because popular platforms often become essential for basic social and professional participation. Due to network effects, declining to use a service because of its privacy policy carries a high social cost, such as professional isolation or missing out on community events. Therefore, for most people, especially those in less privileged positions, opting out is not a viable option, making surveillance effectively mandatory.",
     section: "Consent and Freedom of Choice"
   },
   {
     type: "write",
-    q: "Explain Shoshana Zuboff's perspective that privacy is a 'decision right' rather than just keeping things secret.",
-    hint: "Focus on individual autonomy, agency, and the transfer of rights.",
+    q: "During a debate on privacy tools, a developer argues that 'if users have nothing to hide, they shouldn't care about our database collecting their background location.' How does Shoshana Zuboff's concept of privacy as a 'decision right' counter this argument, and how does it relate to individual autonomy?",
+    hint: "Focus on the right to choose what is shared and who controls that choice, rather than the mere secrecy of the information itself.",
     modelAnswer: "Privacy is not about hiding everything from the world; it is the freedom to choose what information to reveal, to whom, and under what conditions. It is a fundamental decision right that preserves individual autonomy and agency. When surveillance systems extract data without meaningful choice, this decision right is stripped from the individual and transferred to the collecting corporation, which then decides how to disclose or utilize that data for profit.",
     section: "Privacy and Use of Data"
   },
@@ -153,8 +153,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Argue why collecting and retaining personal data indefinitely presents a significant security and legal risk to a company, drawing on Schneier's 'toxic asset' concept.",
-    hint: "Address breaches, changing political climates, and legal liability.",
+    q: "Your database administrator suggests storing all user raw clickstream logs indefinitely in an unencrypted S3 bucket because storage is extremely cheap. Drawing on Bruce Schneier's concept of data as a 'toxic asset,' explain the security, reputational, and legal risks of this retention policy.",
+    hint: "Address how holding massive amounts of sensitive personal data increases breach impact, liability, and susceptibility to hostile government subpoenas.",
     modelAnswer: "Collecting and retaining personal data indefinitely creates a massive surface area for security and legal liabilities. In the event of a breach, leaked data can lead to severe reputational damage, customer churn, and massive regulatory fines. Furthermore, as political environments and corporate management change, held data is vulnerable to insider theft or government subpoenas. Treating data as a toxic asset implies that companies should minimize collection and purge old records, as data that doesn't exist cannot be compromised.",
     section: "Data as Assets and Power"
   },
@@ -186,8 +186,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Explain how the 'legitimate interest' basis for lawful processing under the GDPR operates, and give an example of when it would be used instead of user consent.",
-    hint: "Contrast it with user consent, and think about situations where asking permission is counterproductive.",
+    q: "You are designing an automated fraud detection system that flags accounts performing rapid credit card checkouts. A developer suggests asking every user for explicit consent before running the fraud scan. Explain why you should use the GDPR's 'legitimate interest' basis instead of user consent for this system.",
+    hint: "Consider how requesting consent from a malicious actor is counterproductive to security and how the legal basis balances business utility against user rights.",
     modelAnswer: "The 'legitimate interest' basis allows a company to process personal data without user consent if it has a valid business reason that does not override the individual's rights and freedoms. This is typically used in scenarios like fraud prevention, network security, or credit checks. In these cases, asking for explicit consent would be counterproductive, as fraudulent actors would simply deny consent to evade detection, making the system ineffective.",
     section: "Consent and Freedom of Choice"
   },
@@ -206,8 +206,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "In markets where pricing algorithms learn to collude tacitly (as observed with German gas stations), what system design constraints or market-rules could a regulator require to prevent this collusion and protect consumers?",
-    hint: "Think about limiting the frequency of updates, adding randomized delays, or restricting access to real-time competitor price data feeds.",
+    q: "A regulator notices that the automated pricing algorithms of competing retail stores have tacitly learned to keep prices artificially high without any direct developer communication. What system design constraints or API modifications could you propose to disrupt this algorithmic collusion?",
+    hint: "Think about limiting the frequency of updates, adding randomized pricing delays, or restricting access to real-time competitor price data feeds.",
     modelAnswer: "To mitigate tacit algorithmic collusion, regulators could impose system and market constraints such as: 1) Limiting pricing update frequency (e.g., allowing updates only once a day), which prevents algorithms from instantly punishing price cuts and destroys the feedback loop of rapid retaliation. 2) Restricting real-time competitor feeds, forcing algorithms to rely on delayed or aggregated pricing data so they cannot coordinate instantly. 3) Introducing randomized delays to pricing updates, making it harder for algorithms to predict and synchronize price adjustments.",
     section: "Feedback Loops"
   },
@@ -226,8 +226,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Explain how a movement sensor in a smartwatch can be used by an algorithm in an intrusive way, and what this implies about the granularity of sensor data.",
-    hint: "Think about what motions are captured and what sensitive inputs could be reconstructed.",
+    q: "A fitness app requests permission to upload raw, high-frequency smartwatch accelerometer and gyroscope data to the cloud. You are asked to perform a privacy impact assessment. Explain how an algorithm can abuse this low-level sensor stream, and what this tells us about the safety of 'raw sensor data.'",
+    hint: "Discuss how machine learning can reconstruct sensitive user inputs like keystrokes, passwords, or PINs just from hand movements, showing that raw sensor data is highly descriptive.",
     modelAnswer: "A movement sensor in a smartwatch captures high-frequency accelerometer and gyroscope data. Research has shown that deep learning algorithms can analyze these tiny hand movements to reconstruct what a user is typing on a keyboard, potentially exposing passwords, PINs, or private messages. This implies that even seemingly harmless, low-level physical sensor readings carry rich, highly sensitive behavioral details that must be treated with the same privacy safeguards as text communications.",
     section: "Surveillance"
   },
@@ -259,8 +259,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Draw parallels between the safeguards established during the Industrial Revolution (such as child labor laws and safety regulations) and the challenges of the information age.",
-    hint: "Focus on business costs, the tragedy of the commons, and societal health.",
+    q: "A tech lobbyist argues that privacy regulations will harm software innovation and increase operational overhead. Drawing parallels to the history of the Industrial Revolution, explain why regulations (like GDPR) are necessary safeguards for society despite raising business costs.",
+    hint: "Discuss the tragedy of the commons, negative externalities like pollution or data breaches, and how safety laws eventually benefit the digital public.",
     modelAnswer: "During the Industrial Revolution, factories dumped waste into rivers and exploited labor to maximize profits, treating these harms as externalities. Only after decades of struggle did society implement regulations like workplace safety laws and environmental protections, which increased business costs but created a healthier, fairer society. Similarly, in the information age, companies extract and retain personal data as an unpriced resource, leaving users to bear the risks of surveillance and breaches. The tech industry must accept regulations—such as data minimization and deletion mandates—as necessary safeguards for the digital commons, even if they increase operational friction.",
     section: "Remembering the Industrial Revolution"
   },
@@ -292,8 +292,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Discuss the ethical conflicts software engineers face when they focus exclusively on the technology they build while ignoring its societal consequences.",
-    hint: "Reference the quote by Jez Humble and the concept of engineer responsibility.",
+    q: "A developer claims that their only job is to optimize the throughput of an algorithm that recommends content, even if that algorithm happens to promote extremist propaganda to maximize watch time. Citing Jez Humble's perspective, discuss the ethical responsibility of engineers regarding the societal outcomes of their code.",
+    hint: "Address whether engineers can claim moral neutrality when building systems that directly influence human behavior and shape social outcomes.",
     modelAnswer: "Focusing exclusively on technical metrics (like scalability, latency, or throughput) while ignoring societal impacts is a dereliction of professional duty. As Jez Humble notes, if developers do not consider the social and political consequences of their work, they are not doing their job. Engineers who build mass surveillance features or biased ranking systems cannot claim moral neutrality; they are active participants in constructing systems that shape human behavior, restrict freedoms, and amplify systemic inequalities.",
     section: "Legislation and Self-Regulation"
   },
@@ -312,8 +312,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Describe the technical mechanisms a stream-processing or event-sourced system can use to comply with the GDPR's 'right to be forgotten' (right to erasure) without breaking the immutability of the underlying log storage.",
-    hint: "Think about cryptographic erasure (key shredding) and log compaction with tombstones.",
+    q: "A customer submits a GDPR deletion request, but your system is built on an append-only event store. Your DBA says it is impossible to delete their history because the log is immutable. Explain two technical methods you can use to comply with the law without rewriting the physical files on disk.",
+    hint: "Detail how cryptographic erasure (key shredding) or log compaction with deletion tombstones can render the data unreadable or eventually clean it up.",
     modelAnswer: "To comply with the right to erasure in an append-only/immutable architecture, systems typically use one of two main approaches: 1) Cryptographic Erasure (Key Shredding), where each user's data is encrypted with a unique key, and 'deletion' is achieved by destroying that key, leaving the immutable log ciphertext permanently unreadable. 2) Log Compaction with Tombstones, where a deletion marker (tombstone) is appended for the user, and subsequent log compaction sweeps discard all historical records associated with that user's ID while preserving the log integrity for others.",
     section: "Law and Society"
   },
@@ -332,8 +332,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Argue both sides of the trade-off: 'A hospital sharing patient medical histories with a centralized AI research database' vs. 'Enforcing strict data minimization and local-only storage.'",
-    hint: "Consider public health benefits, scientific discovery, data breach risks, and patient consent.",
+    q: "You are the chief privacy officer at a research hospital. You must draft an ethical evaluation on a proposal to upload all patient health histories to a centralized cloud AI database to train diagnostic models. Present the core trade-offs between public health innovation and strict data minimization/local-only storage.",
+    hint: "Balance the potential for discovering new medical treatments against the risks of massive data breaches, lack of patient control, and surveillance creep.",
     modelAnswer: "On one side, aggregating medical histories in a centralized database enables researchers to run large-scale AI models to detect rare diseases, discover treatments, and improve public health outcomes. On the other side, centralizing such highly sensitive data creates an enormous security risk; a single breach could expose patients to identity theft, insurance discrimination, and blackmail. Furthermore, strict local-only storage and data minimization preserve patient autonomy, prevent surveillance creep, and maintain trust in healthcare systems, though it limits the speed and scope of medical innovation.",
     section: "Legislation and Self-Regulation"
   }
@@ -431,42 +431,16 @@ const MISCONCEPTIONS = [
 // ── State Management ────────────────────────────────
 
 const STATE_KEY = 'ddia_ch14_learning';
-let _state = null;
+
 
 function loadState() {
-  if (!_state) {
-    try {
-      const raw = localStorage.getItem(STATE_KEY);
-      if (raw) _state = JSON.parse(raw);
-    } catch (e) {}
-
-    if (!_state) {
-      try {
-        if (window.parent && window.parent.__ddiaState && window.parent.__ddiaState[STATE_KEY]) {
-          _state = window.parent.__ddiaState[STATE_KEY];
-        }
-      } catch (e) {}
-    }
-
-    if (!_state) _state = {};
-  }
-  // Return a snapshot, not the live object
-  return JSON.parse(JSON.stringify(_state));
+  return window.loadState ? window.loadState(STATE_KEY) : {};
 }
 
 function saveState(data) {
-  if (!_state) loadState();
-  // Clone incoming data and merge to avoid reference aliasing
-  _state = { ..._state, ...JSON.parse(JSON.stringify(data)) };
-
-  try {
-    localStorage.setItem(STATE_KEY, JSON.stringify(_state));
-  } catch (e) {}
-
-  try {
-    window.parent.__ddiaState = window.parent.__ddiaState || {};
-    window.parent.__ddiaState[STATE_KEY] = _state;
-  } catch (e) {}
+  if (window.saveState) {
+    window.saveState(data, STATE_KEY);
+  }
 }
 
 // ── Navigation ──────────────────────────────────────
@@ -879,91 +853,59 @@ function setupQuizFilters() {
   });
 }
 
-function setupLLMGrading() {
-  const modal = document.getElementById('llmModal');
-  const gradeBtn = document.getElementById('gradeWriteIns');
-  const closeBtn = document.getElementById('closeModal');
-  const copyBtn = document.getElementById('copyLlmPrompt');
-  const copyFeedback = document.getElementById('copyFeedback');
-  const promptArea = document.getElementById('llmPromptArea');
-
-  if (gradeBtn) {
-    gradeBtn.addEventListener('click', () => {
-      const state = loadState();
-      const writeIns = state.writeInAnswers || {};
-      
-      // Collect answered write-ins
-      const answeredList = QUIZ_QUESTIONS.filter((q, idx) => q.type === 'write' && writeIns[idx] && writeIns[idx].trim().length > 0);
-
-      if (answeredList.length === 0) {
-        alert('Please answer at least one write-in question before generating the LLM grading prompt!');
-        return;
-      }
-
-      // Compile prompt
-      let prompt = `You are grading a student's responses to Chapter 14 ("Doing the Right Thing") of Designing Data-Intensive Applications.
-For each question, provide:
-1. A Score from 1 to 5 (1 = Incorrect/No attempt, 3 = Partially correct/Gaps present, 5 = Excellent/Nuanced understanding).
-2. Strengths: What did the student capture accurately?
-3. Gaps: What crucial elements, terms, or architectural trade-offs did they miss?
-4. Model Comparison: Explain why the model answer is complete and how they can bridge any gaps.
-
----
-`;
-
-      QUIZ_QUESTIONS.forEach((q, idx) => {
-        if (q.type === 'write') {
-          const studentAns = writeIns[idx] || '';
-          if (studentAns.trim().length > 0) {
-            prompt += `
-QUESTION #${idx + 1}: ${q.q}
-RUBRIC/MODEL ANSWER: ${q.modelAnswer}
-STUDENT'S RESPONSE: "${studentAns}"
---------------------------------------------------
-`;
-          }
-        }
-      });
-
-      prompt += `
-After grading all questions, provide:
-- Overall conceptual score (e.g., "82% - Solid Conceptual Foundation")
-- Top 2 strengths across their responses
-- Top 2 areas for conceptual improvement
-- A custom 1-2 sentence recommendation on which specific sub-sections of Chapter 14 (e.g. Predictive Analytics, Bias and Discrimination, Feedback Loops, Privacy and Tracking, Data as Assets and Power) they should review.`;
-
-      promptArea.value = prompt;
-      modal.classList.remove('hidden');
-    });
-  }
-
-  if (closeBtn) {
-    closeBtn.addEventListener('click', () => {
-      modal.classList.add('hidden');
-    });
-  }
-
-  // Close modal on outside click
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) {
-      modal.classList.add('hidden');
+async function gradeWriteIns() {
+  const state = loadState();
+  const writeIns = state.writeInAnswers || {};
+  const answered = {};
+  
+  QUIZ_QUESTIONS.forEach((q, idx) => {
+    if (q.type === 'write' && writeIns[idx] && writeIns[idx].trim().length > 0) {
+      answered[idx] = writeIns[idx];
     }
   });
 
-  if (copyBtn) {
-    copyBtn.addEventListener('click', () => {
-      promptArea.select();
-      navigator.clipboard.writeText(promptArea.value)
-        .then(() => {
-          copyFeedback.classList.remove('hidden');
-          setTimeout(() => {
-            copyFeedback.classList.add('hidden');
-          }, 2000);
-        })
-        .catch(err => {
-          console.error('Failed to copy text: ', err);
-          alert('Could not auto-copy. Please select all text and copy manually.');
-        });
+  if (Object.keys(answered).length === 0) {
+    alert('Please answer at least one write-in question before grading.');
+    return;
+  }
+
+  const response = await fetch('/grade', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      chapterKey: STATE_KEY,
+      writeIns:   answered,
+      username:   getCurrentUsername()   // returns the active username from db.js
+    })
+  });
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  return await response.json();
+}
+
+function setupLLMGrading() {
+  const gradeBtn = document.getElementById('gradeWriteIns');
+  if (gradeBtn) {
+    gradeBtn.addEventListener('click', async () => {
+      const originalText = gradeBtn.textContent;
+      gradeBtn.textContent = 'Grading...';
+      gradeBtn.disabled = true;
+      try {
+        const data = await gradeWriteIns();
+        if (data && data.grades) {
+          alert('Grading completed successfully! Check the console or logs.');
+          console.log('Grades:', data.grades);
+        }
+      } catch (err) {
+        console.error('Error during grading:', err);
+        alert('Grading failed: ' + err.message);
+      } finally {
+        gradeBtn.textContent = originalText;
+        gradeBtn.disabled = false;
+      }
     });
   }
 }
@@ -1381,4 +1323,17 @@ function init() {
 }
 
 // Start
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', async () => {
+  if (typeof initDb !== 'undefined') {
+    await initDb();
+  }
+  const cachedUser = sessionStorage.getItem('ddia_active_user');
+  if (cachedUser) {
+    if (typeof getOrCreateUser !== 'undefined') {
+      getOrCreateUser(cachedUser);
+    }
+    init();
+  } else {
+    window.location.href = '../index.html';
+  }
+});

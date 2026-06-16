@@ -9,8 +9,25 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <!-- sql.js for SQLite WASM support -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
+  <script src="db.js"></script>
 </head>
 <body>
+  <!-- Username Login Screen Overlay -->
+  <div id="loginOverlay" class="login-overlay">
+    <div class="login-card">
+      <h2>Welcome to DDIA Learning</h2>
+      <p>Enter your username to load or create your progress.</p>
+
+      <label for="usernameInput">Username</label>
+      <input id="usernameInput" type="text" placeholder="e.g. alex" autocomplete="username" list="usernameSuggestions" />
+      <datalist id="usernameSuggestions"></datalist>
+
+      <button id="continueBtn" class="btn-primary">Continue →</button>
+    </div>
+  </div>
+
   <!-- Ambient background -->
   <div class="ambient-bg">
     <div class="orb orb-1"></div>
@@ -237,8 +254,41 @@
       }
     ];
 
-    document.addEventListener("DOMContentLoaded", () => {
+    // Startup Flow
+    async function migrateFromLocalStorage(username) {
+      const chapters = [
+        'ch01', 'ch02', 'ch03', 'ch04', 'ch05', 'ch06', 'ch07',
+        'ch08', 'ch09', 'ch10', 'ch11', 'ch12', 'ch13', 'ch14'
+      ];
+      for (const ch of chapters) {
+        const stateKey = `ddia_${ch}_learning`;
+        const raw = localStorage.getItem(stateKey);
+        if (raw) {
+          try {
+            const existing = JSON.parse(raw);
+            saveState(existing, stateKey);
+            localStorage.removeItem(stateKey);
+          } catch {}
+        }
+      }
+      // Migrate exams
+      const exams = ['midterm', 'final'];
+      for (const type of exams) {
+        const stateKey = `ddia_exam_${type}`;
+        const raw = localStorage.getItem(stateKey);
+        if (raw) {
+          try {
+            const existing = JSON.parse(raw);
+            saveState(existing, stateKey);
+            localStorage.removeItem(stateKey);
+          } catch {}
+        }
+      }
+    }
+
+    function initHub() {
       const grid = document.getElementById("chaptersGrid");
+      grid.innerHTML = "";
       
       let totalQuestionsAnswered = 0;
       let totalFlashcardsReviewed = 0;
@@ -246,22 +296,9 @@
       let totalQuestionsTarget = 0;
       let overallProgressSum = 0;
 
-      // Initialize global state if not already present
-      window.__ddiaState = window.__ddiaState || {};
-
       CHAPTERS.forEach(ch => {
-        // Load state from localStorage or window.__ddiaState (Bug 9)
         const stateKey = `ddia_${ch.dir}_learning`;
-        let state = {};
-        
-        // Try localStorage first
-        try {
-          const raw = localStorage.getItem(stateKey);
-          if (raw) state = JSON.parse(raw);
-        } catch (e) {
-          // If localStorage is blocked (sandbox), fall back to window global
-          state = window.__ddiaState[stateKey] || {};
-        }
+        const state = loadState(stateKey);
 
         // Calculate chapter stats
         const mcCount = state.quizSelections ? Object.keys(state.quizSelections).length : 0;
@@ -278,7 +315,6 @@
           chaptersActiveCount++;
         }
 
-        // Bug 10: Use dynamic question count from state, fallback to 30
         const chapterTotal = state.totalQuestions || 30;
         const progressPercent = Math.min(Math.round((answeredCount / chapterTotal) * 100), 100);
         overallProgressSum += progressPercent;
@@ -326,56 +362,70 @@
         const exams = ['midterm', 'final'];
         exams.forEach(type => {
           const key = `ddia_exam_${type}`;
-          let eState = null;
-          try {
-            const raw = localStorage.getItem(key);
-            if (raw) eState = JSON.parse(raw);
-          } catch (e) {
-            eState = window.__ddiaState[key];
-          }
+          const eState = loadState(key);
 
-          if (eState) {
-            const displayId = `${type}ScoreVal`;
-            if (eState.isSubmitted) {
-              document.getElementById(displayId).textContent = `High Score: ${eState.mcScore}% (MC)`;
-            } else {
-              document.getElementById(displayId).textContent = `In Progress (${Math.round(eState.timeRemaining / 60)} min left)`;
-            }
+          const displayId = `${type}ScoreVal`;
+          if (eState && eState.isSubmitted) {
+            document.getElementById(displayId).textContent = `High Score: ${eState.mcScore}% (MC)`;
+          } else if (eState) {
+            document.getElementById(displayId).textContent = `In Progress (${Math.round(eState.timeRemaining / 60)} min left)`;
+          } else {
+            document.getElementById(displayId).textContent = "Not Attempted";
           }
         });
       } catch (e) {
         console.error("Failed to load exam scores", e);
       }
+    }
 
-      // Export Progress button handler (Bug 9: Use window.__ddiaState)
-      document.getElementById('exportStateBtn').addEventListener('click', () => {
-        // Gather from both localStorage (if available) and window.__ddiaState
-        const exportData = { ...window.__ddiaState };
-        
-        try {
-          for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key.startsWith('ddia_')) {
-              try {
-                exportData[key] = JSON.parse(localStorage.getItem(key));
-              } catch (err) {
-                exportData[key] = localStorage.getItem(key);
-              }
-            }
-          }
-        } catch (e) {
-          // If localStorage fails, we already have window.__ddiaState
-        }
-        
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2));
+    document.addEventListener("DOMContentLoaded", async () => {
+      // 1. Initialize sql.js Database
+      await initDb();
+
+      // 2. Populate Suggestions Datalist
+      const dl = document.getElementById('usernameSuggestions');
+      const users = listUsers();
+      users.forEach(([uname]) => {
+        const opt = document.createElement('option');
+        opt.value = uname;
+        dl.appendChild(opt);
+      });
+
+      // 3. Handle Auto-Login if User Session Exists
+      const cachedUser = sessionStorage.getItem('ddia_active_user');
+      if (cachedUser) {
+        getOrCreateUser(cachedUser);
+        document.getElementById('loginOverlay').remove();
+        initHub();
+      }
+
+      // 4. Handle login button submit
+      document.getElementById('continueBtn').addEventListener('click', async () => {
+        const username = document.getElementById('usernameInput').value.trim();
+        if (!username) return;
+
+        getOrCreateUser(username);
+        await migrateFromLocalStorage(username);
+        document.getElementById('loginOverlay').remove();
+        initHub();
+      });
+
+      // Export Progress: Exports the underlying sqlite DB Uint8Array as file
+      document.getElementById('exportStateBtn').addEventListener('click', async () => {
+        if (!_db) return;
+        const data = _db.export(); // Uint8Array of SQLite DB file
+        const blob = new Blob([data], { type: "application/x-sqlite3" });
+        const url = URL.createObjectURL(blob);
         const downloadAnchor = document.createElement('a');
-        downloadAnchor.setAttribute("href",     dataStr);
-        downloadAnchor.setAttribute("download", "ddia_progress.json");
+        downloadAnchor.href = url;
+        downloadAnchor.download = "ddia_progress.db";
         document.body.appendChild(downloadAnchor);
         downloadAnchor.click();
         downloadAnchor.remove();
+        URL.revokeObjectURL(url);
       });
     });
+
   </script>
 </body>
 </html>

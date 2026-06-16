@@ -33,8 +33,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Explain how a closed content model in JSON Schema differs from an open content model, and discuss the evolvability trade-offs.",
-    hint: "Think about what happens when you add a new field to a payload and send it to an older reader under both models.",
+    q: "Your API versioning discussion gets heated. An engineer suggests using JSON Schema with 'additionalProperties: false' (a closed content model) to enforce strict payloads. Explain why this approach is a forward-compatibility killer during rolling deployments.",
+    hint: "Consider what happens when a new service version sends a field that an older service version has not yet defined.",
     modelAnswer: "An open content model (default in JSON Schema) allows fields not explicitly defined in the schema to exist in the JSON payload, whereas a closed content model (setting additionalProperties to false) rejects any undocumented fields. In terms of evolvability, an open model is much more flexible because new fields can be added by writers and safely ignored by old readers (maintaining forward compatibility). A closed model (specifically using additionalProperties: false) breaks this compatibility and is a forward-compatibility killer during rolling deploys, as older services will reject payloads containing any new fields.",
     section: "Formats for Encoding Data - JSON Schema"
   },
@@ -66,8 +66,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Explain why changing a field's tag number in Protocol Buffers is a breaking change, while changing the field name is not.",
-    hint: "What actually goes onto the wire during serialization?",
+    q: "A developer changes a Protocol Buffers field name from 'userId' to 'accountNumber', and also changes its tag number from 2 to 5. Explain why one of these changes is perfectly safe while the other will cause deserialization failures on client devices.",
+    hint: "Think about what is actually written into the serialized binary payload vs what is generated in code.",
     modelAnswer: "In Protocol Buffers, the serialized binary payload does not contain field names; it only contains field tag numbers to identify fields. Therefore, changing a field's name in the proto schema is purely an API change for the generated classes and does not affect the serialized bytes (it is fully compatible). However, changing a tag number changes the identifier written to the wire. If a reader expects tag 2 and the writer sends tag 5 for the same data, the reader will ignore tag 5 and look for a default value for tag 2, resulting in data loss.",
     section: "Protocol Buffers - Field tags and schema evolution"
   },
@@ -99,8 +99,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Describe how Apache Avro accommodates dynamically generated schemas (e.g., exporting database tables), and explain why this is more difficult in Protocol Buffers.",
-    hint: "Think about the role of field tags vs. field names.",
+    q: "Your data ingestion pipeline needs to dynamically export database tables whose schemas change frequently (columns added or removed). Explain why Apache Avro is much better suited for dynamically generated schemas than Protocol Buffers.",
+    hint: "Think about how Avro maps columns to field names without needing numeric field tags, and why Protobuf requires tag coordination.",
     modelAnswer: "Since Avro maps database columns directly to field names without requiring numeric field tags, it can easily generate a schema dynamically from a relational database schema. If a column is added or removed, a new Avro schema can be created on-the-fly, and readers can resolve it against their schemas by matching field names. In Protocol Buffers, assigning field tags requires coordination to ensure tag numbers are never reused or shifted. Automating tag assignment during dynamic database schema changes is highly complex and error-prone.",
     section: "Avro - Dynamically generated schemas"
   },
@@ -132,8 +132,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "If you are deploying a service upgrade via rolling deployment, explain why forward compatibility in your data formats is just as important as backward compatibility.",
-    hint: "Consider a mix of old and new servers running simultaneously.",
+    q: "During a rolling deployment of a shopping cart service, your old servers start throwing NullPointerExceptions and crashing. Explain why forward compatibility is just as vital as backward compatibility when deploying updates incrementally.",
+    hint: "Think about what happens when an older node reads a record containing new fields written by a newly deployed node.",
     modelAnswer: "During a rolling deployment, some nodes run the new version of the code while others still run the old version. If a new node writes a record containing a new schema field to a shared database, an old node may subsequently read that record. If the old code lacks forward compatibility, it might crash, fail to decode the record, or discard the new field when writing updates back to the database. Hence, forward compatibility ensures the system remains stable during gradual transitions.",
     section: "Dataflow Through Databases"
   },
@@ -165,8 +165,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Contrast RESTful design with RPC design regarding how they model network actions and state.",
-    hint: "Think about HTTP verbs and resources vs. calling remote functions.",
+    q: "Your team is debating whether to expose a new system-to-system integration using gRPC (RPC) or HTTP/JSON (REST). Contrast how these two designs model network interactions and state.",
+    hint: "Compare HTTP verbs and uniform resources against calling remote functions directly while attempting to hide the network.",
     modelAnswer: "REST models network interactions as state transfers over resources identified by URLs, using standard, uniform HTTP verbs (GET, POST, PUT, DELETE) and exploiting built-in protocol features like caching, authentication, and content negotiation. RPC attempts to hide the network entirely, making remote service interactions look like local function calls (e.g. calculateBilling(user)). This makes RPC brittle because it tries to treat remote operations as if they were local, failing to naturally accommodate network-specific states, retries, and variable latencies.",
     section: "Dataflow Through Services - The problems with remote procedure calls"
   },
@@ -198,8 +198,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Why are nondeterministic operations (like generating a random UUID or fetching the current system time) forbidden directly inside durable execution workflow code?",
-    hint: "How does the framework recover state during a replay after a crash?",
+    q: "While writing a Temporal workflow to handle payment processing, you are warned: 'Never call Math.random() or new Date() directly inside the workflow function.' Explain the mechanics of durable execution that make nondeterministic calls forbidden.",
+    hint: "Consider how the framework recovers state during a crash replay and matches execution history.",
     modelAnswer: "Durable execution frameworks recover state after a crash by replaying the workflow code from the beginning and checking it against the logged history of inputs and outputs. If the workflow code contains nondeterministic operations (like generating a random UUID or fetching the system clock), it will produce a different value during replay than what was logged. This causes a mismatch with the logged history, violating the execution contract and breaking workflow consistency. Such operations must instead be executed inside Activities, which log their outputs once and return the cached result on replay. Crucially, executing side-effects within activities ensures idempotency; for example, an activity that charges a credit card will only execute its external side-effects once, returning the cached result during replay instead of re-running the transaction.",
     section: "Durable Execution and Workflows"
   },
@@ -231,8 +231,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Describe the difference between the 'queue' (point-to-point) and 'topic' (publish-subscribe) patterns in message brokers.",
-    hint: "Consider how messages are distributed when there are multiple consumers.",
+    q: "You are designing an asynchronous system with multiple microservices. Contrast the behavior of a point-to-point queue with a publish-subscribe topic when multiple consumers are listening.",
+    hint: "Think about whether messages are load-balanced to a single receiver or broadcast to all active subscribers.",
     modelAnswer: "In the queue (point-to-point) pattern, each message is delivered to exactly one consumer. If there are multiple consumers listening to the queue, the broker load-balances the messages among them (each message is processed once). In the topic (publish-subscribe) pattern, each message is broadcast to all active subscribers. If there are multiple subscribers to a topic, every subscriber receives their own copy of the message, allowing different services to perform different tasks in response to the same event.",
     section: "Event-Driven Architectures - Message brokers"
   },
@@ -251,8 +251,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Detail the safety risks associated with language-specific deserialization libraries (such as Java's ObjectInputStream or Python's pickle.loads).",
-    hint: "What happens if an attacker supplies the input stream?",
+    q: "Your security team flags a vulnerability report showing that your app uses Python's 'pickle.loads()' or Java's 'ObjectInputStream' to read untrusted data from user cookies. Detail the security risks of these language-specific deserialization libraries.",
+    hint: "Think about gadget chains, arbitrary class instantiation, and Remote Code Execution (RCE).",
     modelAnswer: "Language-specific deserialization libraries rebuild objects by instantiating arbitrary classes specified in the byte stream. If an attacker can inject a malicious byte stream into the application, they can force the deserializer to instantiate arbitrary classes (known as gadget chains) present in the classpath. These classes can perform unintended side effects upon instantiation or destruction, often leading to Remote Code Execution (RCE) or arbitrary file reads, compromising the entire host system.",
     section: "Formats for Encoding Data - Language-Specific Formats"
   },
@@ -271,8 +271,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Explain how a service mesh (like Istio or Linkerd) handles service discovery and load balancing, and contrast it with traditional DNS-based load balancing.",
-    hint: "How do sidecar proxies and registries coordinate compared to DNS records?",
+    q: "A network architect asks: 'Why did we implement a service mesh like Istio instead of using standard DNS-based load balancing for our internal microservices?' Explain how sidecar proxies and registries coordinate compared to DNS records.",
+    hint: "Consider DNS caching problems, client-side load balancing, failovers, and mutual TLS (mTLS).",
     modelAnswer: "A service mesh uses sidecar proxies (like Envoy) running alongside client and server processes to intercept network traffic. These proxies query a centralized, highly dynamic registry to discover available server endpoints and metadata. This allows for client-side load balancing, immediate failovers, and secure TLS encryption transparent to the app code. Additionally, service meshes handle mutual TLS (mTLS) certificate rotation and service-to-service encryption out of the application's hands. In contrast, DNS-based load balancing maps a hostname to multiple IPs, which is cached by clients. If a server crashes or changes frequently, clients will attempt to connect to stale cached IPs, making DNS too slow for highly dynamic microservices.",
     section: "Dataflow Through Services - Load balancers, service discovery, and service meshes"
   },
@@ -291,8 +291,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Why does Avro require the exact writer's schema to be present at read time, whereas Protocol Buffers does not?",
-    hint: "Think about what is not present in the Avro binary stream.",
+    q: "Your Kafka consumer crashes with a schema resolution error when reading an Avro topic. Explain why Avro requires the exact writer's schema to decode data, whereas Protocol Buffers can decode payloads without it.",
+    hint: "Think about what metadata (or lack thereof) is present in the binary payload of each format.",
     modelAnswer: "Avro does not write any metadata, field tag numbers, or datatype indicators into the serialized binary payload; it only writes the raw value bytes concatenated together. Without the writer's schema, a reader cannot know where one field ends and another begins, nor what datatype a sequence of bytes represents. Protocol Buffers, on the other hand, tags each field with its tag number and wire type in the binary payload, allowing a reader to skip unrecognized fields using only the tag wire-type information.",
     section: "Avro - The writer’s schema and the reader’s schema"
   },
@@ -311,15 +311,15 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Explain how the 'Billion Dollar Mistake' of null references is addressed in Avro schema definitions.",
-    hint: "How do you define a field that can be either a string or empty?",
+    q: "Sir Tony Hoare famously called null references his 'billion-dollar mistake.' Explain how Apache Avro prevents unexpected null pointer exceptions through its schema definitions and union types.",
+    hint: "Explain how to define a field that can either be a string or null, and why it isn't nullable by default.",
     modelAnswer: "Avro does not make fields nullable by default to prevent silent null-pointer exceptions. Instead, if a field can be empty or null, the developer must explicitly define it using a union type (e.g., union { null, string }). The default value must also match the first branch of the union. This forces the schema designer to explicitly declare which fields are nullable and how they should be default-initialized, preventing common bugs related to unexpected null references.",
     section: "Avro - Schema evolution rules"
   },
   {
     type: "write",
-    q: "Argue both sides (trade-off tribunal) of using a textual format (like JSON) versus a binary format (like Protocol Buffers or Avro) for an internal service-to-service communication system.",
-    hint: "Address ease of debugging, tooling, network/CPU efficiency, and organizational boundaries.",
+    q: "You are the lead architect presiding over a 'trade-off tribunal' comparing JSON vs. Protocol Buffers/Avro for internal service communications. Present arguments for both sides.",
+    hint: "Address readability/debugging/tooling vs. network bandwidth/CPU serialization costs and schema management.",
     modelAnswer: "Using a textual format like JSON is highly advantageous because it is human-readable, making debugging network payloads and ad-hoc testing with tools like curl extremely easy. It is also standard, supported by every programming language, and requires no schema definition files or code generation steps. However, JSON is verbose, consumes more network bandwidth, and requires expensive CPU cycles for string parsing and serialization. Conversely, binary formats like Protocol Buffers are highly optimized, extremely compact, and provide static type safety through code generation. Yet, they make debugging harder because payloads are not human-readable without decoding tools, and they require managing schema repositories, which increases operational overhead, especially across organizational boundaries.",
     section: "The Merits of Schemas / Summary"
   }
@@ -401,42 +401,16 @@ const DIAGNOSTIC_TOPICS = [
 // ── State Management ────────────────────────────────
 
 const STATE_KEY = 'ddia_ch5_learning';
-let _state = null;
+
 
 function loadState() {
-  if (!_state) {
-    try {
-      const raw = localStorage.getItem(STATE_KEY);
-      if (raw) _state = JSON.parse(raw);
-    } catch (e) {}
-
-    if (!_state) {
-      try {
-        if (window.parent && window.parent.__ddiaState && window.parent.__ddiaState[STATE_KEY]) {
-          _state = window.parent.__ddiaState[STATE_KEY];
-        }
-      } catch (e) {}
-    }
-
-    if (!_state) _state = {};
-  }
-  // Return a snapshot, not the live object
-  return JSON.parse(JSON.stringify(_state));
+  return window.loadState ? window.loadState(STATE_KEY) : {};
 }
 
 function saveState(data) {
-  if (!_state) loadState();
-  // Clone incoming data and merge to avoid reference aliasing
-  _state = { ..._state, ...JSON.parse(JSON.stringify(data)) };
-
-  try {
-    localStorage.setItem(STATE_KEY, JSON.stringify(_state));
-  } catch (e) {}
-
-  try {
-    window.parent.__ddiaState = window.parent.__ddiaState || {};
-    window.parent.__ddiaState[STATE_KEY] = _state;
-  } catch (e) {}
+  if (window.saveState) {
+    window.saveState(data, STATE_KEY);
+  }
 }
 
 // ── Navigation ──────────────────────────────────────
@@ -797,91 +771,59 @@ function setupQuizFilters() {
   });
 }
 
-function setupLLMGrading() {
-  const modal = document.getElementById('llmModal');
-  const gradeBtn = document.getElementById('gradeWriteIns');
-  const closeBtn = document.getElementById('closeModal');
-  const copyBtn = document.getElementById('copyLlmPrompt');
-  const copyFeedback = document.getElementById('copyFeedback');
-  const promptArea = document.getElementById('llmPromptArea');
-
-  if (gradeBtn) {
-    gradeBtn.addEventListener('click', () => {
-      const state = loadState();
-      const writeIns = state.writeInAnswers || {};
-      
-      // Collect answered write-ins
-      const answeredList = QUIZ_QUESTIONS.filter((q, idx) => q.type === 'write' && writeIns[idx] && writeIns[idx].trim().length > 0);
-
-      if (answeredList.length === 0) {
-        alert('Please answer at least one write-in question before generating the LLM grading prompt!');
-        return;
-      }
-
-      // Compile prompt
-      let prompt = `You are grading a student's responses to Chapter 5 ("Encoding and Evolution") of Designing Data-Intensive Applications.
-For each question, provide:
-1. A Score from 1 to 5 (1 = Incorrect/No attempt, 3 = Partially correct/Gaps present, 5 = Excellent/Nuanced understanding).
-2. Strengths: What did the student capture accurately?
-3. Gaps: What crucial elements, terms, or architectural trade-offs did they miss?
-4. Model Comparison: Explain why the model answer is complete and how they can bridge any gaps.
-
----
-`;
-
-      QUIZ_QUESTIONS.forEach((q, idx) => {
-        if (q.type === 'write') {
-          const studentAns = writeIns[idx] || '';
-          if (studentAns.trim().length > 0) {
-            prompt += `
-QUESTION #${idx + 1}: ${q.q}
-RUBRIC/MODEL ANSWER: ${q.modelAnswer}
-STUDENT'S RESPONSE: "${studentAns}"
---------------------------------------------------
-`;
-          }
-        }
-      });
-
-      prompt += `
-After grading all questions, provide:
-- Overall conceptual score (e.g., "82% - Solid Conceptual Foundation")
-- Top 2 strengths across their responses
-- Top 2 areas for conceptual improvement
-- A custom 1-2 sentence recommendation on which specific sub-sections of Chapter 5 (e.g. Formats for Encoding Data, Protocol Buffers vs Avro, Modes of Dataflow, Durable Execution & Workflows) they should review.`;
-
-      promptArea.value = prompt;
-      modal.classList.remove('hidden');
-    });
-  }
-
-  if (closeBtn) {
-    closeBtn.addEventListener('click', () => {
-      modal.classList.add('hidden');
-    });
-  }
-
-  // Close modal on outside click
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) {
-      modal.classList.add('hidden');
+async function gradeWriteIns() {
+  const state = loadState();
+  const writeIns = state.writeInAnswers || {};
+  const answered = {};
+  
+  QUIZ_QUESTIONS.forEach((q, idx) => {
+    if (q.type === 'write' && writeIns[idx] && writeIns[idx].trim().length > 0) {
+      answered[idx] = writeIns[idx];
     }
   });
 
-  if (copyBtn) {
-    copyBtn.addEventListener('click', () => {
-      promptArea.select();
-      navigator.clipboard.writeText(promptArea.value)
-        .then(() => {
-          copyFeedback.classList.remove('hidden');
-          setTimeout(() => {
-            copyFeedback.classList.add('hidden');
-          }, 2000);
-        })
-        .catch(err => {
-          console.error('Failed to copy text: ', err);
-          alert('Could not auto-copy. Please select all text and copy manually.');
-        });
+  if (Object.keys(answered).length === 0) {
+    alert('Please answer at least one write-in question before grading.');
+    return;
+  }
+
+  const response = await fetch('/grade', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      chapterKey: STATE_KEY,
+      writeIns:   answered,
+      username:   getCurrentUsername()   // returns the active username from db.js
+    })
+  });
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  return await response.json();
+}
+
+function setupLLMGrading() {
+  const gradeBtn = document.getElementById('gradeWriteIns');
+  if (gradeBtn) {
+    gradeBtn.addEventListener('click', async () => {
+      const originalText = gradeBtn.textContent;
+      gradeBtn.textContent = 'Grading...';
+      gradeBtn.disabled = true;
+      try {
+        const data = await gradeWriteIns();
+        if (data && data.grades) {
+          alert('Grading completed successfully! Check the console or logs.');
+          console.log('Grades:', data.grades);
+        }
+      } catch (err) {
+        console.error('Error during grading:', err);
+        alert('Grading failed: ' + err.message);
+      } finally {
+        gradeBtn.textContent = originalText;
+        gradeBtn.disabled = false;
+      }
     });
   }
 }
@@ -1298,4 +1240,17 @@ function init() {
 }
 
 // Start
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', async () => {
+  if (typeof initDb !== 'undefined') {
+    await initDb();
+  }
+  const cachedUser = sessionStorage.getItem('ddia_active_user');
+  if (cachedUser) {
+    if (typeof getOrCreateUser !== 'undefined') {
+      getOrCreateUser(cachedUser);
+    }
+    init();
+  } else {
+    window.location.href = '../index.html';
+  }
+});

@@ -16,7 +16,7 @@ fi
 # 2. Upgrade pip and install/verify dependencies inside the venv
 echo "Verifying dependencies inside virtual environment..."
 "$PYTHON_BIN" -m pip install --upgrade -q pip
-"$PYTHON_BIN" -m pip install -q google-generativeai
+"$PYTHON_BIN" -m pip install -q google-generativeai flask pytest
 
 # 3. Handle commands
 COMMAND=${1:-"grade"}
@@ -31,8 +31,8 @@ case "$COMMAND" in
     "server")
         echo "Starting local learning platform server on port 8089..."
         echo "Navigate to: http://localhost:8089/index.html"
-        # Run server pointing to learning-app folder
-        "$PYTHON_BIN" -m http.server 8089 --directory learning-app/
+        # Run Flask server
+        PORT=8089 "$PYTHON_BIN" server.py
         ;;
     "help"|"-h"|"--help")
         echo "Designing Data-Intensive Applications Learning App Runner"

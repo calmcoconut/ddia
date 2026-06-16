@@ -33,8 +33,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Explain what a 'tombstone' is in the context of log-structured storage engines (LSM-trees), why it is necessary, and how it is eventually cleaned up.",
-    hint: "Consider how deletions are handled in append-only files and what happens during compaction.",
+    q: "A developer deletes a user account, but notices the database size actually *increases* immediately afterward. Explain the concept of a 'tombstone' in LSM-trees, and how it is eventually garbage collected.",
+    hint: "Think about why append-only designs cannot perform in-place updates, and how compaction resolves this.",
     modelAnswer: "In an LSM-tree, files are immutable, so a deletion cannot be performed in-place. Instead, a deletion is written as a special marker record called a 'tombstone.' When read queries scan segments, the tombstone indicates that the key has been deleted. During compaction, background threads merge old segments, and the tombstone tells the merger to discard previous values of the deleted key. Once the tombstone is merged into the oldest segment and no references to the key remain, the tombstone itself can be discarded.",
     section: "Log-Structured Storage"
   },
@@ -66,8 +66,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "How does a B-tree handle writes, and what mechanisms does it use to ensure reliability and consistency during a crash, especially when a page split occurs?",
-    hint: "Think about in-place updates, page splits, WAL (Write-Ahead Log), and latches.",
+    q: "During a power outage, your relational database server crashes in the middle of a B-tree page split. How does a B-tree handle write updates in-place, and what mechanisms prevent structural corruption after a reboot?",
+    hint: "Think about page-oriented writes, Write-Ahead Logs (WAL) replay, and latches for concurrency.",
     modelAnswer: "A B-tree modifies data in-place by breaking the database down into fixed-size pages (usually 4KB) and overwriting them on disk. When a page is full and a new key is inserted, the page splits into two pages, and the parent page must be updated. If the database crashes mid-way, the B-tree can become corrupted. To prevent this, B-trees write every update to a Write-Ahead Log (WAL) on disk before modifying the pages. If a crash occurs, the WAL is used to restore the B-tree to a consistent state. Note that the WAL does not grow indefinitely; once the dirty pages are successfully flushed/checkpointed to disk, the WAL is safely truncated. Additionally, latches (lightweight locks) are used to protect the tree structures from concurrent updates.",
     section: "B-Trees"
   },
@@ -99,8 +99,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Discuss the trade-offs of background compaction in LSM-trees. What are the potential impacts on write throughput and read latency, especially under high workload conditions?",
-    hint: "Consider disk bandwidth sharing, compaction latency spikes, and disk fill issues.",
+    q: "Your LSM-tree storage engine is ingestion-heavy, but suddenly application writes drop to a crawl. How does background compaction compete for resource bandwidth, and how does this affect write throughput and read latency spikes?",
+    hint: "Consider how sharing disk bandwidth causes throttling when compaction falls behind.",
     modelAnswer: "While LSM-trees handle high write throughput well by writing sequentially, compaction must run in the background to merge and discard old records. This compaction shares the disk's limited write bandwidth with incoming application writes. If compaction cannot keep up with high write volume, the disk can fill up, and the engine must throttle writes to allow compaction to catch up. Additionally, heavy compaction can cause latency spikes, where a read or write query takes longer because the disk head is busy rewriting large SSTable segments.",
     section: "Comparing LSM-Trees and B-Trees"
   },
@@ -132,8 +132,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Explain the difference between a concatenated index (like a compound index on '(lastname, firstname)') and a multi-dimensional index (like an R-tree). Under what search query scenarios would you choose one over the other?",
-    hint: "Consider queries that search on range constraints on both dimensions (e.g., geospatial coordinates or 2D ranges).",
+    q: "You are designing a ride-sharing app and need to query active drivers within a 2D bounding box (latitude and longitude). Explain why a concatenated index on '(latitude, longitude)' performs poorly here compared to a multi-dimensional index like an R-tree.",
+    hint: "Think about how concatenated indexes handle range queries on multiple columns vs spatial coordinates.",
     modelAnswer: "A concatenated index combines multiple columns by appending them together into a single key, which works well for equality filters or range queries on a prefix (e.g., filtering on lastname or lastname AND firstname). However, it cannot efficiently query ranges on both columns simultaneously (like looking for a region of latitude and longitude). For multi-dimensional data, a multi-dimensional index like an R-tree is preferred because it indexes space natively, allowing queries to search bounding boxes or 2D ranges efficiently without scanning all rows along one dimension. Alternatively, column-oriented databases (like BigQuery) sometimes use space-filling curves (such as Z-order/Morton codes or Hilbert curves) to map multi-dimensional coordinates onto a 1D key space while preserving spatial locality.",
     section: "Multicolumn and Secondary Indexes"
   },
@@ -165,8 +165,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Why can in-memory databases outperform disk-centric databases even when the disk-centric database has enough RAM to cache the entire dataset?",
-    hint: "Consider the CPU overhead of serializing, buffer pools, page management, and lock structures.",
+    q: "A systems engineer claims: 'Our database has 256GB of RAM, and our database size is only 100GB, so it runs completely in memory. There's no performance benefit to switching to a native in-memory database like Redis.' Critically analyze this statement.",
+    hint: "Evaluate the CPU overhead of buffer pools, page translation, locks, and serialization.",
     modelAnswer: "Even if a disk-centric database has enough RAM to cache all data, it still incurs significant overhead managing that cache. It must maintain a buffer pool, translate logical page addresses to memory pointers, write locks, and serialize/deserialize data blocks. An in-memory database avoids this overhead by storing data in memory-optimized structures directly (like simple pointers and graphs). Additionally, because RAM is fast and random access is cheap, in-memory databases can run single-threaded, eliminating lock overhead entirely.",
     section: "Keeping Everything in Memory"
   },
@@ -198,8 +198,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Explain the concepts of 'column pruning' (projection pushdown) and 'predicate pushdown' (filter pushdown), and how they optimize query performance in column-oriented databases.",
-    hint: "Think about what data is skipped during disk reads, and where the filtering logic is executed.",
+    q: "An analytical query takes several minutes on a row-oriented database but completes in milliseconds on a columnar warehouse. Explain how 'column pruning' and 'predicate pushdown' minimize the bytes read from disk.",
+    hint: "Think about how column-specific file storage allows skipping unneeded columns and evaluating filters at the storage layer.",
     modelAnswer: "Column pruning (or projection pushdown) allows a column-oriented database to read only the specific column files requested by a query, completely skipping disk reads for unneeded columns. Predicate pushdown (or filter pushdown) takes the query's filter conditions (e.g., WHERE age > 30) and evaluates them at the storage layer while reading the column files. This prevents the database from loading and transferring irrelevant data rows into memory, significantly reducing I/O and CPU overhead.",
     section: "Column-Oriented Storage"
   },
@@ -231,8 +231,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Why are write operations (inserts and updates) exceptionally difficult to perform in-place for column-oriented databases, and how do modern columnar engines (like ClickHouse or Vertica) handle writes instead?",
-    hint: "Think about rewriting files, alignment of row indices, and LSM-tree log-structured approach.",
+    q: "An engineer proposes performing real-time, row-by-row updates directly inside a column-oriented analytics warehouse. Explain why in-place writes are highly inefficient in this architecture, and how modern columnar engines work around this limit.",
+    hint: "Consider the necessity of modifying and aligning dozens of separate column files, and the LSM-tree buffering approach.",
     modelAnswer: "In a columnar database, rows are split across separate files for each column. If you want to insert a row, you must modify every single column file, ensuring the new value is appended at the exact same index. If you perform this in-place for every write, it leads to massive random I/O and realignment costs. To handle this, modern columnar engines use a log-structured (LSM) approach: incoming writes are written to a row-oriented memtable on disk/RAM and appended to a temporary log. In the background, these writes are merged and converted into column-oriented segments.",
     section: "Writes in Column-Oriented Storage"
   },
@@ -251,22 +251,22 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "What are the trade-offs of using an OLAP data cube compared to querying raw columnar data, particularly regarding query flexibility and data freshness?",
-    hint: "Think about pre-computed aggregates versus ad-hoc queries and how changes in underlying data affect the cube.",
+    q: "A product manager is delighted by the sub-millisecond load times of a pre-aggregated data cube, but asks: 'Why can't we run arbitrary ad-hoc filters or see real-time updates through this cube?' Discuss the trade-offs of data cubes versus raw columnar queries.",
+    hint: "Contrast the speed of pre-computed aggregates against rigidity and data staleness/maintenance overhead.",
     modelAnswer: "An OLAP data cube offers ultra-fast query performance by pre-computing aggregates along various dimensions, bypassing the need to scan raw data. However, it suffers from two major trade-offs: first, it lacks query flexibility because you cannot perform ad-hoc queries on attributes or dimensions that were not pre-aggregated. Second, it suffers from pre-aggregation staleness: the data cube becomes stale the moment the underlying data changes, requiring costly recomputations on a schedule to stay up-to-date.",
     section: "Aggregation: Data Cubes and Materialized Views"
   },
   {
     type: "write",
-    q: "Contrast how LSM-trees and B-trees handle disk space fragmentation. Why does the B-tree model lead to internal fragmentation, and how do LSM-trees manage their disk usage?",
-    hint: "Think about fixed-size pages, page splits, append-only logs, and background compaction.",
+    q: "During a database audit, you notice that your B-tree table file size remains huge even after deleting millions of rows, whereas your LSM-tree table reclaimed disk space. Contrast how these two engines handle disk space fragmentation.",
+    hint: "Think about B-tree fixed-size page splits and empty slots vs LSM sequential immutable files and background compaction.",
     modelAnswer: "B-trees are page-oriented and update in-place. When rows are deleted or when a page splits because it is full, empty spaces are left within the page, leading to internal fragmentation. Over time, pages may only be partially full. LSM-trees, by contrast, write immutable files sequentially. Since they don't update in-place, there is no page-level internal fragmentation. Instead, LSM-trees generate multiple segment files (external fragmentation of versions), which are consolidated and cleaned up during background compaction to free disk space.",
     section: "Comparing LSM-Trees and B-Trees"
   },
   {
     type: "write",
-    q: "Contrast the design of a database that stores row data in a heap file with one that uses a clustered index. What are the advantages of storing data in a heap file, particularly regarding secondary indexes?",
-    hint: "Consider what secondary indexes store and the cost of row updates.",
+    q: "You are designing secondary indexes for a table that has very frequent row updates. Contrast the performance trade-offs of storing row data in a heap file versus using a clustered index.",
+    hint: "Think about whether secondary indexes store direct pointers or primary keys, and the cost of row movement during updates.",
     modelAnswer: "A heap file stores rows in no particular order, and secondary indexes store pointers to these heap file locations. This makes row updates efficient: if a row is modified and stays the same size, it doesn't move, and secondary indexes don't need updates. In contrast, a clustered index stores rows inside the primary index. When rows are updated or inserted, they may split pages and move physically. In a clustered database, secondary indexes must store the primary key instead of a direct row pointer, which adds an extra lookup step (secondary index search -> primary index search -> data row).",
     section: "Storing Values Within the Index"
   },
@@ -298,8 +298,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Describe 'vectorized query execution' (or vectorized processing) in database engines. How does it improve the performance of analytical queries, particularly in column-oriented databases?",
-    hint: "Think about CPU cache, instruction cycles, and processing data in chunks rather than row-by-row.",
+    q: "Your data warehouse query engine is running at 100% CPU, but profile trace shows low instruction counts. Explain how 'vectorized query execution' uses modern CPU architectures to speed up analytical processing in columnar databases.",
+    hint: "Think about CPU cache locality, loop overhead, SIMD operations, and processing data in contiguous chunks.",
     modelAnswer: "Vectorized query execution allows the database engine to pass chunks of data (e.g., arrays of 1000 values from a column) through the CPU cache at once, rather than processing data row-by-row. This design takes advantage of modern CPU architectures by keeping loop logic simple, minimizing instruction overhead, and enabling the compiler to use SIMD (Single Instruction, Multiple Data) instructions. Because column-oriented storage stores values of a column contiguously, it provides data in the exact contiguous array format that vectorized loops need to run at maximum speed.",
     section: "Column-Oriented Storage"
   },
@@ -318,15 +318,15 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Describe the 'anti-caching' approach in in-memory databases. How does it allow the database to store more data than fits in RAM, and how does it differ from traditional OS virtual memory swapping?",
-    hint: "Consider what happens to the indexes vs. data values, and which layer manages the movement of data.",
+    q: "An operator wants to prevent OS swapping (thrashing) when their in-memory database exceeds physical RAM limits. Explain how the database-level 'anti-caching' approach solves this, and how it manages indexes versus evicted data.",
+    hint: "Think about database-controlled eviction of cold data vs OS blind page swapping.",
     modelAnswer: "Anti-caching allows an in-memory database to support datasets larger than RAM by evicting cold data (the least recently used records) to disk, while keeping all indexes in memory. Unlike OS virtual memory, which swaps entire pages of memory blindly and can cause thrashing, anti-caching is database-managed: the database knows exactly which records are cold, serializes them to disk, and frees up RAM. When a query accesses an evicted record via the in-memory index, the database fetches only that specific record back into RAM.",
     section: "Keeping Everything in Memory"
   },
   {
     type: "write",
-    q: "Explain how a column-oriented storage engine can use the sort order of a column to both compress data and speed up analytical queries. What happens to write operations when columns are sorted?",
-    hint: "Consider run-length encoding of columns and the cost of inserting rows in sorted columns.",
+    q: "Your team decides to sort a column-oriented table by the 'order_date' column. Explain how this sort order improves compression and speed for queries, but complicates writes.",
+    hint: "Think about run-length encoding on consecutive values, binary search filtering, and the overhead of rewriting sorted files.",
     modelAnswer: "If rows are sorted by a column, say date, then all values of the date column will be contiguous, which allows excellent compression like run-length encoding. Furthermore, secondary columns (like product_id) will also have repeated values in sequence, compressing them well. Sorting also speeds up queries that filter on the sorted column (e.g., date range) because the engine can perform binary search to find the start and end offsets. However, write operations become much harder: inserting a new row in a sorted columnar database requires rewriting all column files to maintain the sort order, which is why updates are typically buffered in an LSM-like write path.",
     section: "Writes in Column-Oriented Storage"
   }
@@ -411,42 +411,16 @@ const DIAGNOSTIC_TOPICS = [
 // ── State Management ────────────────────────────────
 
 const STATE_KEY = 'ddia_ch4_learning';
-let _state = null;
+
 
 function loadState() {
-  if (!_state) {
-    try {
-      const raw = localStorage.getItem(STATE_KEY);
-      if (raw) _state = JSON.parse(raw);
-    } catch (e) {}
-
-    if (!_state) {
-      try {
-        if (window.parent && window.parent.__ddiaState && window.parent.__ddiaState[STATE_KEY]) {
-          _state = window.parent.__ddiaState[STATE_KEY];
-        }
-      } catch (e) {}
-    }
-
-    if (!_state) _state = {};
-  }
-  // Return a snapshot, not the live object
-  return JSON.parse(JSON.stringify(_state));
+  return window.loadState ? window.loadState(STATE_KEY) : {};
 }
 
 function saveState(data) {
-  if (!_state) loadState();
-  // Clone incoming data and merge to avoid reference aliasing
-  _state = { ..._state, ...JSON.parse(JSON.stringify(data)) };
-
-  try {
-    localStorage.setItem(STATE_KEY, JSON.stringify(_state));
-  } catch (e) {}
-
-  try {
-    window.parent.__ddiaState = window.parent.__ddiaState || {};
-    window.parent.__ddiaState[STATE_KEY] = _state;
-  } catch (e) {}
+  if (window.saveState) {
+    window.saveState(data, STATE_KEY);
+  }
 }
 
 // ── Navigation ──────────────────────────────────────
@@ -791,88 +765,59 @@ function setupQuizFilters() {
   });
 }
 
-function setupLLMGrading() {
-  const modal = document.getElementById('llmModal');
-  const gradeBtn = document.getElementById('gradeWriteIns');
-  const closeBtn = document.getElementById('closeModal');
-  const copyBtn = document.getElementById('copyLlmPrompt');
-  const copyFeedback = document.getElementById('copyFeedback');
-  const promptArea = document.getElementById('llmPromptArea');
-
-  if (gradeBtn) {
-    gradeBtn.addEventListener('click', () => {
-      const state = loadState();
-      const writeIns = state.writeInAnswers || {};
-      
-      const answeredList = QUIZ_QUESTIONS.filter((q, idx) => q.type === 'write' && writeIns[idx] && writeIns[idx].trim().length > 0);
-
-      if (answeredList.length === 0) {
-        alert('Please answer at least one write-in question before generating the LLM grading prompt!');
-        return;
-      }
-
-      let prompt = `You are grading a student's responses to Chapter 4 ("Storage and Retrieval") of Designing Data-Intensive Applications.
-For each question, provide:
-1. A Score from 1 to 5 (1 = Incorrect/No attempt, 3 = Partially correct/Gaps present, 5 = Excellent/Nuanced understanding).
-2. Strengths: What did the student capture accurately?
-3. Gaps: What crucial elements, terms, or architectural trade-offs did they miss?
-4. Model Comparison: Explain why the model answer is complete and how they can bridge any gaps.
-
----
-`;
-
-      QUIZ_QUESTIONS.forEach((q, idx) => {
-        if (q.type === 'write') {
-          const studentAns = writeIns[idx] || '';
-          if (studentAns.trim().length > 0) {
-            prompt += `
-QUESTION #${idx + 1}: ${q.q}
-RUBRIC/MODEL ANSWER: ${q.modelAnswer}
-STUDENT'S RESPONSE: "${studentAns}"
---------------------------------------------------
-`;
-          }
-        }
-      });
-
-      prompt += `
-After grading all questions, provide:
-- Overall conceptual score (e.g., "82% - Solid Conceptual Foundation")
-- Top 2 strengths across their responses
-- Top 2 areas for conceptual improvement
-- A custom 1-2 sentence recommendation on which specific sub-sections of Chapter 4 (e.g. LSM-Trees vs B-Trees, Indexing Mechanics, OLTP vs OLAP workloads, Columnar Storage) they should review.`;
-
-      promptArea.value = prompt;
-      modal.classList.remove('hidden');
-    });
-  }
-
-  if (closeBtn) {
-    closeBtn.addEventListener('click', () => {
-      modal.classList.add('hidden');
-    });
-  }
-
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) {
-      modal.classList.add('hidden');
+async function gradeWriteIns() {
+  const state = loadState();
+  const writeIns = state.writeInAnswers || {};
+  const answered = {};
+  
+  QUIZ_QUESTIONS.forEach((q, idx) => {
+    if (q.type === 'write' && writeIns[idx] && writeIns[idx].trim().length > 0) {
+      answered[idx] = writeIns[idx];
     }
   });
 
-  if (copyBtn) {
-    copyBtn.addEventListener('click', () => {
-      promptArea.select();
-      navigator.clipboard.writeText(promptArea.value)
-        .then(() => {
-          copyFeedback.classList.remove('hidden');
-          setTimeout(() => {
-            copyFeedback.classList.add('hidden');
-          }, 2000);
-        })
-        .catch(err => {
-          console.error('Failed to copy text: ', err);
-          alert('Could not auto-copy. Please select all text and copy manually.');
-        });
+  if (Object.keys(answered).length === 0) {
+    alert('Please answer at least one write-in question before grading.');
+    return;
+  }
+
+  const response = await fetch('/grade', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      chapterKey: STATE_KEY,
+      writeIns:   answered,
+      username:   getCurrentUsername()   // returns the active username from db.js
+    })
+  });
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  return await response.json();
+}
+
+function setupLLMGrading() {
+  const gradeBtn = document.getElementById('gradeWriteIns');
+  if (gradeBtn) {
+    gradeBtn.addEventListener('click', async () => {
+      const originalText = gradeBtn.textContent;
+      gradeBtn.textContent = 'Grading...';
+      gradeBtn.disabled = true;
+      try {
+        const data = await gradeWriteIns();
+        if (data && data.grades) {
+          alert('Grading completed successfully! Check the console or logs.');
+          console.log('Grades:', data.grades);
+        }
+      } catch (err) {
+        console.error('Error during grading:', err);
+        alert('Grading failed: ' + err.message);
+      } finally {
+        gradeBtn.textContent = originalText;
+        gradeBtn.disabled = false;
+      }
     });
   }
 }
@@ -1281,4 +1226,17 @@ function init() {
   window.addEventListener('resize', drawForgettingCurve);
 }
 
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', async () => {
+  if (typeof initDb !== 'undefined') {
+    await initDb();
+  }
+  const cachedUser = sessionStorage.getItem('ddia_active_user');
+  if (cachedUser) {
+    if (typeof getOrCreateUser !== 'undefined') {
+      getOrCreateUser(cachedUser);
+    }
+    init();
+  } else {
+    window.location.href = '../index.html';
+  }
+});

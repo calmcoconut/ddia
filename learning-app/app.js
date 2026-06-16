@@ -402,43 +402,17 @@ const MISCONCEPTION_EXPLANATIONS = {
 // ── State Management ────────────────────────────────
 
 const STATE_KEY = 'ddia_ch1_learning';
-let _state = null;
 
 function loadState() {
-  if (!_state) {
-    try {
-      const raw = localStorage.getItem(STATE_KEY);
-      if (raw) _state = JSON.parse(raw);
-    } catch (e) {}
-
-    if (!_state) {
-      try {
-        if (window.parent && window.parent.__ddiaState && window.parent.__ddiaState[STATE_KEY]) {
-          _state = window.parent.__ddiaState[STATE_KEY];
-        }
-      } catch (e) {}
-    }
-
-    if (!_state) _state = {};
-  }
-  // Return a snapshot, not the live object
-  return JSON.parse(JSON.stringify(_state));
+  return window.loadState ? window.loadState(STATE_KEY) : {};
 }
 
 function saveState(data) {
-  if (!_state) loadState();
-  // Clone incoming data and merge to avoid reference aliasing
-  _state = { ..._state, ...JSON.parse(JSON.stringify(data)) };
-
-  try {
-    localStorage.setItem(STATE_KEY, JSON.stringify(_state));
-  } catch (e) {}
-
-  try {
-    window.parent.__ddiaState = window.parent.__ddiaState || {};
-    window.parent.__ddiaState[STATE_KEY] = _state;
-  } catch (e) {}
+  if (window.saveState) {
+    window.saveState(data, STATE_KEY);
+  }
 }
+
 
 // ── Navigation ──────────────────────────────────────
 
@@ -793,94 +767,63 @@ function setupQuizFilters() {
   });
 }
 
-function setupLLMGrading() {
-  const modal = document.getElementById('llmModal');
-  const gradeBtn = document.getElementById('gradeWriteIns');
-  const closeBtn = document.getElementById('closeModal');
-  const copyBtn = document.getElementById('copyLlmPrompt');
-  const copyFeedback = document.getElementById('copyFeedback');
-  const promptArea = document.getElementById('llmPromptArea');
-
-  if (gradeBtn) {
-    gradeBtn.addEventListener('click', () => {
-      const state = loadState();
-      const writeIns = state.writeInAnswers || {};
-      
-      // Collect answered write-ins
-      const answeredList = QUIZ_QUESTIONS.filter((q, idx) => q.type === 'write' && writeIns[idx] && writeIns[idx].trim().length > 0);
-
-      if (answeredList.length === 0) {
-        alert('Please answer at least one write-in question before generating the LLM grading prompt!');
-        return;
-      }
-
-      // Compile prompt
-      let prompt = `You are grading a student's responses to Chapter 1 ("Trade-offs in Data Systems Architecture") of Designing Data-Intensive Applications.
-For each question, provide:
-1. A Score from 1 to 5 (1 = Incorrect/No attempt, 3 = Partially correct/Gaps present, 5 = Excellent/Nuanced understanding).
-2. Strengths: What did the student capture accurately?
-3. Gaps: What crucial elements, terms, or architectural trade-offs did they miss?
-4. Model Comparison: Explain why the model answer is complete and how they can bridge any gaps.
-
----
-`;
-
-      QUIZ_QUESTIONS.forEach((q, idx) => {
-        if (q.type === 'write') {
-          const studentAns = writeIns[idx] || '';
-          if (studentAns.trim().length > 0) {
-            prompt += `
-QUESTION #${idx + 1}: ${q.q}
-RUBRIC/MODEL ANSWER: ${q.modelAnswer}
-STUDENT'S RESPONSE: "${studentAns}"
---------------------------------------------------
-`;
-          }
-        }
-      });
-
-      prompt += `
-After grading all questions, provide:
-- Overall conceptual score (e.g., "82% - Solid Conceptual Foundation")
-- Top 2 strengths across their responses
-- Top 2 areas for conceptual improvement
-- A custom 1-2 sentence recommendation on which specific sub-sections of Chapter 1 (e.g. OLTP vs OLAP, System of Record, Cloud vs Self-Hosting) they should review.`;
-
-      promptArea.value = prompt;
-      modal.classList.remove('hidden');
-    });
-  }
-
-  if (closeBtn) {
-    closeBtn.addEventListener('click', () => {
-      modal.classList.add('hidden');
-    });
-  }
-
-  // Close modal on outside click
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) {
-      modal.classList.add('hidden');
+async function gradeWriteIns() {
+  const state = loadState();
+  const writeIns = state.writeInAnswers || {};
+  const answered = {};
+  
+  QUIZ_QUESTIONS.forEach((q, idx) => {
+    if (q.type === 'write' && writeIns[idx] && writeIns[idx].trim().length > 0) {
+      answered[idx] = writeIns[idx];
     }
   });
 
-  if (copyBtn) {
-    copyBtn.addEventListener('click', () => {
-      promptArea.select();
-      navigator.clipboard.writeText(promptArea.value)
-        .then(() => {
-          copyFeedback.classList.remove('hidden');
-          setTimeout(() => {
-            copyFeedback.classList.add('hidden');
-          }, 2000);
-        })
-        .catch(err => {
-          console.error('Failed to copy text: ', err);
-          alert('Could not auto-copy. Please select all text and copy manually.');
-        });
+  if (Object.keys(answered).length === 0) {
+    alert('Please answer at least one write-in question before grading.');
+    return;
+  }
+
+  const response = await fetch('/grade', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      chapterKey: STATE_KEY,
+      writeIns:   answered,
+      username:   getCurrentUsername()   // returns the active username from db.js
+    })
+  });
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  return await response.json();
+}
+
+function setupLLMGrading() {
+  const gradeBtn = document.getElementById('gradeWriteIns');
+  if (gradeBtn) {
+    gradeBtn.addEventListener('click', async () => {
+      const originalText = gradeBtn.textContent;
+      gradeBtn.textContent = 'Grading...';
+      gradeBtn.disabled = true;
+      try {
+        const data = await gradeWriteIns();
+        if (data && data.grades) {
+          alert('Grading completed successfully! Check the console or logs.');
+          console.log('Grades:', data.grades);
+        }
+      } catch (err) {
+        console.error('Error during grading:', err);
+        alert('Grading failed: ' + err.message);
+      } finally {
+        gradeBtn.textContent = originalText;
+        gradeBtn.disabled = false;
+      }
     });
   }
 }
+
 
 document.getElementById('retakeQuiz')?.addEventListener('click', () => {
   const state = loadState();

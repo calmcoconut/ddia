@@ -34,8 +34,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Why is it difficult to strike a balance when configuring the timeout duration used to detect node failures?",
-    hint: "Think about the trade-offs of false positives (alive nodes suspected dead) vs. false negatives (delayed detection).",
+    q: "During a post-mortem review of a major outage, the ops team argues about the heartbeat timeout. One engineer wants to drop it from 30 seconds to 2 seconds to fail over faster; another warns this will cause a stampede of false alarms during JVM garbage collection pauses. Why is finding the sweet spot for heartbeat timeouts in an asynchronous network so notoriously difficult?",
+    hint: "Put yourself in the shoes of the cluster manager: balance the risk of declaring a healthy but slow node dead (false positives) against leaving a dead node in the rotation (false negatives).",
     modelAnswer: "If a timeout is configured too short, the system risks false positives: declaring a node dead when it is actually alive but temporarily delayed (e.g., due to a GC pause or network congestion). This triggers unnecessary failovers and resource consumption. Conversely, if the timeout is too long, the system suffers from slow fault detection, meaning clients will experience long delays or timeouts before a dead node is taken out of rotation.",
     section: "Fault Detection"
   },
@@ -67,8 +67,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Explain why a monotonic clock is suitable for measuring elapsed time, while a time-of-day clock is not.",
-    hint: "Think about NTP synchronization, clock jumps, and what the absolute values represent.",
+    q: "You're debugging a profiling tool that occasionally reports negative execution times (e.g., a function taking -15 milliseconds to run). You realize the tool uses physical system wall-clock time. Why does this happen, and how does switching to a monotonic clock solve this timing paradox?",
+    hint: "Think about how NTP synchronization interacts with wall-clock time jumps versus how monotonic counters measure elapsed intervals.",
     modelAnswer: "A monotonic clock is guaranteed to always move forward in time, and its absolute value is arbitrary (e.g., nanoseconds since boot), making it ideal for calculating intervals by taking the difference between two readings. In contrast, a time-of-day clock measures wall-clock time and is synchronized via NTP. NTP can forcibly reset the clock, causing it to jump backward or forward in time, which would corrupt duration calculations (e.g., showing a negative interval).",
     section: "Monotonic Versus Time-of-Day Clocks"
   },
@@ -100,8 +100,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Explain the 'last write wins' (LWW) conflict resolution policy and detail how clock skew can lead to silent data loss.",
-    hint: "Imagine client A writing at node 1 with a fast clock, and client B writing causally later at node 3 with a slow clock.",
+    q: "Two users concurrently edit the same document. Node A has a fast system clock, and Node B has a slow system clock. If the cluster uses a Last-Write-Wins (LWW) resolution policy, explain how a chronologically later update on Node B can get silently discarded.",
+    hint: "Trace the timestamps assigned by Node A (fast/future clock) and Node B (slow/lagging clock), and see which one LWW chooses during replication.",
     modelAnswer: "LWW resolves write conflicts by keeping the write with the highest physical timestamp and discarding older ones. If Node 1's clock is ahead (fast) and Node 3's clock is behind (slow), a write on Node 1 will receive a future timestamp. A causally later write on Node 3 will receive a lower timestamp because of its lagging clock. When replicated, the system will compare timestamps, conclude the earlier write on Node 1 is 'newer', and silently drop Client B's update. This is especially problematic in multi-leader or leaderless replication where different leaders assign timestamps independently without a single authority.",
     section: "Relying on Synchronized Clocks"
   },
@@ -133,8 +133,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "List four distinct software or hardware phenomena that can cause an application thread to experience an unexpected, long execution pause.",
-    hint: "Think about runtime environments, memory management, operating systems, and virtualization.",
+    q: "Your application thread occasionally pauses for several seconds, causing client request timeouts. During a engineering team brainstorming session, you need to list four distinct software, runtime, or hardware virtualization mechanisms that can suddenly halt user code execution.",
+    hint: "Consider GC pauses, OS scheduler decisions, page faults, and VM hypervisor level operations.",
     modelAnswer: "Unexpected process pauses can be caused by: 1) JVM 'stop-the-world' garbage collection pauses where all application threads are halted; 2) Virtual memory page faults causing the thread to block while pages are swapped from disk; 3) OS thread scheduling preemption or hypervisor context switches (steal time) under high resource load; and 4) Hypervisor live migration where a VM is suspended and its memory is copied to another host.",
     section: "Process Pauses"
   },
@@ -166,8 +166,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "What is a 'zombie node' in the context of distributed locks, and why can it cause data corruption?",
-    hint: "Think about leases, timeouts, and delayed network write packets.",
+    q: "A node acquires a lease-based distributed lock, starts a write operation to shared storage, but is hit by a massive garbage collection pause. While it is paused, the lease expires and another node acquires the lock. Explain what happens when the first node wakes up, and why it's referred to as a 'zombie node' causing data corruption.",
+    hint: "Visualize the delayed storage write packet arriving after a new lock holder has already started writing, and think about the lack of lease awareness in the paused node.",
     modelAnswer: "A zombie node is a node that previously held a lock or lease but has lost it (either because the lease timed out during a process pause or because of a network disconnection) yet remains unaware of this status. It is dangerous because the zombie node will continue to execute write operations as if it were still the legitimate lock holder, conflicting with the new lock holder and corrupting shared storage. Typical mitigations against this pattern include using fencing tokens checked at the storage layer, implementing very short leases, or avoiding time-of-day-based leases in favor of quorum-based or monotonic lease mechanisms.",
     section: "Distributed Locks and Leases"
   },
@@ -199,8 +199,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Contrast the 'Synchronous' and 'Asynchronous' timing models of distributed systems.",
-    hint: "Focus on the bounds of network delay, process pauses, and clock drift.",
+    q: "Your system architect asks you to analyze a network protocol under two theoretical models: one where message delivery and CPU execution times have strict, guaranteed upper bounds, and another where they are completely unbounded. Contrast these 'Synchronous' and 'Asynchronous' timing models.",
+    hint: "Focus on the predictability of timeouts, network delays, process execution speeds, and physical clock drift in both models.",
     modelAnswer: "The Synchronous model assumes that network delays, process execution pauses, and clock drift are all bounded and will never exceed a known, fixed limit, making timeouts reliable for fault detection. The Asynchronous model makes no timing assumptions whatsoever, meaning network delays and process pauses are unbounded, and the system lacks a physical clock or timeout capabilities. Real systems are best modeled as partially synchronous: behaving synchronously most of the time, but occasionally suffering unbounded delays.",
     section: "System Model and Reality"
   },
@@ -232,8 +232,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Define 'safety properties' and 'liveness properties' in distributed systems, and give an example of each.",
-    hint: "Use the informal rules of 'nothing bad happens' and 'something good eventually happens', and explain how they behave after a violation.",
+    q: "A QA engineer files a bug report stating: 'The consensus engine allowed two leaders to exist simultaneously.' Another files a report: 'The cluster is stuck and has not elected a leader yet.' Distinguish these using the concepts of safety and liveness properties.",
+    hint: "Use the standard definitions of 'nothing bad happens' versus 'something good eventually happens', noting which violations are permanent and which are temporary.",
     modelAnswer: "A safety property informally guarantees that 'nothing bad happens.' If it is violated, we can point to a specific moment it was broken, and the violation cannot be undone (e.g., returning duplicate fencing tokens or electing two leaders). A liveness property guarantees that 'something good eventually happens.' It can be temporarily unsatisfied but can always be fulfilled in the future (e.g., a node eventually receiving a response or eventual consistency).",
     section: "System Model and Reality"
   },
@@ -265,8 +265,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "What is 'Deterministic Simulation Testing' (DST), and how does it differ from standard integration testing?",
-    hint: "Think about mock clocks, network delays, control over nondeterminism, and reproducing bugs.",
+    q: "Tired of tracking down flaky, non-reproducible distributed race conditions in integration tests, your lead engineer proposes building a system where thread scheduling, network delays, and clock drift are completely mocked and driven by a single random seed. Explain what Deterministic Simulation Testing (DST) is and how it differs from traditional testing.",
+    hint: "Focus on the control of non-determinism and the ability to reproduce complex timing bugs deterministically.",
     modelAnswer: "Deterministic Simulation Testing (DST) runs the actual production code (rather than a model) inside a simulated environment where all sources of nondeterminism (clocks, network delays, disk I/O, thread scheduling) are mocked and controlled. This allows the simulator to explore a vast state space of timings and failure scenarios. Unlike standard integration testing, which is chaotic and prone to flaky tests, DST is 100% reproducible: if a bug is found, it can be replayed identically by running the simulator with the same random seed.",
     section: "Formal Methods and Randomized Testing"
   },
@@ -298,8 +298,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Why does Google Spanner's commit wait mechanism rely on small clock confidence intervals, and how do atomic clocks help?",
-    hint: "Explain how overlap in intervals affects transaction ordering and write performance.",
+    q: "A junior developer asks: 'Why does Google Spanner deliberately introduce a delay (commit wait) before completing a write transaction, and why are they installing atomic clocks and GPS receivers in their datacenters to keep this delay short?' How would you explain this?",
+    hint: "Connect the clock uncertainty interval [earliest, latest] with the requirement that consecutive transactions must have non-overlapping intervals to guarantee linearizable causal order.",
     modelAnswer: "Spanner orders transactions using TrueTime intervals [earliest, latest]. To guarantee causal order (A before B), Spanner must ensure transaction B's interval does not overlap with A's, which it does by waiting out the length of the confidence interval before committing. If the clock uncertainty is large, the commit wait time will be long, severely degrading write performance. Atomic clocks and GPS receivers keep the uncertainty (confidence interval width) very small (usually under 7ms), minimizing the required commit wait time.",
     section: "Relying on Synchronized Clocks"
   },
@@ -331,8 +331,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "How can hardware issues (like memory corruption) manifest as Byzantine faults, and how do application-level checksums help?",
-    hint: "Think about how a damaged bit in memory can affect communication without crashing the node.",
+    q: "A damaged ECC memory module on a router begins flipping random bits in transit, causing some packet payloads to change silently without crashing the OS or triggering TCP drop rules. Explain how this manifests as a Byzantine fault, and why standard TCP checksums aren't enough.",
+    hint: "Think about how corrupted data can look syntactically valid but logically lie to the application, and how application-level validation protects integrity.",
     modelAnswer: "Memory corruption due to radiation or hardware wear can change bits in a packet or in application state. If this occurs, a node may send corrupted messages that look valid but contain incorrect values, which is a weak form of 'lying' (a Byzantine fault). Standard TCP/UDP checksums sometimes fail to detect this. Application-level checksums (e.g., checksumming data before sending it and validating it on receipt) detect these silent data corruptions and prevent corrupted data from being accepted as truth.",
     section: "Byzantine Faults"
   }
@@ -408,42 +408,16 @@ const MISCONCEPTION_EXPLANATIONS = {
 // ── State Management ────────────────────────────────
 
 const STATE_KEY = 'ddia_ch9_learning';
-let _state = null;
+
 
 function loadState() {
-  if (!_state) {
-    try {
-      const raw = localStorage.getItem(STATE_KEY);
-      if (raw) _state = JSON.parse(raw);
-    } catch (e) {}
-
-    if (!_state) {
-      try {
-        if (window.parent && window.parent.__ddiaState && window.parent.__ddiaState[STATE_KEY]) {
-          _state = window.parent.__ddiaState[STATE_KEY];
-        }
-      } catch (e) {}
-    }
-
-    if (!_state) _state = {};
-  }
-  // Return a snapshot, not the live object
-  return JSON.parse(JSON.stringify(_state));
+  return window.loadState ? window.loadState(STATE_KEY) : {};
 }
 
 function saveState(data) {
-  if (!_state) loadState();
-  // Clone incoming data and merge to avoid reference aliasing
-  _state = { ..._state, ...JSON.parse(JSON.stringify(data)) };
-
-  try {
-    localStorage.setItem(STATE_KEY, JSON.stringify(_state));
-  } catch (e) {}
-
-  try {
-    window.parent.__ddiaState = window.parent.__ddiaState || {};
-    window.parent.__ddiaState[STATE_KEY] = _state;
-  } catch (e) {}
+  if (window.saveState) {
+    window.saveState(data, STATE_KEY);
+  }
 }
 
 // ── Navigation ──────────────────────────────────────
@@ -804,91 +778,59 @@ function setupQuizFilters() {
   });
 }
 
-function setupLLMGrading() {
-  const modal = document.getElementById('llmModal');
-  const gradeBtn = document.getElementById('gradeWriteIns');
-  const closeBtn = document.getElementById('closeModal');
-  const copyBtn = document.getElementById('copyLlmPrompt');
-  const copyFeedback = document.getElementById('copyFeedback');
-  const promptArea = document.getElementById('llmPromptArea');
-
-  if (gradeBtn) {
-    gradeBtn.addEventListener('click', () => {
-      const state = loadState();
-      const writeIns = state.writeInAnswers || {};
-      
-      // Collect answered write-ins
-      const answeredList = QUIZ_QUESTIONS.filter((q, idx) => q.type === 'write' && writeIns[idx] && writeIns[idx].trim().length > 0);
-
-      if (answeredList.length === 0) {
-        alert('Please answer at least one write-in question before generating the LLM grading prompt!');
-        return;
-      }
-
-      // Compile prompt
-      let prompt = `You are grading a student's responses to Chapter 9 ("The Trouble with Distributed Systems") of Designing Data-Intensive Applications.
-For each question, provide:
-1. A Score from 1 to 5 (1 = Incorrect/No attempt, 3 = Partially correct/Gaps present, 5 = Excellent/Nuanced understanding).
-2. Strengths: What did the student capture accurately?
-3. Gaps: What crucial elements, terms, or architectural trade-offs did they miss?
-4. Model Comparison: Explain why the model answer is complete and how they can bridge any gaps.
-
----
-`;
-
-      QUIZ_QUESTIONS.forEach((q, idx) => {
-        if (q.type === 'write') {
-          const studentAns = writeIns[idx] || '';
-          if (studentAns.trim().length > 0) {
-            prompt += `
-QUESTION #${idx + 1}: ${q.q}
-RUBRIC/MODEL ANSWER: ${q.modelAnswer}
-STUDENT'S RESPONSE: "${studentAns}"
---------------------------------------------------
-`;
-          }
-        }
-      });
-
-      prompt += `
-After grading all questions, provide:
-- Overall conceptual score (e.g., "82% - Solid Conceptual Foundation")
-- Top 2 strengths across their responses
-- Top 2 areas for conceptual improvement
-- A custom 1-2 sentence recommendation on which specific sub-sections of Chapter 9 (e.g. Unreliable Networks, Relying on Synchronized Clocks, Process Pauses, Byzantine Faults, System Model and Reality) they should review.`;
-
-      promptArea.value = prompt;
-      modal.classList.remove('hidden');
-    });
-  }
-
-  if (closeBtn) {
-    closeBtn.addEventListener('click', () => {
-      modal.classList.add('hidden');
-    });
-  }
-
-  // Close modal on outside click
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) {
-      modal.classList.add('hidden');
+async function gradeWriteIns() {
+  const state = loadState();
+  const writeIns = state.writeInAnswers || {};
+  const answered = {};
+  
+  QUIZ_QUESTIONS.forEach((q, idx) => {
+    if (q.type === 'write' && writeIns[idx] && writeIns[idx].trim().length > 0) {
+      answered[idx] = writeIns[idx];
     }
   });
 
-  if (copyBtn) {
-    copyBtn.addEventListener('click', () => {
-      promptArea.select();
-      navigator.clipboard.writeText(promptArea.value)
-        .then(() => {
-          copyFeedback.classList.remove('hidden');
-          setTimeout(() => {
-            copyFeedback.classList.add('hidden');
-          }, 2000);
-        })
-        .catch(err => {
-          console.error('Failed to copy text: ', err);
-          alert('Could not auto-copy. Please select all text and copy manually.');
-        });
+  if (Object.keys(answered).length === 0) {
+    alert('Please answer at least one write-in question before grading.');
+    return;
+  }
+
+  const response = await fetch('/grade', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      chapterKey: STATE_KEY,
+      writeIns:   answered,
+      username:   getCurrentUsername()   // returns the active username from db.js
+    })
+  });
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  return await response.json();
+}
+
+function setupLLMGrading() {
+  const gradeBtn = document.getElementById('gradeWriteIns');
+  if (gradeBtn) {
+    gradeBtn.addEventListener('click', async () => {
+      const originalText = gradeBtn.textContent;
+      gradeBtn.textContent = 'Grading...';
+      gradeBtn.disabled = true;
+      try {
+        const data = await gradeWriteIns();
+        if (data && data.grades) {
+          alert('Grading completed successfully! Check the console or logs.');
+          console.log('Grades:', data.grades);
+        }
+      } catch (err) {
+        console.error('Error during grading:', err);
+        alert('Grading failed: ' + err.message);
+      } finally {
+        gradeBtn.textContent = originalText;
+        gradeBtn.disabled = false;
+      }
     });
   }
 }
@@ -1305,4 +1247,17 @@ function init() {
 }
 
 // Start
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', async () => {
+  if (typeof initDb !== 'undefined') {
+    await initDb();
+  }
+  const cachedUser = sessionStorage.getItem('ddia_active_user');
+  if (cachedUser) {
+    if (typeof getOrCreateUser !== 'undefined') {
+      getOrCreateUser(cachedUser);
+    }
+    init();
+  } else {
+    window.location.href = '../index.html';
+  }
+});

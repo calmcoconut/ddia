@@ -34,8 +34,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Explain the concept of 'impedance mismatch' (object-relational mismatch) in application development.",
-    hint: "Think about how data is represented in object-oriented code versus relational database tables.",
+    q: "During a system design meeting, a frontend engineer complains: 'Why do we have to write so much boilerplate code to translate our nested user profile objects into flat relational tables and columns?' What is the name of this architectural friction, and what does it represent?",
+    hint: "Describe this object-relational mismatch and why bridging OOP designs with relational tables requires translation layers.",
     modelAnswer: "The impedance mismatch refers to the translation layer required to bridge the gap between object-oriented programming models and relational database models. Objects in code contain nested structures, inheritance, and behavior, whereas relational databases store data flatly in tables, rows, and columns. Translating between these two representations requires significant boilerplate code or complex Object-Relational Mapping (ORM) tools, which can introduce performance and design inefficiencies.",
     section: "Object-relational mismatch"
   },
@@ -67,8 +67,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Contrast the process of adding a new field (e.g., 'middle_name') to a schema-on-write relational database versus a schema-on-read document database.",
-    hint: "Consider migrations, table locks, default values, and how client code handles missing data.",
+    q: "A developer is preparing a pull request to add a new 'middle_name' field to the user profile. Contrast the steps, risks, and client-side handling required if they are using a schema-on-write relational database versus a schema-on-read document database.",
+    hint: "Think about ALTER TABLE migrations and locks versus handling missing fields dynamically in client code.",
     modelAnswer: "In a schema-on-write relational database, adding a new field requires executing an ALTER TABLE migration, which can lock the table and cause downtime on large datasets, along with setting up defaults or nullability. In a schema-on-read document database, no database-level migration is needed; new documents are simply written with the new field. However, the client application code must handle the schema flexibility by dynamically checking if the field is present when reading older documents.",
     section: "Schema flexibility in the document model"
   },
@@ -100,8 +100,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Under what conditions does the data locality of a document database become a disadvantage for writes?",
-    hint: "Think about updates that change document size, rewrite overhead, and partial updates.",
+    q: "Your team's document database is experiencing severe write latency spikes. You notice that updates frequently grow the size of individual user documents. Explain why data locality is hurting performance here and how write amplification behaves.",
+    hint: "Consider the cost of relocating documents on disk and rewriting the entire record for partial updates.",
     modelAnswer: "Data locality in a document database becomes a disadvantage when updating or writing data. If an update increases the size of a document, the database engine may need to relocate the entire document on disk, which involves writing the new copy and updating all indexes pointing to it. Furthermore, document databases suffer from partial update inefficiency: even if the document size does not change, the entire document must be re-serialized and written atomically to disk, creating significant write amplification compared to modifying a single field in a normalized relational database.",
     section: "Data locality for reads and writes"
   },
@@ -133,8 +133,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Why do business analysts and BI tools generally prefer a star schema over a snowflake schema?",
-    hint: "Consider query simplicity, join complexity, and readability for non-technical users.",
+    q: "During a data warehousing kickoff, the BI team requests a star schema rather than a snowflake schema. What is their primary motivation, and how does this affect the complexity of their SQL queries?",
+    hint: "Think about the number of joins, query simplicity, and ease of use for non-technical analysts.",
     modelAnswer: "Business analysts and BI tools prefer star schemas because they are simpler and easier to query. A star schema contains fewer tables and fewer relationships, meaning SQL queries require fewer joins. In contrast, snowflake schemas normalize dimensions further, resulting in complex, multi-level joins that can make queries harder to write and understand for non-technical users, and can degrade read performance.",
     section: "Stars and Snowflakes: Schemas for Analytics"
   },
@@ -166,8 +166,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Explain why extreme denormalization (such as star schemas or One Big Table) is acceptable in analytical systems (OLAP) but problematic in operational systems (OLTP).",
-    hint: "Compare read-only history databases with real-time write-intensive transactions.",
+    q: "A junior developer asks: 'If denormalizing data into One Big Table makes analytical queries so fast, why don't we do this for our main user-facing transactional database?' Walk them through the trade-offs between OLAP and OLTP workloads.",
+    hint: "Contrast read-only historical queries with high-frequency, real-time update transactions.",
     modelAnswer: "Extreme denormalization is acceptable in OLAP systems because analytical data is generally write-once, read-many historical logs that rarely change. Thus, write overhead and consistency issues from duplication are not primary concerns. Additionally, OLAP data is typically loaded via batch ETL on a periodic schedule, so data staleness is a known, accepted trade-off. In contrast, OLTP systems have high-velocity write workloads with frequent updates. In OLTP, denormalization causes significant write overhead (updating data in multiple places), risks inconsistency if some copies fail to update, and requires complex transaction controls.",
     section: "Stars and Snowflakes: Schemas for Analytics"
   },
@@ -199,8 +199,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Explain why querying graph data (such as finding N-degree connections) in SQL is difficult compared to graph query languages like Cypher.",
-    hint: "Consider recursive traversals and the number of table joins.",
+    q: "Your product manager wants a new feature: showing 'friends of friends who also bought this product' (a 3rd-degree network search). Explain why writing this query in standard SQL is a headache compared to using a graph query language like Cypher.",
+    hint: "Think about WITH RECURSIVE syntax vs. ASCII-art style pattern matching.",
     modelAnswer: "Querying graph data in SQL is difficult because traversals require joins across tables. If the number of hops (relationships) to traverse is variable or deep (such as searching for 3rd-degree connections), you must write complex recursive queries using `WITH RECURSIVE` that are hard to read, maintain, and optimize. Graph query languages like Cypher have native syntax for variable-length paths (e.g., `[:WITHIN*0..]`), hiding the join and traversal algorithms behind a declarative query planner.",
     section: "Graph Queries in SQL"
   },
@@ -232,15 +232,15 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Compare the triple-store (RDF) model with the property graph model regarding how properties and attributes are represented.",
-    hint: "How do triple-stores store simple attributes compared to edges? Think about subjects and predicates.",
+    q: "You are comparing Neo4j (a property graph) and Apache Jena (a triple-store) for a new knowledge base. Contrast how these two models represent a simple attribute of a vertex, such as a person's name.",
+    hint: "Think about key-value maps on vertices vs. representing everything uniformly as subject-predicate-object triples.",
     modelAnswer: "In a property graph, vertices and edges can have internal key-value properties. In a triple-store (RDF) model, everything is represented as a triple (subject, predicate, object). To represent an attribute of a vertex in a triple-store, you write a triple where the object is a literal value (e.g., `Lucy, name, 'Lucy'`). If you want to link two vertices, the object is another vertex URI (e.g., `Lucy, born_in, Idaho`). Thus, triple-stores represent attributes and relationships uniformly as triples.",
     section: "Triple Stores and SPARQL"
   },
   {
     type: "write",
-    q: "Explain how rules and facts are used in Datalog to write recursive queries.",
-    hint: "Think about how Datalog builds on the relational model using declarative rules.",
+    q: "A research engineer suggests Datalog for modeling complex hierarchical permission rules. How does Datalog use rules and facts to resolve recursive relationships, and how does this relate to the relational model?",
+    hint: "Describe how rules define new relations based on existing facts, and how it evaluates them recursively.",
     modelAnswer: "Datalog is a declarative query language that represents data as facts (similar to relational tuples). To query this data, you write rules that define new relations based on existing facts or other rules. A rule consists of a head (the result) and a body (the conditions). Datalog naturally supports recursion because a rule can refer to itself in its body, allowing the query engine to iteratively apply the rule until no new facts can be derived.",
     section: "Datalog: Recursive Relational Queries"
   },
@@ -259,8 +259,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Explain the difference between GraphQL and a graph database like Neo4j.",
-    hint: "Consider what role GraphQL plays in client-server communication vs what a graph database does.",
+    q: "In a Slack thread, a developer asks: 'Since we are adopting GraphQL for our API gateway, should we migrate our relational database to Neo4j?' Clarify the difference in roles between these two technologies.",
+    hint: "Differentiate between client-server data fetching protocols and underlying graph storage engines.",
     modelAnswer: "GraphQL is an API query language and runtime for fetching data from a server to a client, letting the client request specific JSON structures to render the UI. It does not dictate how data is stored and can run on top of relational, document, or graph databases. In contrast, a graph database like Neo4j is a storage technology that represents data as nodes and edges, using query languages like Cypher to perform deep traversals and recursive queries.",
     section: "GraphQL"
   },
@@ -292,15 +292,15 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Compare Event Sourcing logs with relational star schema fact tables. What are the key similarities and differences?",
-    hint: "Think about the nature of historical records, column structures, and event ordering.",
+    q: "Your architecture review board is debating whether to use Event Sourcing or an analytical star schema to track user action history. Compare an append-only event log with a fact table in terms of schema heterogeneity and query patterns.",
+    hint: "Consider if the records are homogeneous or diverse, and the importance of chronological ordering.",
     modelAnswer: "Both Event Sourcing logs and star schema fact tables store historical records of events that happened in the past. However, there are key differences: first, fact table rows are homogeneous (sharing the exact same columns), whereas Event Sourcing logs exhibit schema heterogeneity, containing diverse event types (like OrderPlaced, OrderShipped, and OrderCancelled) in the same stream with completely different payloads. Second, a fact table is typically queried as an unordered collection of records, whereas Event Sourcing requires strict chronological ordering to compute correct state transitions. Third, because of this schema heterogeneity and ordering requirement, Event Sourcing logs are significantly harder to query directly for analytics, which is why they usually require projecting into a read-optimized schema (CQRS) first.",
     section: "Event Sourcing and CQRS"
   },
   {
     type: "write",
-    q: "Explain why data scientists prefer using DataFrames (e.g. Pandas) and iterative data wrangling over standard declarative SQL.",
-    hint: "Think about data exploration, step-by-step transformations, and integration with scientific libraries.",
+    q: "During a lunch-and-learn, a database administrator wonders: 'Why do data scientists write messy Pandas code when they could just write clean, declarative SQL queries?' Explain the benefits of DataFrames for data science workflows.",
+    hint: "Think about step-by-step pipeline transformations, data cleaning, and integration with machine learning libraries.",
     modelAnswer: "Data scientists prefer DataFrames because they support iterative data exploration and step-by-step transformations. Instead of writing a single, massive SQL query, a data scientist can inspect intermediate results, clean data, handle outliers, and pivot tables using a series of procedural commands. Furthermore, DataFrames integrate with scientific libraries (such as NumPy or scikit-learn) and support operations that go far beyond standard SQL, such as converting data into matrices for machine learning.",
     section: "DataFrames, Matrices, and Arrays"
   },
@@ -319,8 +319,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Why is a sparse matrix representing user-item ratings (such as user ratings for thousands of movies) difficult to represent in a traditional relational database, and how do array databases or DataFrames solve this?",
-    hint: "Consider table width, null columns, and linear algebra operations.",
+    q: "You are building a recommendation engine that tracks how millions of users rate a catalog of 50,000 items. Explain why storing this ratings matrix in a relational database is highly inefficient, and how array databases or sparse matrices solve the problem.",
+    hint: "Consider wide tables with thousands of null columns, join overhead, and linear algebra operations.",
     modelAnswer: "A sparse matrix representing user-item ratings would require a table with thousands of columns (one for each movie), which relational databases do not support or handle inefficiently due to row width limits and overhead of storing mostly null values. If represented as a normalized long table (user_id, item_id, rating), it requires expensive joins and cannot easily undergo linear algebra operations. Array databases and DataFrames solve this by natively supporting sparse array data structures, which store only non-zero values efficiently and allow direct execution of mathematical matrix algorithms.",
     section: "DataFrames, Matrices, and Arrays"
   }
@@ -396,42 +396,16 @@ const MISCONCEPTION_EXPLANATIONS = {
 // ── State Management ────────────────────────────────
 
 const STATE_KEY = 'ddia_ch3_learning';
-let _state = null;
+
 
 function loadState() {
-  if (!_state) {
-    try {
-      const raw = localStorage.getItem(STATE_KEY);
-      if (raw) _state = JSON.parse(raw);
-    } catch (e) {}
-
-    if (!_state) {
-      try {
-        if (window.parent && window.parent.__ddiaState && window.parent.__ddiaState[STATE_KEY]) {
-          _state = window.parent.__ddiaState[STATE_KEY];
-        }
-      } catch (e) {}
-    }
-
-    if (!_state) _state = {};
-  }
-  // Return a snapshot, not the live object
-  return JSON.parse(JSON.stringify(_state));
+  return window.loadState ? window.loadState(STATE_KEY) : {};
 }
 
 function saveState(data) {
-  if (!_state) loadState();
-  // Clone incoming data and merge to avoid reference aliasing
-  _state = { ..._state, ...JSON.parse(JSON.stringify(data)) };
-
-  try {
-    localStorage.setItem(STATE_KEY, JSON.stringify(_state));
-  } catch (e) {}
-
-  try {
-    window.parent.__ddiaState = window.parent.__ddiaState || {};
-    window.parent.__ddiaState[STATE_KEY] = _state;
-  } catch (e) {}
+  if (window.saveState) {
+    window.saveState(data, STATE_KEY);
+  }
 }
 
 // ── Navigation ──────────────────────────────────────
@@ -792,91 +766,59 @@ function setupQuizFilters() {
   });
 }
 
-function setupLLMGrading() {
-  const modal = document.getElementById('llmModal');
-  const gradeBtn = document.getElementById('gradeWriteIns');
-  const closeBtn = document.getElementById('closeModal');
-  const copyBtn = document.getElementById('copyLlmPrompt');
-  const copyFeedback = document.getElementById('copyFeedback');
-  const promptArea = document.getElementById('llmPromptArea');
-
-  if (gradeBtn) {
-    gradeBtn.addEventListener('click', () => {
-      const state = loadState();
-      const writeIns = state.writeInAnswers || {};
-      
-      // Collect answered write-ins
-      const answeredList = QUIZ_QUESTIONS.filter((q, idx) => q.type === 'write' && writeIns[idx] && writeIns[idx].trim().length > 0);
-
-      if (answeredList.length === 0) {
-        alert('Please answer at least one write-in question before generating the LLM grading prompt!');
-        return;
-      }
-
-      // Compile prompt
-      let prompt = `You are grading a student's responses to Chapter 3 ("Data Models and Query Languages") of Designing Data-Intensive Applications.
-For each question, provide:
-1. A Score from 1 to 5 (1 = Incorrect/No attempt, 3 = Partially correct/Gaps present, 5 = Excellent/Nuanced understanding).
-2. Strengths: What did the student capture accurately?
-3. Gaps: What crucial elements, terms, or architectural trade-offs did they miss?
-4. Model Comparison: Explain why the model answer is complete and how they can bridge any gaps.
-
---------------------------------------------------
-`;
-
-      QUIZ_QUESTIONS.forEach((q, idx) => {
-        if (q.type === 'write') {
-          const studentAns = writeIns[idx] || '';
-          if (studentAns.trim().length > 0) {
-            prompt += `
-QUESTION #${idx + 1}: ${q.q}
-RUBRIC/MODEL ANSWER: ${q.modelAnswer}
-STUDENT'S RESPONSE: "${studentAns}"
---------------------------------------------------
-`;
-          }
-        }
-      });
-
-      prompt += `
-After grading all questions, provide:
-- Overall conceptual score (e.g., "82% - Solid Conceptual Foundation")
-- Top 2 strengths across their responses
-- Top 2 areas for conceptual improvement
-- A custom 1-2 sentence recommendation on which specific sub-sections of Chapter 3 (e.g. Relational vs. Document Models, Graph-Like Data Models, Event Sourcing and CQRS, DataFrames) they should review.`;
-
-      promptArea.value = prompt;
-      modal.classList.remove('hidden');
-    });
-  }
-
-  if (closeBtn) {
-    closeBtn.addEventListener('click', () => {
-      modal.classList.add('hidden');
-    });
-  }
-
-  // Close modal on outside click
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) {
-      modal.classList.add('hidden');
+async function gradeWriteIns() {
+  const state = loadState();
+  const writeIns = state.writeInAnswers || {};
+  const answered = {};
+  
+  QUIZ_QUESTIONS.forEach((q, idx) => {
+    if (q.type === 'write' && writeIns[idx] && writeIns[idx].trim().length > 0) {
+      answered[idx] = writeIns[idx];
     }
   });
 
-  if (copyBtn) {
-    copyBtn.addEventListener('click', () => {
-      promptArea.select();
-      navigator.clipboard.writeText(promptArea.value)
-        .then(() => {
-          copyFeedback.classList.remove('hidden');
-          setTimeout(() => {
-            copyFeedback.classList.add('hidden');
-          }, 2000);
-        })
-        .catch(err => {
-          console.error('Failed to copy text: ', err);
-          alert('Could not auto-copy. Please select all text and copy manually.');
-        });
+  if (Object.keys(answered).length === 0) {
+    alert('Please answer at least one write-in question before grading.');
+    return;
+  }
+
+  const response = await fetch('/grade', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      chapterKey: STATE_KEY,
+      writeIns:   answered,
+      username:   getCurrentUsername()   // returns the active username from db.js
+    })
+  });
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  return await response.json();
+}
+
+function setupLLMGrading() {
+  const gradeBtn = document.getElementById('gradeWriteIns');
+  if (gradeBtn) {
+    gradeBtn.addEventListener('click', async () => {
+      const originalText = gradeBtn.textContent;
+      gradeBtn.textContent = 'Grading...';
+      gradeBtn.disabled = true;
+      try {
+        const data = await gradeWriteIns();
+        if (data && data.grades) {
+          alert('Grading completed successfully! Check the console or logs.');
+          console.log('Grades:', data.grades);
+        }
+      } catch (err) {
+        console.error('Error during grading:', err);
+        alert('Grading failed: ' + err.message);
+      } finally {
+        gradeBtn.textContent = originalText;
+        gradeBtn.disabled = false;
+      }
     });
   }
 }
@@ -1293,4 +1235,17 @@ function init() {
 }
 
 // Start
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', async () => {
+  if (typeof initDb !== 'undefined') {
+    await initDb();
+  }
+  const cachedUser = sessionStorage.getItem('ddia_active_user');
+  if (cachedUser) {
+    if (typeof getOrCreateUser !== 'undefined') {
+      getOrCreateUser(cachedUser);
+    }
+    init();
+  } else {
+    window.location.href = '../index.html';
+  }
+});

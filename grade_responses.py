@@ -10,10 +10,13 @@ import subprocess
 try:
     import google.generativeai as genai
 except ImportError:
-    print("Error: The 'google-generativeai' library is required to run this script.")
-    print("Please install it by running:")
-    print("  pip install google-generativeai")
-    sys.exit(1)
+    if __name__ == "__main__":
+        print("Error: The 'google-generativeai' library is required to run this script.")
+        print("Please install it by running:")
+        print("  pip install google-generativeai")
+        sys.exit(1)
+    else:
+        genai = None
 
 # Chapter list matching index.html
 CHAPTERS_LIST = {
@@ -130,6 +133,19 @@ Output ONLY the JSON object. Do not wrap it in markdown code blocks or add pream
 def main():
     args = parse_args()
     
+    # Try loading GEMINI_KEY from .env if GEMINI_API_KEY is not in env
+    if not os.environ.get("GEMINI_API_KEY") and os.path.exists(".env"):
+        try:
+            with open(".env", "r") as f:
+                for line in f:
+                    if line.strip().startswith("GEMINI_KEY="):
+                        val = line.strip().split("=", 1)[1]
+                        os.environ["GEMINI_API_KEY"] = val
+                        break
+        except Exception as e:
+            print(f"Error reading .env file: {e}")
+            sys.exit(1)
+
     # Check API key
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:

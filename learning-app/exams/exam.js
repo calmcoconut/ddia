@@ -43,38 +43,20 @@ function getStorageKey() {
 }
 
 function loadExamState() {
-  if (!examState) {
-    try {
-      const raw = localStorage.getItem(getStorageKey());
-      if (raw) examState = JSON.parse(raw);
-    } catch (e) {}
-
-    if (!examState) {
-      try {
-        if (window.parent && window.parent.__ddiaState && window.parent.__ddiaState[getStorageKey()]) {
-          examState = window.parent.__ddiaState[getStorageKey()];
-        }
-      } catch (e) {}
-    }
+  if (window.loadState) {
+    examState = window.loadState(getStorageKey());
   }
-
   // Return a snapshot, not the live object
-  return examState ? JSON.parse(JSON.stringify(examState)) : null;
+  return examState && Object.keys(examState).length > 0 ? JSON.parse(JSON.stringify(examState)) : null;
 }
 
 function saveExamState(state) {
-  // Clone to avoid reference aliasing
   examState = JSON.parse(JSON.stringify(state));
-
-  try {
-    localStorage.setItem(getStorageKey(), JSON.stringify(examState));
-  } catch (e) {}
-
-  try {
-    window.parent.__ddiaState = window.parent.__ddiaState || {};
-    window.parent.__ddiaState[getStorageKey()] = examState;
-  } catch (e) {}
+  if (window.saveState) {
+    window.saveState(examState, getStorageKey());
+  }
 }
+
 
 // ── Question Loader ─────────────────────────────────
 
@@ -762,7 +744,9 @@ async function init() {
   
   document.getElementById('retakeExamBtn')?.addEventListener('click', async () => {
     if (confirm("Are you sure you want to discard your current answers and generate a brand-new practice exam pool?")) {
-      localStorage.removeItem(getStorageKey());
+      if (window.saveState) {
+        window.saveState({}, getStorageKey());
+      }
       await assembleExamPool();
       currentQuestionIndex = 0;
       document.getElementById('resultsModal').classList.add('hidden');
@@ -774,5 +758,19 @@ async function init() {
   });
 }
 
-// Kickstart
-window.addEventListener('DOMContentLoaded', init);
+// Start
+window.addEventListener('DOMContentLoaded', async () => {
+  if (typeof initDb !== 'undefined') {
+    await initDb();
+  }
+  const cachedUser = sessionStorage.getItem('ddia_active_user');
+  if (cachedUser) {
+    if (typeof getOrCreateUser !== 'undefined') {
+      getOrCreateUser(cachedUser);
+    }
+    init();
+  } else {
+    window.location.href = '../index.html';
+  }
+});
+

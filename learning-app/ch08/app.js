@@ -34,8 +34,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Explain the difference between how the term 'atomic' is used in multi-threaded programming versus how it is defined in ACID transactions.",
-    hint: "Think about what happens when two threads access a shared variable concurrently versus what happens when a database transaction fails halfway through.",
+    q: "During a lunch debate with a systems programmer, they claim: 'Atomicity in multi-threaded code is the exact same concept as Atomicity in ACID transactions!' How do you correct them, explaining the difference in how 'atomic' is used in these two contexts?",
+    hint: "Contrast what happens when two concurrent threads access a shared variable vs. what happens when a database transaction encounters a crash/error halfway through.",
     modelAnswer: "In multi-threaded programming, an atomic operation is one where another thread cannot see a half-finished state — it is about concurrency control. In ACID transactions, atomicity is not about concurrency (which is isolation); rather, it describes abortability. It guarantees that if a transaction fails mid-way, all of its writes are discarded and rolled back, so that the database does not end up in a partially updated state.",
     section: "The Meaning of ACID: Atomicity"
   },
@@ -67,8 +67,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "How do databases implement Read Committed isolation to prevent dirty reads and dirty writes without letting read queries block write queries?",
-    hint: "Think about row locks for writes and keeping old values for reads.",
+    q: "Your team is tuning a database running on Read Committed isolation. You want to explain to your colleagues why our read queries are not getting blocked by concurrent insert/update queries. How does the database implement this isolation level behind the scenes to prevent dirty reads and dirty writes?",
+    hint: "Explain how the database uses row locks for write operations while remembering the previous committed values to serve read operations without locking them.",
     modelAnswer: "To prevent dirty writes, databases use row-level locks; a transaction must acquire a lock on a row before writing to it. To prevent dirty reads without letting reads block writes, most databases do not use locks for reads. Instead, they remember the old committed value of a row while a write transaction holds a lock. Any concurrent read query is simply served this old committed value until the write transaction commits.",
     section: "Weak Isolation Levels: Read Committed"
   },
@@ -87,8 +87,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Explain the conceptual difference between a 'lost update' and 'write skew'. How does the nature of the data being written differ?",
-    hint: "In a lost update, are they writing to the same database row? In write skew, is there a shared constraint over multiple rows?",
+    q: "While analyzing a tricky concurrency issue in a code review, a teammate asks: 'Wait, is this bug a \"lost update\" or \"write skew\"? Aren't they basically the same thing?' How do you explain the conceptual difference between the two anomalies and how the nature of the target rows/data differs?",
+    hint: "Contrast concurrent transactions updating the exact same database row (lost update) with transactions reading the same rows but updating different rows to violate a shared constraint (write skew).",
     modelAnswer: "A lost update occurs when two concurrent transactions read the same row, modify it, and write it back, causing one of the updates to overwrite the other (occurring on a single row). Write skew is a generalization of the lost update problem where transactions read the same records but update different records, violating a cross-row invariant (such as ensuring at least one doctor remains on call). Write skew involves a race condition where the action of one transaction invalidates the premise of another transaction's write.",
     section: "Weak Isolation Levels: Write Skew and Phantoms"
   },
@@ -120,8 +120,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "In a system running Snapshot Isolation, why does the 'doctor checkout' write skew occur, and how would you resolve it using application-level locks?",
-    hint: "Think about SELECT ... FOR UPDATE and how it forces transactions to wait.",
+    q: "Our medical scheduling app is running on Snapshot Isolation, and we just had an incident where the last two on-call doctors checked out at the exact same time, leaving the hospital empty! Walk through why this write skew occurred under snapshot isolation, and how we can fix it using explicit database locks in our application code.",
+    hint: "Explain how the database fails to detect conflicts when transactions write to different rows, and show how a 'SELECT ... FOR UPDATE' query solves this.",
     modelAnswer: "Under Snapshot Isolation, write skew occurs because both transactions run on independent, consistent snapshots. Since they update different rows (Doctor A's status vs Doctor B's status), the database does not detect a write conflict. To resolve this, the developer can use explicit locking by querying the on-call doctors list using 'SELECT ... FOR UPDATE'. This forces the database to lock all returned rows, meaning the second transaction must wait until the first commits, exposing the updated state and preventing double checkout.",
     section: "Weak Isolation Levels: Write Skew and Phantoms"
   },
@@ -153,8 +153,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Explain under what conditions 'Actual Serial Execution' (running transactions single-threaded on a single CPU core) is a viable and highly performant way to implement serializability.",
-    hint: "Think about RAM size, transaction execution speed, and whether interactive network round-trips are allowed within a transaction.",
+    q: "Your database architect suggests: 'Let's run our database single-threaded on a single CPU core to achieve absolute serializability!' The team laughs, but you agree it could work. Under what specific architectural conditions is 'Actual Serial Execution' not only viable but extremely fast?",
+    hint: "Think about dataset fit in memory (RAM), transaction execution time, avoiding interactive client network hops, and stored procedures.",
     modelAnswer: "Actual Serial Execution is viable if all data can fit in memory (RAM) and transactions are written as short, stored procedures without any interactive network I/O. Because memory access is fast and there are no network round-trips mid-transaction, a single-threaded CPU can execute thousands of transactions per second. This completely eliminates locking overhead, deadlocks, and coordination, but is limited by single-core CPU scaling and RAM capacity.",
     section: "Serializability: Actual Serial Execution"
   },
@@ -186,8 +186,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "How does Serializable Snapshot Isolation (SSI) detect that a write skew conflict has occurred without using locks?",
-    hint: "Think about tracking read premises: uncommitted writes and writes that happen after reads.",
+    q: "We are migrating to a database that implements Serializable Snapshot Isolation (SSI). The team is amazed that it achieves serializability without the performance hit of traditional locks. How does SSI detect a write skew conflict under the hood, and what operational trade-offs must our application handle?",
+    hint: "Explain how the database monitors reads of uncommitted writes and writes affecting prior reads, and mention the need for client-side transaction retries under high contention.",
     modelAnswer: "SSI detects serialization conflicts by tracking when a transaction reads data that is subsequently modified by another transaction, or when a transaction's write is based on an outdated read premise. It does this by monitoring: 1) reads of uncommitted writes (detecting when a transaction reads a row that has a pending write from another transaction) and 2) writes that affect prior reads (detecting when a transaction writes to a row or index range that another active transaction has already read). If a conflict is confirmed at commit time, the transaction is aborted. However, a significant operational trade-off of SSI is that under high write contention, transactions can suffer from high abort rates (starvation), requiring the application layer to implement robust retry logic.",
     section: "Serializability: Serializable Snapshot Isolation"
   },
@@ -219,8 +219,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Explain what when a participant in a 2PC protocol enters the 'in-doubt' or 'uncertain' state, and why this is a major architectural problem.",
-    hint: "Think about the participant voting Yes, the coordinator crashing, and whether the participant can unilaterally abort or commit.",
+    q: "During a network outage, one of our microservices enters an 'in-doubt' or 'uncertain' state during a Two-Phase Commit (2PC) transaction. Why has this node become stuck, why can it not decide to commit or abort on its own, and what is the cascading impact on our systems?",
+    hint: "Walk through the scenario where the participant votes 'Yes' in Phase 1 but the coordinator crashes before Phase 2. What happens to the participant's locks?",
     modelAnswer: "A participant enters the 'in-doubt' state when it has voted 'Yes' in Phase 1 but the coordinator crashes or is disconnected before sending the Phase 2 commit or abort decision. In this state, the participant cannot unilaterally commit (because another participant might have voted No and aborted) and cannot unilaterally abort (because the coordinator might have decided to commit). The participant must block and hold all locks indefinitely until the coordinator recovers, causing resource starvation and blocking other queries.",
     section: "Distributed Transactions: Two-Phase Commit"
   },
@@ -239,8 +239,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Compare database-internal distributed transactions with heterogeneous/XA distributed transactions. Which is generally more performant and why?",
-    hint: "Think about protocol optimizations, vendor control, and standard serialization APIs.",
+    q: "Your team is debating whether to use a built-in distributed SQL database (like CockroachDB) or set up a multi-technology XA transaction across PostgreSQL and RabbitMQ. Compare these two types of distributed transactions and explain which one offers better performance and reliability.",
+    hint: "Contrast system-specific consensus and layout optimizations of database-internal systems with the generic, high-overhead coordination APIs required by heterogeneous XA systems.",
     modelAnswer: "Database-internal distributed transactions are managed within a single database system (e.g., Spanner, CockroachDB) and are highly optimized, utilizing custom consensus protocols, shared data formats, and internal optimizations. Furthermore, the failure domain is contained inside a single system rather than spanning multiple independently operated products, which simplifies operations, debugging, and recovery. Heterogeneous/XA transactions span different technologies (e.g., PostgreSQL, ActiveMQ) and must use standard, generic APIs (like JTA). XA transactions are significantly slower because they cannot optimize internal details, suffer from high network coordination overhead, and are prone to blocking due to coordinator crash sensitivity.",
     section: "Distributed Transactions: Database-Internal Distributed Transactions"
   },
@@ -272,8 +272,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Why do many modern software engineers and distributed systems architects avoid Two-Phase Commit (2PC) in high-throughput applications?",
-    hint: "Think about locking durations, network round-trips, coordinator crash blocking, and availability.",
+    q: "You are in a design review where a developer suggests using Two-Phase Commit (2PC) to sync writes across three separate high-scale microservices. Why do experienced distributed systems architects strongly advise against 2PC in high-throughput, cloud-native environments?",
+    hint: "Consider the latency costs of network round-trips, physical disk flushes, long lock retention times, coordinator crash vulnerability, and CAP theorem availability trade-offs.",
     modelAnswer: "Engineers avoid 2PC because it introduces substantial latency overhead due to multiple network round-trips (prepare, vote, commit) and disk fsyncs. More critically, 2PC is a blocking protocol: if the coordinator crashes during Phase 2, participants must hold row locks indefinitely. This reduces availability (violating CAP theorem principles) and can cause cascading failures across the system as locks pile up, bottlenecking overall transaction throughput.",
     section: "Distributed Transactions: Two-Phase Commit"
   },
@@ -305,22 +305,22 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Describe a scenario where 'read skew' (non-repeatable read) causes a confusing, temporary bug for a user, even if the database is eventually consistent.",
-    hint: "Think about backing up a database or transferring money between two accounts and reading them.",
+    q: "A bank customer calls support in a panic: 'I just transferred $100 from my savings to my checking account, but when I refreshed my dashboard, the money disappeared from savings and hasn't shown up in checking! My total balance is short by $100!' Describe how this read skew bug occurred and why it was only temporary.",
+    hint: "Explain how a user transaction reading checking, then a concurrent transfer committing, then the user transaction reading savings results in an inconsistent view of the total balance.",
     modelAnswer: "A classic scenario is transferring $100 from Account A to Account B. Suppose Account A has $500 and Account B has $500. A transaction transfers $100. Concurrently, a user views their account balances. Under Read Committed, if they read Account B ($500), then the transfer commits, then they read Account A ($400), they will see a total of $900 ($500 + $400), making it look like $100 vanished. Although subsequent refreshes will show the correct $1000 total, this temporary inconsistency is a read skew bug.",
     section: "Weak Isolation Levels: Snapshot Isolation"
   },
   {
     type: "write",
-    q: "Explain what 'single-object' transaction support means in document databases, and how it differs from the traditional ACID multi-object transactions.",
-    hint: "Think about atomicity and isolation guarantees for single documents versus operations across multiple collections or tables.",
+    q: "A NoSQL database vendor advertises: 'We support ACID transactions!' in their documentation. However, you notice they only support 'single-object' transactions. How do you explain the difference between single-object transaction support and traditional multi-object ACID transactions to your team?",
+    hint: "Contrast atomicity/isolation guarantees for a single document key/value pair with transactions covering multiple collections, tables, or documents.",
     modelAnswer: "Single-object transactions guarantee atomicity and isolation for operations on a single key or document (e.g., updating a nested array in a document). Traditional ACID transactions, however, support multi-object operations, meaning multiple reads and writes across different rows, documents, or tables can be grouped together. If any operation fails, all are discarded. Single-object support is insufficient when changes to multiple independent entities must succeed or fail as a single atomic unit.",
     section: "What Exactly Is a Transaction?"
   },
   {
     type: "write",
-    q: "Argue both sides of this statement: 'Distributed transactions via Two-Phase Commit (2PC) are a critical tool that programmers should utilize, rather than writing complex compensation logic in application code.'",
-    hint: "For: developer productivity, correctness guarantees, and simplicity. Against: locking, performance bottlenecks, coordinator availability, and scalability.",
+    q: "Prepare a mock debate outline for your engineering team, arguing both sides of this statement: 'We should use database-level Two-Phase Commit (2PC) for multi-node writes rather than building custom saga/compensation logic in our microservices.'",
+    hint: "Balance developer velocity and correctness guarantees (Pro) against lock durations, performance bottlenecks, coordinator SPOF risks, and microservice independence (Con).",
     modelAnswer: "On the pro side, utilizing 2PC ensures strong consistency and atomicity out-of-the-box, saving developers from writing, testing, and debugging complex compensation code (like Sagas or outbox patterns) which are highly error-prone. This improves developer velocity and prevents data integrity issues (like the Horizon Post Office scandal). On the con side, 2PC is a performance bottleneck due to blocking locks and network round-trips, and it introduces coordinator availability risks. For high-scale, high-availability microservices, 2PC can lead to cascading outages, making eventual consistency and saga patterns preferable despite the added code complexity.",
     section: "Distributed Transactions: Distributed Transactions Across Different Systems"
   }
@@ -393,42 +393,16 @@ const MISCONCEPTION_EXPLANATIONS = {
 // ── State Management ────────────────────────────────
 
 const STATE_KEY = 'ddia_ch8_transactions_learning';
-let _state = null;
+
 
 function loadState() {
-  if (!_state) {
-    try {
-      const raw = localStorage.getItem(STATE_KEY);
-      if (raw) _state = JSON.parse(raw);
-    } catch (e) {}
-
-    if (!_state) {
-      try {
-        if (window.parent && window.parent.__ddiaState && window.parent.__ddiaState[STATE_KEY]) {
-          _state = window.parent.__ddiaState[STATE_KEY];
-        }
-      } catch (e) {}
-    }
-
-    if (!_state) _state = {};
-  }
-  // Return a snapshot, not the live object
-  return JSON.parse(JSON.stringify(_state));
+  return window.loadState ? window.loadState(STATE_KEY) : {};
 }
 
 function saveState(data) {
-  if (!_state) loadState();
-  // Clone incoming data and merge to avoid reference aliasing
-  _state = { ..._state, ...JSON.parse(JSON.stringify(data)) };
-
-  try {
-    localStorage.setItem(STATE_KEY, JSON.stringify(_state));
-  } catch (e) {}
-
-  try {
-    window.parent.__ddiaState = window.parent.__ddiaState || {};
-    window.parent.__ddiaState[STATE_KEY] = _state;
-  } catch (e) {}
+  if (window.saveState) {
+    window.saveState(data, STATE_KEY);
+  }
 }
 
 // ── Navigation ──────────────────────────────────────
@@ -789,91 +763,59 @@ function setupQuizFilters() {
   });
 }
 
-function setupLLMGrading() {
-  const modal = document.getElementById('llmModal');
-  const gradeBtn = document.getElementById('gradeWriteIns');
-  const closeBtn = document.getElementById('closeModal');
-  const copyBtn = document.getElementById('copyLlmPrompt');
-  const copyFeedback = document.getElementById('copyFeedback');
-  const promptArea = document.getElementById('llmPromptArea');
-
-  if (gradeBtn) {
-    gradeBtn.addEventListener('click', () => {
-      const state = loadState();
-      const writeIns = state.writeInAnswers || {};
-      
-      // Collect answered write-ins
-      const answeredList = QUIZ_QUESTIONS.filter((q, idx) => q.type === 'write' && writeIns[idx] && writeIns[idx].trim().length > 0);
-
-      if (answeredList.length === 0) {
-        alert('Please answer at least one write-in question before generating the LLM grading prompt!');
-        return;
-      }
-
-      // Compile prompt
-      let prompt = `You are grading a student's responses to Chapter 8 ("Transactions") of Designing Data-Intensive Applications.
-For each question, provide:
-1. A Score from 1 to 5 (1 = Incorrect/No attempt, 3 = Partially correct/Gaps present, 5 = Excellent/Nuanced understanding).
-2. Strengths: What did the student capture accurately?
-3. Gaps: What crucial elements, terms, or architectural trade-offs did they miss?
-4. Model Comparison: Explain why the model answer is complete and how they can bridge any gaps.
-
----
-`;
-
-      QUIZ_QUESTIONS.forEach((q, idx) => {
-        if (q.type === 'write') {
-          const studentAns = writeIns[idx] || '';
-          if (studentAns.trim().length > 0) {
-            prompt += `
-QUESTION #${idx + 1}: ${q.q}
-RUBRIC/MODEL ANSWER: ${q.modelAnswer}
-STUDENT'S RESPONSE: "${studentAns}"
---------------------------------------------------
-`;
-          }
-        }
-      });
-
-      prompt += `
-After grading all questions, provide:
-- Overall conceptual score (e.g., "82% - Solid Conceptual Foundation")
-- Top 2 strengths across their responses
-- Top 2 areas for conceptual improvement
-- A custom 1-2 sentence recommendation on which specific sub-sections of Chapter 8 (e.g. Read Committed, Snapshot Isolation, Preventing Lost Updates, Write Skew & Phantoms, Two-Phase Commit (2PC), or Serializability) they should review.`;
-
-      promptArea.value = prompt;
-      modal.classList.remove('hidden');
-    });
-  }
-
-  if (closeBtn) {
-    closeBtn.addEventListener('click', () => {
-      modal.classList.add('hidden');
-    });
-  }
-
-  // Close modal on outside click
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) {
-      modal.classList.add('hidden');
+async function gradeWriteIns() {
+  const state = loadState();
+  const writeIns = state.writeInAnswers || {};
+  const answered = {};
+  
+  QUIZ_QUESTIONS.forEach((q, idx) => {
+    if (q.type === 'write' && writeIns[idx] && writeIns[idx].trim().length > 0) {
+      answered[idx] = writeIns[idx];
     }
   });
 
-  if (copyBtn) {
-    copyBtn.addEventListener('click', () => {
-      promptArea.select();
-      navigator.clipboard.writeText(promptArea.value)
-        .then(() => {
-          copyFeedback.classList.remove('hidden');
-          setTimeout(() => {
-            copyFeedback.classList.add('hidden');
-          }, 2000);
-        })
-        .catch(err => {
-          console.error('Failed to copy text: ', err);
-          alert('Could not auto-copy. Please select all text and copy manually.');
-        });
+  if (Object.keys(answered).length === 0) {
+    alert('Please answer at least one write-in question before grading.');
+    return;
+  }
+
+  const response = await fetch('/grade', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      chapterKey: STATE_KEY,
+      writeIns:   answered,
+      username:   getCurrentUsername()   // returns the active username from db.js
+    })
+  });
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  return await response.json();
+}
+
+function setupLLMGrading() {
+  const gradeBtn = document.getElementById('gradeWriteIns');
+  if (gradeBtn) {
+    gradeBtn.addEventListener('click', async () => {
+      const originalText = gradeBtn.textContent;
+      gradeBtn.textContent = 'Grading...';
+      gradeBtn.disabled = true;
+      try {
+        const data = await gradeWriteIns();
+        if (data && data.grades) {
+          alert('Grading completed successfully! Check the console or logs.');
+          console.log('Grades:', data.grades);
+        }
+      } catch (err) {
+        console.error('Error during grading:', err);
+        alert('Grading failed: ' + err.message);
+      } finally {
+        gradeBtn.textContent = originalText;
+        gradeBtn.disabled = false;
+      }
     });
   }
 }
@@ -1289,4 +1231,17 @@ function init() {
 }
 
 // Start
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', async () => {
+  if (typeof initDb !== 'undefined') {
+    await initDb();
+  }
+  const cachedUser = sessionStorage.getItem('ddia_active_user');
+  if (cachedUser) {
+    if (typeof getOrCreateUser !== 'undefined') {
+      getOrCreateUser(cachedUser);
+    }
+    init();
+  } else {
+    window.location.href = '../index.html';
+  }
+});

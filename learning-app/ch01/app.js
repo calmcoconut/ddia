@@ -33,8 +33,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Explain the 'sushi principle' (raw data is better) in the context of data lakes vs data warehouses.",
-    hint: "Think about schema-on-write vs schema-on-read, flexibility for analysts, and performance.",
+    q: "Scenario: You are the Lead Architect at BiteSized, a food delivery startup. A junior engineer submits an RFC proposing: 'Let's clean, transform, and normalize all raw app event logs immediately at ingestion, storing only structured SQL records in our warehouse to keep things tidy.'\n\nExplain the 'Sushi Principle' (raw data is better) in a code review comment to convince them why throwing away the raw event payload is a mistake. Contrast data lakes (schema-on-read) and data warehouses (schema-on-write) regarding analyst flexibility, and warn them about the operational risk of a 'data swamp' if we have zero governance.",
+    hint: "Your response should touch on schema-on-write vs schema-on-read, downstream flexibility, and data swamp risks.",
     modelAnswer: "The 'sushi principle' states that 'raw data is better.' In a data lake, data is stored in its raw, unprocessed form (schema-on-read), giving downstream consumers (analysts, data scientists) the flexibility to interpret and transform it according to their specific needs. In contrast, a data warehouse enforces a rigid schema during the import process (schema-on-write), which optimizes read performance but limits flexibility for ad-hoc analytical exploration. However, without governance, data lakes can become data swamps where raw data is unusable.",
     section: "Data Warehouses"
   },
@@ -66,8 +66,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "How does the 'expertise reversal effect' apply to choosing between self-hosting and managed cloud services?",
-    hint: "How do instruction or assistance techniques that help beginners affect experts?",
+    q: "Scenario: Your CTO wants to migrate your predictable, highly stable database workload from self-hosted hardware to a fully managed cloud service. An experienced engineer objects, arguing that managed services will introduce unnecessary control limits.\n\nExplain how the 'expertise reversal effect' applies here. Under what conditions do managed cloud services benefit a team, and under what conditions do they act as a hindrance for experienced operators with predictable loads?",
+    hint: "Contrast cognitive load reduction for novices with the control limits, debugging boundaries, and costs faced by experts.",
     modelAnswer: "The expertise reversal effect suggests that assistance that helps novices can actually hinder experts. Managed cloud services reduce cognitive load for teams without operational expertise, helping them launch quickly. However, for an experienced operations team with predictable loads, managed cloud services can act as a hindrance by introducing a lack of control, limited diagnostic capabilities, vendor lock-in, and higher costs than self-hosting.",
     section: "Cloud vs Self-Hosting"
   },
@@ -99,7 +99,7 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Explain why microservices are described as a solution to a 'people problem' rather than a technical performance problem.",
+    q: "Scenario: A tech lead claims: 'Converting our monolith to microservices will make our application run faster and improve CPU utilization.'\n\nWrite a response clarifying why microservices are primarily a solution to a 'people problem' rather than a technical performance problem. Detail the trade-offs of microservices in terms of team coordination vs. technical overhead (network latency, serialization, transaction complexity).",
     hint: "Focus on organizational scaling, team independence, communication overhead, and operational complexity.",
     modelAnswer: "Microservices solve the organizational challenge of coordinate overhead by letting teams operate independent services with clear interfaces. This avoids blocking on other teams' release schedules or shared codebases. Technically, microservices introduce performance overhead (network latency, serialization) and complexity (distributed transactions), meaning they are often a trade-off of technical efficiency for organizational scaling.",
     section: "Microservices"
@@ -132,7 +132,7 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Why can running a complex analytical query directly on a production OLTP database cause severe user-facing issues?",
+    q: "Scenario: An eager data analyst runs a giant SQL query containing multiple multi-table JOINs and GROUP BY operations directly on your production Postgres primary server to build a live dashboard. Immediately, your checkout service starts throwing 504 Gateway Timeouts.\n\nExplain why running complex analytical queries directly on OLTP databases causes these user-facing issues. Detail the physical resource bottlenecks involved.",
     hint: "Think about locks, CPU starvation, memory consumption, and transaction response times.",
     modelAnswer: "An analytical query typically performs full-table scans, large joins, and aggregations across millions of rows. This consumes substantial CPU cycles and RAM. Additionally, it may hold locks on tables or indexes. In an OLTP system, this resource starvation blocks fast, concurrent transactional queries, causing checkout delays, timeouts, and a degraded user experience.",
     section: "OLTP vs OLAP"
@@ -165,8 +165,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Compare and contrast a data warehouse (schema-on-write) and a data lake (schema-on-read) regarding flexibility and query performance.",
-    hint: "How does pre-processing affect speed of analytical queries vs ability to adapt to new requirements?",
+    q: "Scenario: A new database project requires choosing between a structured Data Warehouse and an unstructured Data Lake. The executive team demands: 'We want maximum flexibility to adapt to new user fields next month, but we also need our analytical dashboard queries to run in under 2 seconds.'\n\nCompare Data Warehouses (schema-on-write) and Data Lakes (schema-on-read). Explain why this request represents a fundamental engineering trade-off that cannot be completely bypassed.",
+    hint: "Explain how pre-processing and indexing affect query speed versus the ease of changing structures.",
     modelAnswer: "A data warehouse (schema-on-write) offers high query performance because the data is clean, pre-structured, and indexed, but it is less flexible because changing the schema requires complex migrations. A data lake (schema-on-read) offers maximum flexibility because raw data is loaded without pre-processing, allowing analysts to write custom parses later, but query performance is typically slower because formatting is resolved during execution.",
     section: "Data Warehouses"
   },
@@ -198,8 +198,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Under what conditions is a single-node database running on a high-spec server preferable to a distributed database cluster?",
-    hint: "Think about complexity, network overhead, transactional safety (ACID), and actual load size.",
+    q: "Scenario: A developer proposes sharding your database across a 5-node cluster. The database currently fits easily on a single high-spec server, and transactional consistency is critical for your financial ledger operations.\n\nExplain why sticking with a single-node database running on a high-spec server might be preferable in this situation. Contrast the complexity, coordination, and network costs.",
+    hint: "Discuss complexity, network latency, transactional safety (ACID), and actual dataset size.",
     modelAnswer: "A single-node database is preferable when the load can fit on a single large machine, when strict ACID transactional guarantees across all data are required without the latency overhead of distributed consensus, and when the team lacks the operational expertise to manage a complex distributed cluster. A single-node system avoids the network delay, serialization cost, and coordination overhead of a multi-node database.",
     section: "Single-Node vs Distributed"
   },
@@ -231,8 +231,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Define 'derived data' and explain how a search index is derived from a system of record.",
-    hint: "What makes data derived? How does sync work when the primary database updates?",
+    q: "Scenario: You are designing an e-commerce platform. You have a PostgreSQL primary database (system of record) and an Elasticsearch cluster (for fast keyword search).\n\nDefine 'derived data' in this context, explain how the Elasticsearch index qualifies as derived data, and briefly outline how they stay synchronized.",
+    hint: "Define derived data. Explain redundancy, and discuss change synchronization channels.",
     modelAnswer: "Derived data is information that is created by transforming existing data from another source. It is redundant and can be fully reconstructed if lost. A search index is derived because it extracts text columns from the system of record (primary database) and indexes them in a specialized format (e.g., inverted index). When updates occur in the primary database, change data capture (CDC) or application logic syncs those changes to update the search index.",
     section: "System of Record"
   },
@@ -264,8 +264,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "How do data protection laws (like GDPR) conflict with the engineering ideal of append-only event logs?",
-    hint: "Think about the 'right to be forgotten' (erasure) and the immutable nature of append-only logs.",
+    q: "Scenario: Your engineering team is proud of their append-only, immutable event ledger that records all historical user activities. A user submits a formal GDPR 'Right to be Forgotten' request demanding their profile and action history be deleted.\n\nExplain why append-only immutable logs clash with this legal mandate. What workarounds or design techniques (e.g., cryptographic erasure or log compaction) can resolve this conflict?",
+    hint: "Discuss the conflict between log immutability and data deletion, and how techniques like key shredding help.",
     modelAnswer: "GDPR guarantees individuals the 'right to be forgotten' (erasure), requiring companies to delete all personal data of a user. In contrast, append-only logs are designed to be immutable histories of events. Deleting a single user's data from an immutable log requires rewriting history or using complex workarounds like cryptographic erasure (shredding the user's specific encryption key) or log compaction, introducing technical friction.",
     section: "Law and Society"
   },
@@ -297,8 +297,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Explain data minimization (Datensparsamkeit) and how it challenges the modern 'big data' philosophy of storing all data indefinitely.",
-    hint: "Compare speculative data collection with privacy risk, liability, and specified-purpose limits.",
+    q: "Scenario: A PM suggests: 'Let's store every single click, mouse movement, and page view for all users indefinitely. Disk space is cheap, and we might find a use for it in five years.'\n\nExplain 'Data Minimization' (Datensparsamkeit) and how it challenges this 'big data' philosophy. Discuss the hidden costs (e.g. security liability, legal compliance under GDPR) of storing speculative data.",
+    hint: "Contrast speculative data storage with the legal and operational liabilities of accumulating unneeded personal data.",
     modelAnswer: "Data minimization states that you should only collect and retain personal data that is strictly necessary for a specified, explicit purpose. This directly challenges the 'big data' philosophy, which advocates for storing as much raw data as possible, speculative of future analytical value. Data minimization argues that unneeded data is a liability, exposing the organization to security breaches, legal risks, and regulatory fines.",
     section: "Law and Society"
   },
@@ -402,42 +402,16 @@ const MISCONCEPTION_EXPLANATIONS = {
 // ── State Management ────────────────────────────────
 
 const STATE_KEY = 'ddia_ch1_learning';
-let _state = null;
+
 
 function loadState() {
-  if (!_state) {
-    try {
-      const raw = localStorage.getItem(STATE_KEY);
-      if (raw) _state = JSON.parse(raw);
-    } catch (e) {}
-
-    if (!_state) {
-      try {
-        if (window.parent && window.parent.__ddiaState && window.parent.__ddiaState[STATE_KEY]) {
-          _state = window.parent.__ddiaState[STATE_KEY];
-        }
-      } catch (e) {}
-    }
-
-    if (!_state) _state = {};
-  }
-  // Return a snapshot, not the live object
-  return JSON.parse(JSON.stringify(_state));
+  return window.loadState ? window.loadState(STATE_KEY) : {};
 }
 
 function saveState(data) {
-  if (!_state) loadState();
-  // Clone incoming data and merge to avoid reference aliasing
-  _state = { ..._state, ...JSON.parse(JSON.stringify(data)) };
-
-  try {
-    localStorage.setItem(STATE_KEY, JSON.stringify(_state));
-  } catch (e) {}
-
-  try {
-    window.parent.__ddiaState = window.parent.__ddiaState || {};
-    window.parent.__ddiaState[STATE_KEY] = _state;
-  } catch (e) {}
+  if (window.saveState) {
+    window.saveState(data, STATE_KEY);
+  }
 }
 
 // ── Navigation ──────────────────────────────────────
@@ -798,91 +772,59 @@ function setupQuizFilters() {
   });
 }
 
-function setupLLMGrading() {
-  const modal = document.getElementById('llmModal');
-  const gradeBtn = document.getElementById('gradeWriteIns');
-  const closeBtn = document.getElementById('closeModal');
-  const copyBtn = document.getElementById('copyLlmPrompt');
-  const copyFeedback = document.getElementById('copyFeedback');
-  const promptArea = document.getElementById('llmPromptArea');
-
-  if (gradeBtn) {
-    gradeBtn.addEventListener('click', () => {
-      const state = loadState();
-      const writeIns = state.writeInAnswers || {};
-      
-      // Collect answered write-ins
-      const answeredList = QUIZ_QUESTIONS.filter((q, idx) => q.type === 'write' && writeIns[idx] && writeIns[idx].trim().length > 0);
-
-      if (answeredList.length === 0) {
-        alert('Please answer at least one write-in question before generating the LLM grading prompt!');
-        return;
-      }
-
-      // Compile prompt
-      let prompt = `You are grading a student's responses to Chapter 1 ("Trade-offs in Data Systems Architecture") of Designing Data-Intensive Applications.
-For each question, provide:
-1. A Score from 1 to 5 (1 = Incorrect/No attempt, 3 = Partially correct/Gaps present, 5 = Excellent/Nuanced understanding).
-2. Strengths: What did the student capture accurately?
-3. Gaps: What crucial elements, terms, or architectural trade-offs did they miss?
-4. Model Comparison: Explain why the model answer is complete and how they can bridge any gaps.
-
----
-`;
-
-      QUIZ_QUESTIONS.forEach((q, idx) => {
-        if (q.type === 'write') {
-          const studentAns = writeIns[idx] || '';
-          if (studentAns.trim().length > 0) {
-            prompt += `
-QUESTION #${idx + 1}: ${q.q}
-RUBRIC/MODEL ANSWER: ${q.modelAnswer}
-STUDENT'S RESPONSE: "${studentAns}"
---------------------------------------------------
-`;
-          }
-        }
-      });
-
-      prompt += `
-After grading all questions, provide:
-- Overall conceptual score (e.g., "82% - Solid Conceptual Foundation")
-- Top 2 strengths across their responses
-- Top 2 areas for conceptual improvement
-- A custom 1-2 sentence recommendation on which specific sub-sections of Chapter 1 (e.g. OLTP vs OLAP, System of Record, Cloud vs Self-Hosting) they should review.`;
-
-      promptArea.value = prompt;
-      modal.classList.remove('hidden');
-    });
-  }
-
-  if (closeBtn) {
-    closeBtn.addEventListener('click', () => {
-      modal.classList.add('hidden');
-    });
-  }
-
-  // Close modal on outside click
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) {
-      modal.classList.add('hidden');
+async function gradeWriteIns() {
+  const state = loadState();
+  const writeIns = state.writeInAnswers || {};
+  const answered = {};
+  
+  QUIZ_QUESTIONS.forEach((q, idx) => {
+    if (q.type === 'write' && writeIns[idx] && writeIns[idx].trim().length > 0) {
+      answered[idx] = writeIns[idx];
     }
   });
 
-  if (copyBtn) {
-    copyBtn.addEventListener('click', () => {
-      promptArea.select();
-      navigator.clipboard.writeText(promptArea.value)
-        .then(() => {
-          copyFeedback.classList.remove('hidden');
-          setTimeout(() => {
-            copyFeedback.classList.add('hidden');
-          }, 2000);
-        })
-        .catch(err => {
-          console.error('Failed to copy text: ', err);
-          alert('Could not auto-copy. Please select all text and copy manually.');
-        });
+  if (Object.keys(answered).length === 0) {
+    alert('Please answer at least one write-in question before grading.');
+    return;
+  }
+
+  const response = await fetch('/grade', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      chapterKey: STATE_KEY,
+      writeIns:   answered,
+      username:   getCurrentUsername()   // returns the active username from db.js
+    })
+  });
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  return await response.json();
+}
+
+function setupLLMGrading() {
+  const gradeBtn = document.getElementById('gradeWriteIns');
+  if (gradeBtn) {
+    gradeBtn.addEventListener('click', async () => {
+      const originalText = gradeBtn.textContent;
+      gradeBtn.textContent = 'Grading...';
+      gradeBtn.disabled = true;
+      try {
+        const data = await gradeWriteIns();
+        if (data && data.grades) {
+          alert('Grading completed successfully! Check the console or logs.');
+          console.log('Grades:', data.grades);
+        }
+      } catch (err) {
+        console.error('Error during grading:', err);
+        alert('Grading failed: ' + err.message);
+      } finally {
+        gradeBtn.textContent = originalText;
+        gradeBtn.disabled = false;
+      }
     });
   }
 }
@@ -1299,4 +1241,17 @@ function init() {
 }
 
 // Start
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', async () => {
+  if (typeof initDb !== 'undefined') {
+    await initDb();
+  }
+  const cachedUser = sessionStorage.getItem('ddia_active_user');
+  if (cachedUser) {
+    if (typeof getOrCreateUser !== 'undefined') {
+      getOrCreateUser(cachedUser);
+    }
+    init();
+  } else {
+    window.location.href = '../index.html';
+  }
+});

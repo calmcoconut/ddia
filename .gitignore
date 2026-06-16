@@ -3,3 +3,6 @@ Designing Data-Intensive Applications_ The Big Ideas Behind Reliable, Scalable, 
 ddia_progress.json
 chapters/
 chapters/**
+.env
+logs/
+**/__pycache__/**

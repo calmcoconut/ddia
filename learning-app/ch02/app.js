@@ -185,8 +185,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Describe the difference between 'scaling up' (vertical scaling) and 'scaling out' (horizontal scaling), and detail the major cost and architecture trade-offs of each.",
-    hint: "Mention single powerful machines vs multiple commodity machines, cost growth curves, and application complexity.",
+    q: "Scenario: A startup launches a service on a single large cloud server. As traffic grows, the lead architect suggests: 'Let's scale out to a 10-node distributed Postgres database cluster immediately to handle future growth.' Another engineer argues they should scale up (vertically) first.\n\nCompare scaling up (vertical scaling) and scaling out (horizontal scaling). Explain the cost growth curves, operational complexity trade-offs, and architecture modifications required for each option.",
+    hint: "Detail single powerful machines vs multiple commodity machines, cost growth curves, and application complexity.",
     modelAnswer: "Scaling up (vertical scaling) means upgrading to a more powerful machine (more CPU, RAM, disk). It is simple because the application architecture doesn't change, but costs grow non-linearly and there is a hard physical limit. Scaling out (horizontal scaling) means adding more commodity machines in a shared-nothing cluster. It is cheaper at scale and highly available, but it introduces distributed systems complexity, requiring data partitioning (sharding), replication, and handling network partitions.",
     section: "Scalability"
   },
@@ -205,8 +205,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "What is a 'shared-nothing architecture' and what makes it the standard choice for web-scale systems?",
-    hint: "Explain how nodes coordinate, how scaling is achieved, and what complexity is pushed to the software layer.",
+    q: "Scenario: You are designing a globally distributed database that needs to scale to tens of thousands of writes per second across multiple datacenters.\n\nDefine a 'shared-nothing architecture' and explain why it is the default choice for web-scale systems. What coordination complexity is pushed into the software layer under this model?",
+    hint: "Discuss independent nodes, linear scaling, replication/sharding requirements, and network coordination.",
     modelAnswer: "A shared-nothing architecture consists of a cluster of independent machines (nodes), where each node has its own CPU, memory, and disks. Nodes coordinate solely through software APIs over a network. This is the standard for web-scale systems because it scales linearly by adding cheap, commodity hardware, avoids hardware-level storage bottlenecks, and can tolerate the loss of entire machines or datacenters by replicating data across nodes. However, shared-nothing pushes coordination complexity into the application or middleware layer, requiring explicit handling of data partitioning and replication.",
     section: "Scalability"
   },
@@ -238,8 +238,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Explain the difference between 'essential complexity' and 'accidental complexity' as defined in software engineering, and why this boundary can shift over time.",
-    hint: "Mention complexity inherent in the problem vs complexity arising from tooling, and give an example of how a tool shift changes this.",
+    q: "Scenario: You are migrating a legacy finance system written in manual C++ memory management to a modern platform. A senior architect remarks: 'We need to separate the essential complexity of calculating compound interest from the accidental complexity of our network timeouts and resource allocations.'\n\nExplain the difference between 'essential complexity' and 'accidental complexity'. Detail how this boundary shifts when you introduce higher-level languages or managed infrastructure.",
+    hint: "Define complexity inherent in the problem versus complexity created by tooling, and give an example of a tool shift.",
     modelAnswer: "Essential complexity is inherent in the business domain or problem being solved (e.g., the rules of calculation or compliance). Accidental complexity arises from the limitations of our software engineering tooling and infrastructure (e.g., manual memory management). This boundary shifts as tools evolve; for example, high-level languages and managed databases turn what was once accidental complexity (memory allocation, manual indexes) into abstracted, solved problems.",
     section: "Maintainability"
   },
@@ -258,8 +258,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Define the term 'evolvability' in the context of data systems, and explain how it relates to simplicity and abstractions.",
-    hint: "Think about changing requirements, loose coupling, and how easy it is to refactor code.",
+    q: "Scenario: A software startup builds a product by hardcoding direct database queries and raw TCP sockets across their entire client codebase. Within six months, changes in the database schema break all client applications.\n\nDefine the term 'evolvability' in this context. Explain how evolvability is related to simplicity and abstractions, and how modular interfaces protect systems from cascading breakage.",
+    hint: "Discuss extensibility, loose coupling, modular boundaries, and refactoring safety.",
     modelAnswer: "Evolvability (also known as extensibility or agility) is the ease with which a data system can be modified to adapt to changing requirements or new use cases. It is closely linked to simplicity and abstractions: systems that are simple and built on clean, modular abstractions are loosely coupled. This makes them much easier to change because developers can modify one component without fear of unintended side effects in other parts of the system.",
     section: "Maintainability"
   },
@@ -827,91 +827,59 @@ function setupQuizFilters() {
   });
 }
 
-function setupLLMGrading() {
-  const modal = document.getElementById('llmModal');
-  const gradeBtn = document.getElementById('gradeWriteIns');
-  const closeBtn = document.getElementById('closeModal');
-  const copyBtn = document.getElementById('copyLlmPrompt');
-  const copyFeedback = document.getElementById('copyFeedback');
-  const promptArea = document.getElementById('llmPromptArea');
-
-  if (gradeBtn) {
-    gradeBtn.addEventListener('click', () => {
-      const state = loadState();
-      const writeIns = state.writeInAnswers || {};
-      
-      // Collect answered write-ins
-      const answeredList = QUIZ_QUESTIONS.filter((q, idx) => q.type === 'write' && writeIns[idx] && writeIns[idx].trim().length > 0);
-
-      if (answeredList.length === 0) {
-        alert('Please answer at least one write-in question before generating the LLM grading prompt!');
-        return;
-      }
-
-      // Compile prompt
-      let prompt = `You are grading a student's responses to Chapter 2 ("Defining Nonfunctional Requirements") of Designing Data-Intensive Applications.
-For each question, provide:
-1. A Score from 1 to 5 (1 = Incorrect/No attempt, 3 = Partially correct/Gaps present, 5 = Excellent/Nuanced understanding).
-2. Strengths: What did the student capture accurately?
-3. Gaps: What crucial elements, terms, or architectural trade-offs did they miss?
-4. Model Comparison: Explain why the model answer is complete and how they can bridge any gaps.
-
---------------------------------------------------
-`;
-
-      QUIZ_QUESTIONS.forEach((q, idx) => {
-        if (q.type === 'write') {
-          const studentAns = writeIns[idx] || '';
-          if (studentAns.trim().length > 0) {
-            prompt += `
-QUESTION #${idx + 1}: ${q.q}
-RUBRIC/MODEL ANSWER: ${q.modelAnswer}
-STUDENT'S RESPONSE: "${studentAns}"
---------------------------------------------------
-`;
-          }
-        }
-      });
-
-      prompt += `
-After grading all questions, provide:
-- Overall conceptual score (e.g., "82% - Solid Conceptual Foundation")
-- Top 2 strengths across their responses
-- Top 2 areas for conceptual improvement
-- A custom 1-2 sentence recommendation on which specific sub-sections of Chapter 2 (e.g. Case Study: Timelines, Describing Performance, Reliability, Scalability, pillars of Maintainability) they should review.`;
-
-      promptArea.value = prompt;
-      modal.classList.remove('hidden');
-    });
-  }
-
-  if (closeBtn) {
-    closeBtn.addEventListener('click', () => {
-      modal.classList.add('hidden');
-    });
-  }
-
-  // Close modal on outside click
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) {
-      modal.classList.add('hidden');
+async function gradeWriteIns() {
+  const state = loadState();
+  const writeIns = state.writeInAnswers || {};
+  const answered = {};
+  
+  QUIZ_QUESTIONS.forEach((q, idx) => {
+    if (q.type === 'write' && writeIns[idx] && writeIns[idx].trim().length > 0) {
+      answered[idx] = writeIns[idx];
     }
   });
 
-  if (copyBtn) {
-    copyBtn.addEventListener('click', () => {
-      promptArea.select();
-      navigator.clipboard.writeText(promptArea.value)
-        .then(() => {
-          copyFeedback.classList.remove('hidden');
-          setTimeout(() => {
-            copyFeedback.classList.add('hidden');
-          }, 2000);
-        })
-        .catch(err => {
-          console.error('Failed to copy text: ', err);
-          alert('Could not auto-copy. Please select all text and copy manually.');
-        });
+  if (Object.keys(answered).length === 0) {
+    alert('Please answer at least one write-in question before grading.');
+    return;
+  }
+
+  const response = await fetch('/grade', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      chapterKey: STATE_KEY,
+      writeIns:   answered,
+      username:   getCurrentUsername()   // returns the active username from db.js
+    })
+  });
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  return await response.json();
+}
+
+function setupLLMGrading() {
+  const gradeBtn = document.getElementById('gradeWriteIns');
+  if (gradeBtn) {
+    gradeBtn.addEventListener('click', async () => {
+      const originalText = gradeBtn.textContent;
+      gradeBtn.textContent = 'Grading...';
+      gradeBtn.disabled = true;
+      try {
+        const data = await gradeWriteIns();
+        if (data && data.grades) {
+          alert('Grading completed successfully! Check the console or logs.');
+          console.log('Grades:', data.grades);
+        }
+      } catch (err) {
+        console.error('Error during grading:', err);
+        alert('Grading failed: ' + err.message);
+      } finally {
+        gradeBtn.textContent = originalText;
+        gradeBtn.disabled = false;
+      }
     });
   }
 }

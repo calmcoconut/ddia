@@ -34,8 +34,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Explain the 'cross-channel timing dependency' race condition that can occur when a web server writes a file to storage and puts a transcoding message on a queue.",
-    hint: "Think about what happens if the queue is faster than the file storage's replication lag.",
+    q: "Your team is building an image upload service. The web server saves an image to a non-linearizable cloud storage bucket, then immediately publishes an 'image_id' message to a fast message queue. The worker node receives the message, attempts to read the image, and crashes with a '404 File Not Found' error. What is this race condition called, and why does it happen?",
+    hint: "Consider how the message queue acts as an out-of-band communication channel compared to the storage system's replication lag.",
     modelAnswer: "When a web server writes a file to a non-linearizable storage service and then sends an instruction to a transcoder via a message queue, a cross-channel race condition can occur. The message queue might deliver the message to the transcoder faster than the storage service replicates the new file. When the transcoder tries to read the file, it will see either an old version or no file at all, causing a permanent inconsistency.",
     section: "Linearizability"
   },
@@ -67,8 +67,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Why is Dynamo-style leaderless replication generally not linearizable, even when using quorum reads and writes (w + r > n)?",
-    hint: "Consider network delays, concurrent reads/writes, and Last-Write-Wins clock skew.",
+    q: "A senior architect warns against using a leaderless Dynamo-style database for strict sequential user inventory balances, even if we configure w + r > n (quorum). Why is leaderless replication generally unable to guarantee linearizability?",
+    hint: "Think about how network delays during concurrent writes, lack of read repair on some reads, and LWW clock skew can cause a reader to get a stale value.",
     modelAnswer: "Even with quorums, leaderless systems can experience race conditions where a reader gets a stale value if their quorum overlap reads from nodes that have not yet received the concurrent write. Furthermore, conflict resolution using Last-Write-Wins (LWW) relies on time-of-day clocks, which are subject to clock skew and NTP updates, violating linearizable order. True linearizability in quorums requires synchronous read repair and pre-write reads, which degrade performance.",
     section: "Implementing Linearizable Systems"
   },
@@ -100,8 +100,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Discuss why the CAP theorem is often considered of 'little practical value' for modern distributed systems design, according to the author.",
-    hint: "What are its narrow definitions of consistency, availability, and faults?",
+    q: "During an interview, a candidate says: 'We chose CP over AP because we needed low-latency transactions.' Explain why the CAP theorem is of little practical value for modern distributed systems design, and how it misrepresents normal operating conditions.",
+    hint: "Think about CAP's narrow definition of consistency (strictly linearizability), availability (100% of non-failing nodes must respond), and how it ignores latency or non-partitioned normal operations.",
     modelAnswer: "The CAP theorem has a very narrow scope: it only considers one consistency model (linearizability), one fault type (network partitions), and defines availability as 100% responsiveness from all non-failing nodes. Importantly, the theorem only constrains behavior during an active network partition; outside partitions, latency and partial failures dominate, meaning the 'CP vs AP' choice is irrelevant during normal operation. Furthermore, CAP ignores latency, node crashes, network delays, and weaker consistency levels. In practice, designers must choose from a spectrum of consistency models and fault-tolerance tradeoffs rather than a simple binary choice.",
     section: "The CAP Theorem"
   },
@@ -133,8 +133,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Explain how a Lamport clock updates its counter when a node processes an event and when it receives a message from another node.",
-    hint: "How is uniqueness guaranteed?",
+    q: "You are designing a distributed event tracker using Lamport clocks. Describe the algorithm a node must run to update its counter when (a) an event occurs locally, and (b) it receives a message from another node.",
+    hint: "Recall the mechanism of taking the maximum of local and incoming counters, and how node IDs break ties to ensure total ordering.",
     modelAnswer: "A Lamport clock represents a timestamp as a pair of (counter, node ID). When a node processes a local event, it increments its local counter by 1. When it receives a message containing a timestamp (incoming counter, sender ID), it sets its local counter to the maximum of its current counter and the incoming counter, then increments its counter by 1 before attaching it to the event. Uniqueness is guaranteed by breaking ties using the node ID.",
     section: "Logical Clocks"
   },
@@ -166,8 +166,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Compare and contrast Lamport clocks and Vector clocks regarding their ability to identify concurrent events.",
-    hint: "What does it mean if timestamp A is less than timestamp B? What is the size penalty?",
+    q: "Your colleague proposes using Lamport clocks to detect concurrent edits in a collaborative editor. You suggest vector clocks instead. Explain the fundamental difference between these two logical clocks in their ability to identify concurrent events, and the space trade-off involved.",
+    hint: "Ask yourself: if timestamp A is less than timestamp B, does it guarantee A happened before B? How does vector clock size scale with cluster size?",
     modelAnswer: "Lamport clocks provide a total ordering, but you cannot determine if two events were concurrent; you only know that if A causally preceded B, then A's timestamp is less than B's. Vector clocks maintain counters for every node, which allows them to explicitly detect concurrency (if neither timestamp is strictly greater than the other). However, vector clocks have a space penalty because their size grows linearly with the number of nodes in the cluster.",
     section: "Logical Clocks"
   },
@@ -199,8 +199,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "State the four formal safety and liveness properties of single-value consensus.",
-    hint: "Uniform Agreement, Integrity, Validity, Termination.",
+    q: "You are writing a formal specification for a new consensus engine. State the four mathematical properties (Uniform Agreement, Integrity, Validity, Termination) that define single-value consensus, and specify which one is a liveness property.",
+    hint: "Group the properties into 'nothing bad happens' (safety) and 'something good eventually happens' (liveness).",
     modelAnswer: "The four properties are: 1) Uniform Agreement: No two nodes decide differently. 2) Integrity: No node decides twice (once decided, the decision is locked). 3) Validity: If a node decides value v, then v must have been proposed by some node. 4) Termination: Every node that does not crash eventually decides a value (this is the liveness property ensuring progress).",
     section: "Single-value consensus"
   },
@@ -219,8 +219,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Explain why Two-Phase Commit (2PC) is considered a 'blocking' protocol, and how this makes it different from Paxos or Raft.",
-    hint: "Think about what happens if the coordinator crashes after nodes vote.",
+    q: "During a high-throughput transaction phase, the coordinator node crashes in a Two-Phase Commit (2PC) setup. The participant databases are now locked up, unable to abort or commit, and client connections are timing out. Why is 2PC considered a blocking protocol, and how does this contrast with Paxos or Raft?",
+    hint: "Think about the unanimity requirement in 2PC vs. the majority quorum requirement in Paxos or Raft.",
     modelAnswer: "Two-Phase Commit is blocking because it requires a unanimous 'yes' vote from all participants to commit. If the coordinator crashes after the participants have voted but before sending the commit decision, the participants cannot resolve the transaction on their own and must block indefinitely to avoid inconsistency. In contrast, Paxos and Raft are non-blocking consensus protocols because they only require a majority (quorum) to proceed, allowing the cluster to elect a new leader and continue even if some nodes crash.",
     section: "Atomic commitment as consensus"
   },
@@ -239,8 +239,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Contrast 'atomic commitment' (like 2PC) with 'consensus' (like Paxos/Raft) regarding their validation rules.",
-    hint: "Can consensus choose any proposed value? Must atomic commit respect an abort vote?",
+    q: "An engineer argues that Paxos/Raft and 2PC are basically the same because they both coordinate decisions across nodes. Clarify the core difference in their validation/decision rules: what is required for a transaction to succeed in 2PC vs. consensus?",
+    hint: "Must every single participant agree in 2PC? Can a consensus leader decide a value even if some nodes crash?",
     modelAnswer: "In consensus, the algorithm can decide on any value that was proposed by a node. In atomic commitment, the rules are stricter: the transaction must abort if even a single participant votes to abort or times out. This means consensus can tolerate nodes crashing, whereas atomic commit requires coordination with all active participants, making it highly sensitive to failures.",
     section: "Atomic commitment as consensus"
   },
@@ -259,8 +259,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "In Raft, when a leader fails and a new leader is elected, how does the protocol ensure that the new leader does not overwrite committed log entries from the old leader?",
-    hint: "How is a node's log completeness evaluated during elections?",
+    q: "In a Raft cluster, a network partition heals and a newly elected leader has to synchronize logs. How does Raft guarantee that this new leader will never overwrite or discard any log entries that were already committed by the old leader?",
+    hint: "Look at how candidate logs are compared during elections and how a quorum overlap guarantees that at least one voter has the committed data.",
     modelAnswer: "Raft prevents a leader with stale data from overwriting committed logs by enforcing that a node can only be elected leader if its log is at least as up-to-date as the majority of the nodes in the cluster. Because committed entries must exist on a majority of nodes, any successful leader election quorum must contain at least one node that has the committed entry, ensuring the new leader has it.",
     section: "Subtleties of consensus"
   },
@@ -279,8 +279,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Explain why consensus throughput cannot be scaled linearly by simply adding more nodes to the cluster.",
-    hint: "What happens to communication overhead and quorums?",
+    q: "To handle a massive spike in write volume, an operator proposes scaling out a Raft-based coordination cluster from 3 nodes to 15 nodes. Why will this decrease, rather than increase, the maximum write throughput of the consensus cluster?",
+    hint: "Consider the size of the majority quorum and the network messages needed to achieve agreement as the cluster grows.",
     modelAnswer: "Adding nodes to a consensus cluster increases the number of nodes required to form a majority quorum (e.g., from 2 out of 3, to 3 out of 5, to 4 out of 7). This increases the network communication overhead and serialization latency for every single write, as the leader must gather votes from a larger number of nodes. Therefore, adding nodes actually makes the consensus protocol slower, though it increases fault tolerance.",
     section: "Pros and cons of consensus"
   },
@@ -299,8 +299,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Explain what a 'fencing token' is and why it is necessary in a distributed lock service when clients undergo garbage collection (GC) pauses.",
-    hint: "Think about what happens to client leases during a pause.",
+    q: "A worker node claims a lock from ZooKeeper, starts processing a transaction, but is preempted by a 10-second JVM garbage collection pause. Another worker takes over the lock. How does a 'fencing token' prevent the first worker from corrupting storage when it wakes up?",
+    hint: "Recall the role of monotonically increasing numbers attached to lock acquisitions and checked by the storage engine.",
     modelAnswer: "A fencing token is a monotonically increasing number (like etcd's revision or ZooKeeper's zxid) generated whenever a lock is acquired. If a client acquires a lock, goes into a long GC pause, and its lock lease expires, another client can acquire the lock with a higher token. When the paused client wakes up and tries to write, the storage service checks the token. Since the client's token is lower than the current lock holder's token, the write is rejected, preventing split-brain writes.",
     section: "Locks and leases"
   },
@@ -319,8 +319,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Discuss how the 'sushi principle' (storing raw, unprocessed data) applies or does not apply to metadata in coordination services versus transactional databases.",
-    hint: "Is coordination metadata structured or unstructured? Why does it need strict rules?",
+    q: "A developer suggests storing raw, unvalidated JSON blobs in etcd to make the system schema-flexible, citing the 'sushi principle' (raw data is better). Explain why this principle applies to data lakes but is dangerous for metadata in coordination services.",
+    hint: "Contrast the read-side schema flexibility of analytics with the strict, immediate invariants needed for cluster membership and leases.",
     modelAnswer: "The 'sushi principle' (storing raw, unprocessed data) applies to data lakes and batch processing systems (as discussed in Chapters 2–3) where keeping raw logs allows for flexible, retroactively modifiable analytical schemas. However, it does not apply to coordination metadata. Coordination metadata (such as leader leases or work allocation) is highly structured, akin to strict database schemas and invariants, and must represent a single, globally agreed-upon truth. Storing unstructured or unvalidated raw metadata in ZooKeeper or etcd would break system invariants, trigger split-brain, and crash dependent services, which is why metadata must be strictly validated on write.",
     section: "Coordination Services"
   }
@@ -395,42 +395,16 @@ const MISCONCEPTION_EXPLANATIONS = {
 // ── State Management ────────────────────────────────
 
 const STATE_KEY = 'ddia_ch10_learning';
-let _state = null;
+
 
 function loadState() {
-  if (!_state) {
-    try {
-      const raw = localStorage.getItem(STATE_KEY);
-      if (raw) _state = JSON.parse(raw);
-    } catch (e) {}
-
-    if (!_state) {
-      try {
-        if (window.parent && window.parent.__ddiaState && window.parent.__ddiaState[STATE_KEY]) {
-          _state = window.parent.__ddiaState[STATE_KEY];
-        }
-      } catch (e) {}
-    }
-
-    if (!_state) _state = {};
-  }
-  // Return a snapshot, not the live object
-  return JSON.parse(JSON.stringify(_state));
+  return window.loadState ? window.loadState(STATE_KEY) : {};
 }
 
 function saveState(data) {
-  if (!_state) loadState();
-  // Clone incoming data and merge to avoid reference aliasing
-  _state = { ..._state, ...JSON.parse(JSON.stringify(data)) };
-
-  try {
-    localStorage.setItem(STATE_KEY, JSON.stringify(_state));
-  } catch (e) {}
-
-  try {
-    window.parent.__ddiaState = window.parent.__ddiaState || {};
-    window.parent.__ddiaState[STATE_KEY] = _state;
-  } catch (e) {}
+  if (window.saveState) {
+    window.saveState(data, STATE_KEY);
+  }
 }
 
 // ── Navigation ──────────────────────────────────────
@@ -791,91 +765,59 @@ function setupQuizFilters() {
   });
 }
 
-function setupLLMGrading() {
-  const modal = document.getElementById('llmModal');
-  const gradeBtn = document.getElementById('gradeWriteIns');
-  const closeBtn = document.getElementById('closeModal');
-  const copyBtn = document.getElementById('copyLlmPrompt');
-  const copyFeedback = document.getElementById('copyFeedback');
-  const promptArea = document.getElementById('llmPromptArea');
-
-  if (gradeBtn) {
-    gradeBtn.addEventListener('click', () => {
-      const state = loadState();
-      const writeIns = state.writeInAnswers || {};
-      
-      // Collect answered write-ins
-      const answeredList = QUIZ_QUESTIONS.filter((q, idx) => q.type === 'write' && writeIns[idx] && writeIns[idx].trim().length > 0);
-
-      if (answeredList.length === 0) {
-        alert('Please answer at least one write-in question before generating the LLM grading prompt!');
-        return;
-      }
-
-      // Compile prompt
-      let prompt = `You are grading a student's responses to Chapter 10 ("Consistency and Consensus") of Designing Data-Intensive Applications.
-For each question, provide:
-1. A Score from 1 to 5 (1 = Incorrect/No attempt, 3 = Partially correct/Gaps present, 5 = Excellent/Nuanced understanding).
-2. Strengths: What did the student capture accurately?
-3. Gaps: What crucial elements, terms, or architectural trade-offs did they miss?
-4. Model Comparison: Explain why the model answer is complete and how they can bridge any gaps.
-
----
-`;
-
-      QUIZ_QUESTIONS.forEach((q, idx) => {
-        if (q.type === 'write') {
-          const studentAns = writeIns[idx] || '';
-          if (studentAns.trim().length > 0) {
-            prompt += `
-QUESTION #${idx + 1}: ${q.q}
-RUBRIC/MODEL ANSWER: ${q.modelAnswer}
-STUDENT'S RESPONSE: "${studentAns}"
---------------------------------------------------
-`;
-          }
-        }
-      });
-
-      prompt += `
-After grading all questions, provide:
-- Overall conceptual score (e.g., "82% - Solid Conceptual Foundation")
-- Top 2 strengths across their responses
-- Top 2 areas for conceptual improvement
-- A custom 1-2 sentence recommendation on which specific sub-sections of Chapter 10 (e.g. Linearizability, Ordering Guarantees, Lamport/HLC clocks, Distributed Transactions and Consensus, Coordination Services) they should review.`;
-
-      promptArea.value = prompt;
-      modal.classList.remove('hidden');
-    });
-  }
-
-  if (closeBtn) {
-    closeBtn.addEventListener('click', () => {
-      modal.classList.add('hidden');
-    });
-  }
-
-  // Close modal on outside click
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) {
-      modal.classList.add('hidden');
+async function gradeWriteIns() {
+  const state = loadState();
+  const writeIns = state.writeInAnswers || {};
+  const answered = {};
+  
+  QUIZ_QUESTIONS.forEach((q, idx) => {
+    if (q.type === 'write' && writeIns[idx] && writeIns[idx].trim().length > 0) {
+      answered[idx] = writeIns[idx];
     }
   });
 
-  if (copyBtn) {
-    copyBtn.addEventListener('click', () => {
-      promptArea.select();
-      navigator.clipboard.writeText(promptArea.value)
-        .then(() => {
-          copyFeedback.classList.remove('hidden');
-          setTimeout(() => {
-            copyFeedback.classList.add('hidden');
-          }, 2000);
-        })
-        .catch(err => {
-          console.error('Failed to copy text: ', err);
-          alert('Could not auto-copy. Please select all text and copy manually.');
-        });
+  if (Object.keys(answered).length === 0) {
+    alert('Please answer at least one write-in question before grading.');
+    return;
+  }
+
+  const response = await fetch('/grade', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      chapterKey: STATE_KEY,
+      writeIns:   answered,
+      username:   getCurrentUsername()   // returns the active username from db.js
+    })
+  });
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  return await response.json();
+}
+
+function setupLLMGrading() {
+  const gradeBtn = document.getElementById('gradeWriteIns');
+  if (gradeBtn) {
+    gradeBtn.addEventListener('click', async () => {
+      const originalText = gradeBtn.textContent;
+      gradeBtn.textContent = 'Grading...';
+      gradeBtn.disabled = true;
+      try {
+        const data = await gradeWriteIns();
+        if (data && data.grades) {
+          alert('Grading completed successfully! Check the console or logs.');
+          console.log('Grades:', data.grades);
+        }
+      } catch (err) {
+        console.error('Error during grading:', err);
+        alert('Grading failed: ' + err.message);
+      } finally {
+        gradeBtn.textContent = originalText;
+        gradeBtn.disabled = false;
+      }
     });
   }
 }
@@ -1291,4 +1233,17 @@ function init() {
 }
 
 // Start
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', async () => {
+  if (typeof initDb !== 'undefined') {
+    await initDb();
+  }
+  const cachedUser = sessionStorage.getItem('ddia_active_user');
+  if (cachedUser) {
+    if (typeof getOrCreateUser !== 'undefined') {
+      getOrCreateUser(cachedUser);
+    }
+    init();
+  } else {
+    window.location.href = '../index.html';
+  }
+});

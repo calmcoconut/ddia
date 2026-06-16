@@ -34,8 +34,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Explain how a log-based message broker (like Apache Kafka) differs from a traditional JMS/AMQP message broker in how messages are consumed and stored.",
-    hint: "Think about durability, retention on disk, message deletion after consumption, and offsets.",
+    q: "During a post-mortem review after your RabbitMQ cluster ran out of memory because consumers couldn't keep up with a spike, a senior engineer suggests replacing it with Apache Kafka. How does the fundamental storage and consumption model of a log-based broker like Kafka prevent this 'short queue' memory pressure while handling multiple consumers at their own pace?",
+    hint: "Contrast how JMS/AMQP brokers handle message deletion upon acknowledgment vs how log-based brokers write to append-only logs on disk and use consumer-tracked offsets.",
     modelAnswer: "In a traditional message broker, messages are deleted from the queue once they are acknowledged by consumers, and the queue is expected to remain short. In contrast, a log-based message broker writes all messages to an append-only log on disk, where they are retained for a configured duration. Consumers read the log sequentially and track their own progress using a log offset, which allows multiple independent consumers to read the same stream at their own pace and replay messages if necessary.",
     section: "Partitioned Logs"
   },
@@ -54,8 +54,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Explain the trade-offs of using direct, brokerless messaging (like UDP multicast or Webhooks) compared to using a centralized message broker.",
-    hint: "Consider network latency, consumer availability, buffer behavior during spikes, and message durability.",
+    q: "A developer on your high-frequency trading desk wants to strip out the centralized message broker to use direct UDP multicast or HTTP Webhooks for service-to-service communication. You need to write a design doc outlining the trade-offs: what do we gain in performance, and what operational risks do we introduce when subscriber nodes fail or encounter sudden traffic spikes?",
+    hint: "Consider the contrast between low latency/low overhead and the lack of message durability, buffer management, or consumer offline support in brokerless architectures.",
     modelAnswer: "Direct, brokerless messaging (such as UDP multicast in finance or HTTP webhooks) achieves low latency and avoids the overhead of a centralized broker server. However, it requires the sender to handle delivery retries and buffers, and it fails when the consumer is offline or crashes. Centralized message brokers add a hop (increasing latency) but handle consumer offline states, absorb spikes with large queues, and offer durability guarantees, simplifying client-side error handling.",
     section: "Messaging Systems"
   },
@@ -87,8 +87,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Compare and contrast Change Data Capture (CDC) and Event Sourcing. Which system treats the database as the primary source of truth?",
-    hint: "Consider the source of truth, application design, and how read views are generated.",
+    q: "At a system architecture alignment meeting, two teams are debating: one wants to capture updates from a PostgreSQL write-ahead log to populate Elasticsearch (CDC), while the other wants to build a system where the business domain events themselves are written to an append-only log as the primary source of truth (Event Sourcing). Explain the key differences between these two patterns, and identify which system considers the database the system of record.",
+    hint: "Focus on whether the application's write path updates a traditional database table first (generating events from a log) or writes to an immutable event log first (deriving read views from it).",
     modelAnswer: "In Change Data Capture (CDC), the application updates the relational database normally (making the database the source of truth), and the database log is mined to produce a stream of events for downstream systems. In Event Sourcing, the application state is modeled as an immutable log of events where the events themselves are the primary source of truth. The database state (read views) is derived by playing the events forward, making state changes explicit and auditable.",
     section: "Event Sourcing"
   },
@@ -107,8 +107,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Why does the distinction between event time and processing time become highly problematic when a user device goes offline and later reconnects?",
-    hint: "Think about event delays, window aggregation, and what happens to the graphs on a dashboard.",
+    q: "A pager alert wakes you up at 3:00 AM. A dashboard is showing a massive spike in user click rates, but the actual HTTP request rate is completely flat. You discover a popular mobile game app just reconnected to the network after a long subway outage and uploaded hours of buffered events. Why does using processing time instead of event time cause this dashboard anomaly, and what challenges do you face if you switch?",
+    hint: "Think about when the event actually occurred on the device vs when it reached the server, and the complexity of late-arriving data in window aggregations.",
     modelAnswer: "When a user device goes offline, it buffers events locally. Upon reconnecting, it uploads these events hours or days later. If the stream processor uses processing time (when the server receives them), these events are aggregated into the current time window, causing artificial spikes in the dashboard. If the stream processor uses event time (when the events occurred), it must handle late-arriving data by either updating past windows or using watermarks to close windows, which introduces trade-offs in correctness and latency.",
     section: "Reasoning About Time"
   },
@@ -140,8 +140,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Explain what a session window is and how it differs from tumbling or hopping windows in terms of duration and boundary definition.",
-    hint: "Think about user activity patterns, inactivity gaps, and whether the duration is fixed.",
+    q: "Your product manager wants to analyze shopping behavior by grouping clicks that occur together and ending the window once a user has been inactive for 30 minutes. A junior developer suggests using a standard 30-minute tumbling window. Explain why a tumbling window is unsuitable here, and how a session window dynamically adapts to user activity patterns.",
+    hint: "Think about user activity patterns, inactivity gaps, and why session windows do not have fixed grid boundaries.",
     modelAnswer: "A session window has no fixed duration. It is defined dynamically based on user activity: it groups together all events for the same user that occur closely together in time, and the window closes only when the user is inactive for a specified threshold (e.g., 30 minutes of no events). Unlike tumbling and hopping windows, which have pre-defined, fixed time boundaries, session windows adapt to the actual user session behavior and vary in size.",
     section: "Reasoning About Time"
   },
@@ -160,8 +160,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Describe how a stream-table join (enrichment join) works, and explain why timing/out-of-order issues can cause non-deterministic results if the table is mutable.",
-    hint: "Consider a user clickstream joining with a profile database. What if profile updates are delayed?",
+    q: "You are designing an ad-click enricher that joins a real-time stream of click events with a user profile database. If a user clicks an ad and then immediately updates their location in their profile, but the update event gets slightly delayed, the click might be joined with the wrong location. Explain how this mutable stream-table join introduces non-determinism, and how it could be made deterministic.",
+    hint: "Consider how joining a click stream against in-place updates to a database table depends on the timing of processing, and how point-in-time state histories resolve this.",
     modelAnswer: "A stream-table join enriches a stream of events with information from a database table (e.g., joining user click events with their user profile records). If the database table is mutable (updates occur in place), the join is non-deterministic because a late-arriving event or a delayed database update can change the join result depending on whether the click event is processed before or after the profile update. To make it deterministic, the join must align with the historical version of the table matching the event's timestamp.",
     section: "Stream Joins"
   },
@@ -193,8 +193,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Why is it impossible to guarantee that a network message is sent exactly once, and how do stream processors achieve 'exactly-once' processing semantics in practice?",
-    hint: "Think about acknowledgements failing over the network, message redelivery, and idempotence or transactions.",
+    q: "During a technical design review, a lead engineer demands a network protocol that guarantees a message is transmitted over the Internet and received 'exactly once' at the network transport layer. After explaining why network-level exactly-once delivery is physically impossible, how do you explain to them that stream processors still achieve 'exactly-once' processing semantics in practice?",
+    hint: "Explain why network retries are inevitable when ACKs are lost, and how stream processors use idempotent operations or atomic commits to make duplicate processing transparent.",
     modelAnswer: "It is impossible to guarantee that a network message is sent exactly once because if an acknowledgement is lost or delayed, the sender must retransmit, causing the message to be delivered again (at-least-once). Stream processors achieve the illusion of 'exactly-once' semantics by making the processing side-effects idempotent (so processing the same message twice does not change the result) or by using atomic commits (e.g., writing state updates and sending downstream messages in a single transaction). However, if the output sink (like an external database or email service) is non-idempotent or does not participate in the stream processor's transaction protocol, duplicate operations will still be visible externally.",
     section: "Fault Tolerance"
   },
@@ -226,8 +226,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Explain what an idempotent operation is in the context of stream processing, and why it is a powerful building block for fault-tolerant state updates.",
-    hint: "Define idempotence and explain how it solves duplicate messages resulting from crashes.",
+    q: "During a database failover, your stream consumer node restarts and re-processes the last 5 minutes of billing events. Because some messages are processed twice, the accounting ledger shows duplicate charges for the same transactions. Explain how designing your state updates to be idempotent would resolve this issue.",
+    hint: "Define idempotence in the context of state updates and explain how it renders duplicated processing of duplicate events harmless.",
     modelAnswer: "An idempotent operation is one that can be executed multiple times and produces the same system state as if it were run only once. In stream processing, duplicates are common due to retries after network failures or node crashes. If state updates are designed to be idempotent (e.g., updating a value with a unique timestamp or setting status by ID), the processor can safely replay and reprocess duplicate events without risking incorrect calculations, such as double-counting.",
     section: "Fault Tolerance"
   },
@@ -259,8 +259,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Discuss the limitations of log immutability, particularly in relation to data privacy regulations (like GDPR) and administrative data cleanup.",
-    hint: "Consider delete operations, log compaction, cryptographic erasure, and rewrite overhead.",
+    q: "Your company receives a GDPR 'right to erasure' request from a former customer. However, your core application state is constructed by reading an immutable, append-only Kafka event log. Explain the technical conflict between log immutability and data privacy laws, and discuss how you can satisfy the deletion request.",
+    hint: "Consider the difficulty of modifying append-only historical records, and workarounds like cryptographic erasure (key shredding) or log compaction tombstones.",
     modelAnswer: "Immutability is an excellent default for audit logs and system recovery, but it conflicts with regulatory requirements like GDPR's 'right to erasure.' Deleting a user's data from an immutable log requires either rewriting the entire history to exclude their events, which is extremely expensive, or employing workarounds. These workarounds include using log compaction (which only keeps the latest event key, which could be set to null) or cryptographic erasure, where the user's data is encrypted with a unique key, and deleting that key makes the log data unrecoverable.",
     section: "State, Streams, and Immutability"
   },
@@ -292,8 +292,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Argue the trade-offs of using microbatching (like Spark Streaming) versus continuous one-event-at-a-time processing (like Apache Flink) for a real-time fraud detection system.",
-    hint: "Compare latency, throughput, complexity, and fault-tolerance mechanics.",
+    q: "You are designing a high-throughput transaction monitoring pipeline to block fraudulent credit card transactions. One engineer proposes using Apache Spark Streaming (microbatching), while another insists on Apache Flink (continuous processing). Contrast the trade-offs of these two processing models for this latency-sensitive domain.",
+    hint: "Compare the latency of continuous event-at-a-time processing with the throughput benefits and fault-tolerance checkpoint simplicity of processing data in mini-batches.",
     modelAnswer: "Continuous processing (Flink) processes events individually as they arrive, yielding ultra-low latency (milliseconds), which is critical for immediately blocking fraudulent credit card transactions. However, this model has higher coordination overhead for state checkpoints. Microbatching (Spark) group events into small windows (e.g., 500ms), which increases latency but can achieve higher throughput by processing records in bulk and simplifies fault-tolerance by using batch mechanics. For fraud detection, where latency is critical, continuous processing is generally preferred.",
     section: "Fault Tolerance"
   },
@@ -325,8 +325,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Explain what watermarks are in stream processing, how they are determined, and why they are necessary when processing events by event time.",
-    hint: "Consider late events, out-of-order delivery, and when a stream processor can safely assume a window is complete.",
+    q: "A junior engineer is confused because their Flink pipeline is buffering events and not emitting hourly aggregates for several minutes. You explain that because the system uses Event Time, it is waiting for a 'watermark.' Explain what a watermark is, how it is determined, and why it is necessary to handle late or out-of-order data.",
+    hint: "Focus on why a stream processor cannot know when all events for a specific hour have actually arrived from client devices, and how watermarks act as progress markers.",
     modelAnswer: "Watermarks are temporal progress markers in a stream processor that signal when a window can be closed and its aggregates calculated. They are necessary because network delays, device offline states, and out-of-order delivery mean the processor cannot know if more late events will arrive for a given time window. A watermark (e.g., event time minus 5 seconds) is calculated heuristically, telling the processor to assume no more events prior to that time will arrive. Events arriving after the watermark are considered late and are either discarded or handled by a separate side-channel. Crucially, watermarks are approximate and offer no hard guarantees; there is always a trade-off between waiting longer for correctness (higher latency) vs producing results sooner (lower latency, but dropping or handling more late events).",
     section: "Reasoning About Time"
   }
@@ -401,42 +401,16 @@ const MISCONCEPTION_EXPLANATIONS = {
 // ── State Management ────────────────────────────────
 
 const STATE_KEY = 'ddia_ch12_learning';
-let _state = null;
+
 
 function loadState() {
-  if (!_state) {
-    try {
-      const raw = localStorage.getItem(STATE_KEY);
-      if (raw) _state = JSON.parse(raw);
-    } catch (e) {}
-
-    if (!_state) {
-      try {
-        if (window.parent && window.parent.__ddiaState && window.parent.__ddiaState[STATE_KEY]) {
-          _state = window.parent.__ddiaState[STATE_KEY];
-        }
-      } catch (e) {}
-    }
-
-    if (!_state) _state = {};
-  }
-  // Return a snapshot, not the live object
-  return JSON.parse(JSON.stringify(_state));
+  return window.loadState ? window.loadState(STATE_KEY) : {};
 }
 
 function saveState(data) {
-  if (!_state) loadState();
-  // Clone incoming data and merge to avoid reference aliasing
-  _state = { ..._state, ...JSON.parse(JSON.stringify(data)) };
-
-  try {
-    localStorage.setItem(STATE_KEY, JSON.stringify(_state));
-  } catch (e) {}
-
-  try {
-    window.parent.__ddiaState = window.parent.__ddiaState || {};
-    window.parent.__ddiaState[STATE_KEY] = _state;
-  } catch (e) {}
+  if (window.saveState) {
+    window.saveState(data, STATE_KEY);
+  }
 }
 
 // ── Navigation ──────────────────────────────────────
@@ -797,91 +771,59 @@ function setupQuizFilters() {
   });
 }
 
-function setupLLMGrading() {
-  const modal = document.getElementById('llmModal');
-  const gradeBtn = document.getElementById('gradeWriteIns');
-  const closeBtn = document.getElementById('closeModal');
-  const copyBtn = document.getElementById('copyLlmPrompt');
-  const copyFeedback = document.getElementById('copyFeedback');
-  const promptArea = document.getElementById('llmPromptArea');
-
-  if (gradeBtn) {
-    gradeBtn.addEventListener('click', () => {
-      const state = loadState();
-      const writeIns = state.writeInAnswers || {};
-      
-      // Collect answered write-ins
-      const answeredList = QUIZ_QUESTIONS.filter((q, idx) => q.type === 'write' && writeIns[idx] && writeIns[idx].trim().length > 0);
-
-      if (answeredList.length === 0) {
-        alert('Please answer at least one write-in question before generating the LLM grading prompt!');
-        return;
-      }
-
-      // Compile prompt
-      let prompt = `You are grading a student's responses to Chapter 12 ("Stream Processing") of Designing Data-Intensive Applications.
-For each question, provide:
-1. A Score from 1 to 5 (1 = Incorrect/No attempt, 3 = Partially correct/Gaps present, 5 = Excellent/Nuanced understanding).
-2. Strengths: What did the student capture accurately?
-3. Gaps: What crucial elements, terms, or architectural trade-offs did they miss?
-4. Model Comparison: Explain why the model answer is complete and how they can bridge any gaps.
-
----
-`;
-
-      QUIZ_QUESTIONS.forEach((q, idx) => {
-        if (q.type === 'write') {
-          const studentAns = writeIns[idx] || '';
-          if (studentAns.trim().length > 0) {
-            prompt += `
-QUESTION #${idx + 1}: ${q.q}
-RUBRIC/MODEL ANSWER: ${q.modelAnswer}
-STUDENT'S RESPONSE: "${studentAns}"
---------------------------------------------------
-`;
-          }
-        }
-      });
-
-      prompt += `
-After grading all questions, provide:
-- Overall conceptual score (e.g., "82% - Solid Conceptual Foundation")
-- Top 2 strengths across their responses
-- Top 2 areas for conceptual improvement
-- A custom 1-2 sentence recommendation on which specific sub-sections of Chapter 12 (e.g. Partitioned Logs, Change Data Capture, Reasoning About Time, Stream Joins, Fault Tolerance) they should review.`;
-
-      promptArea.value = prompt;
-      modal.classList.remove('hidden');
-    });
-  }
-
-  if (closeBtn) {
-    closeBtn.addEventListener('click', () => {
-      modal.classList.add('hidden');
-    });
-  }
-
-  // Close modal on outside click
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) {
-      modal.classList.add('hidden');
+async function gradeWriteIns() {
+  const state = loadState();
+  const writeIns = state.writeInAnswers || {};
+  const answered = {};
+  
+  QUIZ_QUESTIONS.forEach((q, idx) => {
+    if (q.type === 'write' && writeIns[idx] && writeIns[idx].trim().length > 0) {
+      answered[idx] = writeIns[idx];
     }
   });
 
-  if (copyBtn) {
-    copyBtn.addEventListener('click', () => {
-      promptArea.select();
-      navigator.clipboard.writeText(promptArea.value)
-        .then(() => {
-          copyFeedback.classList.remove('hidden');
-          setTimeout(() => {
-            copyFeedback.classList.add('hidden');
-          }, 2000);
-        })
-        .catch(err => {
-          console.error('Failed to copy text: ', err);
-          alert('Could not auto-copy. Please select all text and copy manually.');
-        });
+  if (Object.keys(answered).length === 0) {
+    alert('Please answer at least one write-in question before grading.');
+    return;
+  }
+
+  const response = await fetch('/grade', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      chapterKey: STATE_KEY,
+      writeIns:   answered,
+      username:   getCurrentUsername()   // returns the active username from db.js
+    })
+  });
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  return await response.json();
+}
+
+function setupLLMGrading() {
+  const gradeBtn = document.getElementById('gradeWriteIns');
+  if (gradeBtn) {
+    gradeBtn.addEventListener('click', async () => {
+      const originalText = gradeBtn.textContent;
+      gradeBtn.textContent = 'Grading...';
+      gradeBtn.disabled = true;
+      try {
+        const data = await gradeWriteIns();
+        if (data && data.grades) {
+          alert('Grading completed successfully! Check the console or logs.');
+          console.log('Grades:', data.grades);
+        }
+      } catch (err) {
+        console.error('Error during grading:', err);
+        alert('Grading failed: ' + err.message);
+      } finally {
+        gradeBtn.textContent = originalText;
+        gradeBtn.disabled = false;
+      }
     });
   }
 }
@@ -1298,4 +1240,17 @@ function init() {
 }
 
 // Start
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', async () => {
+  if (typeof initDb !== 'undefined') {
+    await initDb();
+  }
+  const cachedUser = sessionStorage.getItem('ddia_active_user');
+  if (cachedUser) {
+    if (typeof getOrCreateUser !== 'undefined') {
+      getOrCreateUser(cachedUser);
+    }
+    init();
+  } else {
+    window.location.href = '../index.html';
+  }
+});

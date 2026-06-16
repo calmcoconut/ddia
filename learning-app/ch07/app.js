@@ -33,8 +33,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "What are the main security and compliance advantages of using sharding to isolate data in a multitenant Software-as-a-Service (SaaS) application?",
-    hint: "Think about physical vs logical separation, data access control bugs, and GDPR data deletion rights.",
+    q: "Your enterprise clients are extremely paranoid about data privacy, and a compliance auditor demands to know how you isolate user data. How does sharding by tenant provide security and compliance benefits in a multitenant SaaS system compared to storing everyone in a single shared table?",
+    hint: "Explain this in terms of physical vs. logical separation, mitigating data leak bugs, handling GDPR 'right to be forgotten' requests, and satisfying regional data residency laws.",
     modelAnswer: "Sharding for multitenancy isolates each customer's data, which enhances security by preventing access control bugs from exposing data across tenants (permission isolation). If a tenant requests data erasure under privacy laws like the GDPR, it is much easier to delete or export an entire separate shard rather than scanning a shared database table. Additionally, it helps satisfy data residency requirements by placing specific tenant shards in servers located in the correct geographical region.",
     section: "Sharding for Multitenancy"
   },
@@ -66,8 +66,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "In a database storing time-series data using key-range sharding where the key is just the timestamp, why does a write hotspot occur, and how can it be mitigated?",
-    hint: "Think about where the writes for the current time land, and how modifying the compound key structure changes the distribution.",
+    q: "Our IoT metrics database uses key-range sharding where the primary key is simply the timestamp. During a traffic surge, the database starts throwing timeout alerts because one node is melting under heavy load while the others sit idle. Explain why this write hotspot occurs and how we can redesign the compound key to mitigate it.",
+    hint: "Explain where writes for the current time land, and how prefixing the key with a non-temporal attribute (like sensor ID) changes the partition distribution.",
     modelAnswer: "If the key is just the timestamp, all current writes will have nearby keys and will route to the same active shard (the one covering the current time range), leaving all older shards idle. This write hotspot can be mitigated by prefixing the timestamp with another column, such as a sensor ID or user ID, to form a compound key. This distributes the concurrent writes across different shards, though it makes range queries across multiple sensors or users within a time range more expensive since they must be run on multiple shards.",
     section: "Sharding by Key Range"
   },
@@ -86,8 +86,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Why is splitting a shard described as an expensive operation that can exacerbate an already overloaded database node?",
-    hint: "Consider the disk I/O and file rewriting involved, similar to log compaction or B-trees.",
+    q: "During a flash sale, one of your database nodes is already running at 95% CPU and disk utilization. Suddenly, the autoscaler detects the shard has crossed its size limit and initiates a shard split, which immediately crashes the node. Why is splitting a shard such an expensive operation, and why is doing it on an overloaded node a recipe for disaster?",
+    hint: "Think about the disk I/O, file reading/rewriting, and network transfer overhead involved in re-partitioning the data.",
     modelAnswer: "Splitting a shard is an expensive operation because the database must rewrite all the data from the original shard into new, smaller files, which requires substantial disk read/write I/O and network transfer. Because shard splitting is often triggered when a node is already under heavy write load, the added resource consumption of the split process can degrade performance further, potentially pushing the node into failure or timeouts.",
     section: "Sharding by Key Range"
   },
@@ -119,8 +119,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Explain how the 'fixed number of shards' approach (used by Elasticsearch and Riak) decoupling shards from nodes resolves the rebalancing inefficiency of modulo hashing.",
-    hint: "Think about what changes and what stays the same when you add or remove nodes in this model.",
+    q: "You need to add five new physical servers to your database cluster. If you were using simple modulo hashing, this change would trigger a massive, cluster-wide data migration. Explain how the 'fixed number of shards' approach resolves this rebalancing inefficiency by decoupling logical shards from physical nodes.",
+    hint: "Describe what happens to key-to-shard assignments and node-to-shard mappings when physical nodes are added or removed.",
     modelAnswer: "In the fixed number of shards approach, the database is split into a fixed, large number of logical shards (e.g. 1000) from the start, and each key's assignment to a shard (`hash(key) % 1000`) never changes. The system separately maps these logical shards to physical nodes. When a new node is added, only entire logical shards are reassigned and moved from existing nodes to the new node, avoiding any recalculation of key-to-shard mapping and minimizing the volume of data transferred.",
     section: "Fixed number of shards"
   },
@@ -152,8 +152,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "How does consistent hashing (like Rendezvous or Jump consistent hashing) differ from the fixed number of shards approach when a new node is added?",
-    hint: "Think about where the keys come from to populate the new node.",
+    q: "You are choosing between a 'fixed number of shards' architecture and 'consistent hashing' (like Rendezvous or Jump consistent hashing) for a high-performance database cluster. When we add a new node, how does the actual movement and source of keys differ between these two models?",
+    hint: "Contrast moving whole pre-allocated logical shards between nodes with pulling individual, scattered keys from across all existing nodes.",
     modelAnswer: "In the fixed number of shards approach, rebalancing is done by moving entire pre-existing logical shards from some nodes to the new node. In contrast, under consistent hashing algorithms like Rendezvous or Jump consistent hashing, there are no fixed logical shards; instead, the new node is assigned individual keys that are collected and pulled from being scattered across all existing nodes, minimizing data movement at the key level directly.",
     section: "Consistent hashing"
   },
@@ -185,8 +185,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Describe the trade-offs of using application-level key randomization (adding random suffixes to hot keys) to mitigate write hotspots.",
-    hint: "Contrast write throughput improvements with read complexity, and explain why this shouldn't be applied to all keys.",
+    q: "An ultra-popular celebrity is hosting a live giveaway, causing millions of concurrent writes to a single database key. A senior engineer suggests: 'Let's append a random 2-digit suffix to the key in our application code to spread the writes!' Explain the architectural trade-offs of this key-randomization hack on write and read performance.",
+    hint: "Compare the parallel write capacity gains against the scatter-gather read complexity, and explain why applying this to every key in the database is a bad idea.",
     modelAnswer: "Appending a random suffix to a hot key successfully distributes its write load across multiple shards, allowing high-throughput parallel writes. However, this introduces significant read overhead because any read for that key must query all possible suffixed variations and merge the results. Furthermore, it requires additional application-level bookkeeping to identify which specific keys are hot enough to justify this suffixing, as applying it to all keys would introduce massive unnecessary read overhead.",
     section: "Skewed Workloads and Relieving Hot Spots"
   },
@@ -218,15 +218,15 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "How do systems like HBase, SolrCloud, and Kubernetes use coordination services like ZooKeeper or etcd to manage request routing, and how is split-brain avoided?",
-    hint: "Think about metadata registration, client subscriptions, and consensus protocols.",
+    q: "In a production cluster running distributed search indexes, you use ZooKeeper to manage request routing metadata. How do the database nodes and the routing tier interact with this coordination service to keep routing updated, and how does the service prevent split-brain routing maps?",
+    hint: "Mention how nodes register their shards, how the routing tier subscribes to changes, and the consensus algorithms ZooKeeper/etcd use to maintain a single source of truth.",
     modelAnswer: "These systems use ZooKeeper or etcd as an authoritative registry of which shards live on which nodes. Each database node registers its active shards with the coordination service, and the routing tier or clients subscribe to changes in this registry. Split-brain is avoided because ZooKeeper/etcd run consensus protocols (such as Paxos or Raft) to ensure that only a single, globally agreed-upon shard assignment metadata exists, preventing conflicting coordinators from assigning shards.",
     section: "Request Routing"
   },
   {
     type: "write",
-    q: "Given a multi-region deployment with untrusted client devices, which request routing strategy (client-side awareness, routing tier, or node-forwarding) would you select, and why?",
-    hint: "Consider network latency, security exposure of internal node topologies, and client complexity.",
+    q: "You are architecting a multi-region database cluster that serves requests from millions of mobile apps (untrusted client devices). Which routing strategy—client-side awareness, a dedicated routing tier, or random node-forwarding—would you choose for this deployment, and what is your design rationale?",
+    hint: "Evaluate the trade-offs regarding internal network security exposure, WAN latency, and mobile client code complexity.",
     modelAnswer: "A routing tier (load balancer/proxy) is the preferred choice. For untrusted clients, client-side shard awareness is a security risk because it exposes internal database topology and node IP addresses. A routing tier hides the database topology behind a single entry point, handles SSL termination, and rate-limiting. For a multi-region deployment, the routing tier can route the user to the closest datacenter node. Although it adds a network hop, it is much more secure and keeps the client code simple compared to client-side routing, and is more efficient than random node-forwarding which can cause cross-region WAN hops.",
     section: "Request Routing"
   },
@@ -258,8 +258,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Why are reads using a local secondary index described as a 'scatter-gather' operation, and what is its impact on tail latency?",
-    hint: "Think about what happens if you don't know the partition key, and how querying multiple nodes in parallel affects response time.",
+    q: "A developer complains: 'Our search queries using local secondary indexes are incredibly slow, and our p99 tail latency is spiking horribly as our cluster grows!' Why does a local secondary index force a 'scatter-gather' read operation, and why is this pattern so toxic for tail latency?",
+    hint: "Explain what happens when a query searches by an indexed attribute without specifying the partition key, and how querying all nodes in parallel amplifies the chance of hitting a slow response.",
     modelAnswer: "If you query a database using a local secondary index without knowing the partition key, the database cannot determine which shard holds the matching records. It must perform a 'scatter-gather' query, sending the request to all shards in parallel and merging the results. This is highly vulnerable to tail latency amplification because the overall response time of the query is bound by the slowest individual shard node to respond, which degrades performance as the cluster grows.",
     section: "Local Secondary Indexes"
   },
@@ -291,8 +291,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Explain why writes to a database with global secondary indexes are more complex and require coordinating multiple shards.",
-    hint: "Think about a record containing multiple fields/terms and where those terms are indexed.",
+    q: "Your team decides to switch from local indexes to a global secondary index to speed up search queries. However, the write latency of the application immediately doubles. Walk us through why updating a record with a global secondary index is so complex and requires coordinating multiple shards.",
+    hint: "Trace a write containing multiple attributes whose index entries reside on different shards, and mention the trade-offs between distributed transaction overhead and asynchronous replica lag.",
     modelAnswer: "In a global secondary index, the index is sharded by the values of the indexed attributes (terms) rather than the primary key. When a single record is written or updated, it may modify multiple indexed fields whose corresponding index entries reside on different shards. Thus, the database must write to the primary shard as well as coordinate updates to multiple index shards, which requires either expensive distributed transactions to guarantee consistency or accepting asynchronous propagation lag. As a consequence of this asynchronous update pipeline (like in DynamoDB), reads against a global secondary index are eventually consistent, meaning strongly consistent reads must go via the primary key or specially configured paths.",
     section: "Global Secondary Indexes"
   },
@@ -324,15 +324,15 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Compare and contrast local and global secondary indexes in terms of read latency, write latency, and overall query scaling.",
-    hint: "Think about what happens on a write (single node vs. multiple nodes) and a read (single node vs. scatter-gather).",
+    q: "During an architecture review, the team is debating whether to index our product catalog using local secondary indexes or global secondary indexes. Compare and contrast these two indexing strategies across read latency, write latency, and how they scale as we add nodes.",
+    hint: "Walk through the write path (single-shard writes vs. multi-shard coordination) and the read path (parallel scatter-gather vs. single-shard index scans) for each approach.",
     modelAnswer: "Local secondary indexes optimize for write latency because updates are confined to the single shard containing the primary record, but they suffer from high read latency for general queries because they require a scatter-gather scan across all shards. Global secondary indexes optimize for read latency because a query on a single attribute can be resolved by scanning a single index shard, but they suffer from high write latency and complexity because writing a record requires updating multiple scattered index shards. Additionally, because global indexes are updated asynchronously, reads from them are eventually consistent, and strongly consistent reads must go via the primary key or specially configured paths.",
     section: "Sharding and Secondary Indexes"
   },
   {
     type: "write",
-    q: "Explain how sharding by tenant can simplify schema migrations in a SaaS application, and what risks this approach reduces.",
-    hint: "Think about rolling upgrades, database locking, and blast radius of migration bugs.",
+    q: "A major database schema migration needs to be deployed for a multi-tenant SaaS application. If all clients shared one database table, this migration would be high-risk. How does sharding the database by tenant simplify this schema migration process, and what blast radius risks does it reduce?",
+    hint: "Consider rolling upgrades for individual tenants, lock durations on shared resources, and the containment of migration bugs.",
     modelAnswer: "Sharding by tenant allows schema migrations to be rolled out gradually, one tenant at a time, rather than performing a massive migration on a single monolithic database. This reduces operational risk because any migration bugs or performance regressions are isolated to a single tenant's shard (limited blast radius) and can be resolved before impacting other customers. It also avoids locking a shared database table for long periods, which would cause downtime for all tenants.",
     section: "Sharding for Multitenancy"
   }
@@ -408,42 +408,16 @@ const MISCONCEPTION_EXPLANATIONS = {
 // ── State Management ────────────────────────────────
 
 const STATE_KEY = 'ddia_ch7_learning';
-let _state = null;
+
 
 function loadState() {
-  if (!_state) {
-    try {
-      const raw = localStorage.getItem(STATE_KEY);
-      if (raw) _state = JSON.parse(raw);
-    } catch (e) {}
-
-    if (!_state) {
-      try {
-        if (window.parent && window.parent.__ddiaState && window.parent.__ddiaState[STATE_KEY]) {
-          _state = window.parent.__ddiaState[STATE_KEY];
-        }
-      } catch (e) {}
-    }
-
-    if (!_state) _state = {};
-  }
-  // Return a snapshot, not the live object
-  return JSON.parse(JSON.stringify(_state));
+  return window.loadState ? window.loadState(STATE_KEY) : {};
 }
 
 function saveState(data) {
-  if (!_state) loadState();
-  // Clone incoming data and merge to avoid reference aliasing
-  _state = { ..._state, ...JSON.parse(JSON.stringify(data)) };
-
-  try {
-    localStorage.setItem(STATE_KEY, JSON.stringify(_state));
-  } catch (e) {}
-
-  try {
-    window.parent.__ddiaState = window.parent.__ddiaState || {};
-    window.parent.__ddiaState[STATE_KEY] = _state;
-  } catch (e) {}
+  if (window.saveState) {
+    window.saveState(data, STATE_KEY);
+  }
 }
 
 // ── Navigation ──────────────────────────────────────
@@ -804,91 +778,59 @@ function setupQuizFilters() {
   });
 }
 
-function setupLLMGrading() {
-  const modal = document.getElementById('llmModal');
-  const gradeBtn = document.getElementById('gradeWriteIns');
-  const closeBtn = document.getElementById('closeModal');
-  const copyBtn = document.getElementById('copyLlmPrompt');
-  const copyFeedback = document.getElementById('copyFeedback');
-  const promptArea = document.getElementById('llmPromptArea');
-
-  if (gradeBtn) {
-    gradeBtn.addEventListener('click', () => {
-      const state = loadState();
-      const writeIns = state.writeInAnswers || {};
-      
-      // Collect answered write-ins
-      const answeredList = QUIZ_QUESTIONS.filter((q, idx) => q.type === 'write' && writeIns[idx] && writeIns[idx].trim().length > 0);
-
-      if (answeredList.length === 0) {
-        alert('Please answer at least one write-in question before generating the LLM grading prompt!');
-        return;
-      }
-
-      // Compile prompt
-      let prompt = `You are grading a student's responses to Chapter 7 ("Sharding") of Designing Data-Intensive Applications.
-For each question, provide:
-1. A Score from 1 to 5 (1 = Incorrect/No attempt, 3 = Partially correct/Gaps present, 5 = Excellent/Nuanced understanding).
-2. Strengths: What did the student capture accurately?
-3. Gaps: What crucial elements, terms, or architectural trade-offs did they miss?
-4. Model Comparison: Explain why the model answer is complete and how they can bridge any gaps.
-
----
-`;
-
-      QUIZ_QUESTIONS.forEach((q, idx) => {
-        if (q.type === 'write') {
-          const studentAns = writeIns[idx] || '';
-          if (studentAns.trim().length > 0) {
-            prompt += `
-QUESTION #${idx + 1}: ${q.q}
-RUBRIC/MODEL ANSWER: ${q.modelAnswer}
-STUDENT'S RESPONSE: "${studentAns}"
---------------------------------------------------
-`;
-          }
-        }
-      });
-
-      prompt += `
-After grading all questions, provide:
-- Overall conceptual score (e.g., "82% - Solid Conceptual Foundation")
-- Top 2 strengths across their responses
-- Top 2 areas for conceptual improvement
-- A custom 1-2 sentence recommendation on which specific sub-sections of Chapter 7 (e.g. Sharding by Key Range, Sharding by Hash of Key, Local vs Global Secondary Indexes, Request Routing) they should review.`;
-
-      promptArea.value = prompt;
-      modal.classList.remove('hidden');
-    });
-  }
-
-  if (closeBtn) {
-    closeBtn.addEventListener('click', () => {
-      modal.classList.add('hidden');
-    });
-  }
-
-  // Close modal on outside click
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) {
-      modal.classList.add('hidden');
+async function gradeWriteIns() {
+  const state = loadState();
+  const writeIns = state.writeInAnswers || {};
+  const answered = {};
+  
+  QUIZ_QUESTIONS.forEach((q, idx) => {
+    if (q.type === 'write' && writeIns[idx] && writeIns[idx].trim().length > 0) {
+      answered[idx] = writeIns[idx];
     }
   });
 
-  if (copyBtn) {
-    copyBtn.addEventListener('click', () => {
-      promptArea.select();
-      navigator.clipboard.writeText(promptArea.value)
-        .then(() => {
-          copyFeedback.classList.remove('hidden');
-          setTimeout(() => {
-            copyFeedback.classList.add('hidden');
-          }, 2000);
-        })
-        .catch(err => {
-          console.error('Failed to copy text: ', err);
-          alert('Could not auto-copy. Please select all text and copy manually.');
-        });
+  if (Object.keys(answered).length === 0) {
+    alert('Please answer at least one write-in question before grading.');
+    return;
+  }
+
+  const response = await fetch('/grade', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      chapterKey: STATE_KEY,
+      writeIns:   answered,
+      username:   getCurrentUsername()   // returns the active username from db.js
+    })
+  });
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  return await response.json();
+}
+
+function setupLLMGrading() {
+  const gradeBtn = document.getElementById('gradeWriteIns');
+  if (gradeBtn) {
+    gradeBtn.addEventListener('click', async () => {
+      const originalText = gradeBtn.textContent;
+      gradeBtn.textContent = 'Grading...';
+      gradeBtn.disabled = true;
+      try {
+        const data = await gradeWriteIns();
+        if (data && data.grades) {
+          alert('Grading completed successfully! Check the console or logs.');
+          console.log('Grades:', data.grades);
+        }
+      } catch (err) {
+        console.error('Error during grading:', err);
+        alert('Grading failed: ' + err.message);
+      } finally {
+        gradeBtn.textContent = originalText;
+        gradeBtn.disabled = false;
+      }
     });
   }
 }
@@ -1311,4 +1253,17 @@ function init() {
 }
 
 // Start
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', async () => {
+  if (typeof initDb !== 'undefined') {
+    await initDb();
+  }
+  const cachedUser = sessionStorage.getItem('ddia_active_user');
+  if (cachedUser) {
+    if (typeof getOrCreateUser !== 'undefined') {
+      getOrCreateUser(cachedUser);
+    }
+    init();
+  } else {
+    window.location.href = '../index.html';
+  }
+});

@@ -33,8 +33,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Explain the difference between synchronous and asynchronous replication in terms of write latency and write availability when a follower node goes offline.",
-    hint: "Focus on whether the leader blocks waiting for a follower, how acknowledgment works, and what happens to the system's write capacity.",
+    q: "During a late-night production incident, one of your database followers goes completely offline. While debugging, a junior developer asks: 'Wait, does this crash block our incoming writes or spike our response latency?' How do you explain the trade-offs of synchronous vs. asynchronous replication regarding write latency and write availability in this outage scenario?",
+    hint: "Walk the junior dev through whether the leader blocks waiting for the dead follower, how write acknowledgments are sent to clients, and the impact on overall system write capacity.",
     modelAnswer: "In synchronous replication, the leader waits for the follower to confirm the write before acknowledging it to the client. If the follower goes offline, the leader cannot confirm writes, blocking the system and reducing write availability, though it guarantees zero data loss on leader crash. In asynchronous replication, the leader acknowledges the write immediately after committing it locally. If a follower goes offline, the leader continues to process writes with low latency, but any un-replicated writes are lost if the leader crashes.",
     section: "Synchronous Versus Asynchronous Replication"
   },
@@ -66,8 +66,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Describe the steps required to set up a new follower replica in a single-leader system without taking the database offline or locking out writes.",
-    hint: "Mention snapshots, copying data, replication logs, and log sequence numbers or binlog coordinates.",
+    q: "It is Black Friday, and the primary database is sweating under heavy traffic. You need to provision a new follower replica immediately to scale reads, but you absolutely cannot take the database offline or lock out writes. What is the step-by-step workflow you must follow to get this new follower synced up?",
+    hint: "Explain how to use database snapshots, copy the data, align replication logs, and use log sequence numbers or binlog coordinates to catch up.",
     modelAnswer: "First, take a consistent snapshot of the leader's database without locking the entire database (supported by most storage engines). Copy this snapshot to the new follower node. Next, identify the exact position in the leader's replication log (e.g., log sequence number or binlog position) at which the snapshot was taken. Finally, configure the follower to connect to the leader and stream all log entries starting from that exact position, catching up until it is fully synced.",
     section: "Setting Up New Followers"
   },
@@ -99,8 +99,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "What is the 'split-brain' problem in leader election, how does it occur, and what is a common mechanism used to prevent it?",
-    hint: "Discuss network partitions, multiple leaders, and node consensus (fencing tokens/quorums).",
+    q: "A major network partition splits your cluster in half, and suddenly two different nodes are both acting as the primary leader and accepting writes. Explain this 'split-brain' catastrophe: how did we end up in this state, why is it dangerous for our data, and what common architecture mechanism could have prevented it?",
+    hint: "Discuss how network isolation triggers dual leader elections, how conflicting updates diverge, and how tools like node consensus (fencing tokens/quorums) mitigate this.",
     modelAnswer: "Split-brain occurs when a network partition cuts off the leader from the rest of the cluster, causing the remaining followers to believe the leader is dead and elect a new leader. If the old leader is actually still running, it will continue to accept writes while the new leader does the same, leading to data divergence. To prevent split-brain, systems often use node consensus protocols (like ZooKeeper or Raft) to ensure only one leader can be active at a time, or implement fencing mechanisms that disable the old leader once a new one is elected.",
     section: "Leader failure: Failover"
   },
@@ -132,8 +132,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Compare Write-Ahead Log (WAL) shipping with Logical (row-based) log replication. Why does Logical replication make rolling database upgrades easier?",
-    hint: "Think about physical vs. logical formats, coupling to the storage engine, and version compatibility.",
+    q: "Your team is planning a zero-downtime rolling upgrade of the production database cluster. You are debating between physical Write-Ahead Log (WAL) shipping and Logical (row-based) replication. Explain the structural difference between these two logs and why Logical replication makes rolling upgrades significantly easier.",
+    hint: "Contrast physical disk block changes with logical row-level changes, and detail how tight coupling to the storage engine affects version compatibility.",
     modelAnswer: "Write-Ahead Log (WAL) shipping is a physical replication method where the log contains low-level byte changes on specific disk blocks, tightly coupling the log to the database's storage engine. A physical log is usually version-incompatible across minor/major database releases. Logical replication, however, decodes database changes into logical rows (independent of physical disk layouts). This decoupling allows the leader and followers to run different database versions, enabling rolling upgrades where followers are upgraded first and then promoted to leader.",
     section: "Implementation of Replication Logs"
   },
@@ -165,8 +165,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Describe a user-facing anomaly caused by replication lag, and explain how a system can implement 'read-after-write consistency' to solve it.",
-    hint: "Think about a user editing a profile, submitting, refreshing the page, and hitting an asynchronous follower that hasn't caught up.",
+    q: "A frustrated user submits a bug report: 'I just updated my profile picture, but when the page reloaded, my old picture was still there! My changes are lost!' Describe the replication lag anomaly occurring under the hood, and explain how you would design the system to guarantee 'read-after-write consistency' to solve it.",
+    hint: "Walk through the path of the write to the leader and the user's subsequent read hitting an asynchronous follower. How can we force reads to the leader or track write timestamps?",
     modelAnswer: "When a user updates their profile, the write goes to the leader and is asynchronously replicated to followers. If the user immediately refreshes the page and their read request is routed to a follower that has replication lag, they will see their old profile data, making it look like their update was lost. To solve this, read-after-write consistency can be implemented by routing reads for the user's own data to the leader (e.g., always read a user's own profile from the leader, or route to the leader for 1 minute after a write) or by tracking the update timestamp and only querying followers that are caught up to that timestamp.",
     section: "Reading your own writes"
   },
@@ -198,8 +198,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Explain how the 'monotonic reads' guarantee differs from 'read-after-write consistency' using a concrete user scenario.",
-    hint: "Think about multiple read requests hitting different followers vs. a user reading their own updates.",
+    q: "During a system design meeting, a product manager asks: 'Is \"monotonic reads\" just a fancy academic name for \"read-after-write consistency,\" or is there a real difference?' Explain the difference by walking through a concrete user scenario where monotonic reads are violated but read-after-write is not.",
+    hint: "Contrast a user reading their own writes vs. a user refreshing and hitting different followers with varying lag (moving backward in time).",
     modelAnswer: "Read-after-write consistency is about a user's relationship with their own updates: if User A submits a post, they are guaranteed to see that post on subsequent reads. Monotonic reads is about a user's relationship with the sequence of reads of any data: if User B reads User A's profile and sees a new post, B is guaranteed not to see that post disappear on a subsequent refresh. In monotonic reads, the user's consecutive reads cannot go backward in time (by hitting a more lagged follower), even if they didn't write the data themselves. In practice, monotonic reads are often implemented via 'sticky reads' by routing all of a user's requests to the same replica (e.g., pinning a session to a specific server based on user ID hash).",
     section: "Problems with Replication Lag"
   },
@@ -218,8 +218,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Discuss the benefits and drawbacks of multi-leader replication in multi-datacenter systems compared to a single-leader setup.",
-    hint: "Focus on write latency, tolerance to datacenter failures, offline operations, and the complexity of conflict resolution.",
+    q: "Your application is expanding globally, and you are pitching a multi-leader, multi-datacenter replication architecture to your CTO. What are the key operational benefits and major engineering drawbacks of this setup compared to keeping a single global leader?",
+    hint: "Highlight write latency across WANs, tolerance to datacenter outages, support for offline client work, and the headache of conflict resolution.",
     modelAnswer: "Multi-leader replication provides lower write latency in multi-datacenter setups because write operations can be accepted and committed locally in each datacenter, rather than traversing the WAN to a single global leader. It also tolerates datacenter network outages, as each datacenter can continue functioning independently. However, the major drawback is the complexity of conflict resolution: because writes can happen concurrently at different leaders, the system must detect and resolve write conflicts, which is not required in single-leader setups.",
     section: "Multi-Leader Replication"
   },
@@ -238,8 +238,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Explain how conflict avoidance works in a multi-leader system and why it might break down (e.g., forcing a system to handle actual conflicts).",
-    hint: "Consider user geographic routing, traveling users, or datacenter outages.",
+    q: "You've decided to implement 'conflict avoidance' to handle writes in your multi-leader database setup. How does this strategy prevent write conflicts, and under what real-world circumstances will this avoidance guarantee break down, forcing your system to handle actual conflicts?",
+    hint: "Explain how routing users to a specific geographic leader avoids conflicts, and consider what happens when users travel or a datacenter experiences an outage.",
     modelAnswer: "Conflict avoidance works by routing all write operations for a specific user or record to the same database leader. For instance, a user's requests are routed to the closest datacenter, so all edits to their profile occur on that single leader, avoiding concurrent writes on different leaders. However, this breaks down if the user travels to a different region and is routed to a different datacenter, or if a datacenter fails and the system must failover and route writes to a different leader, forcing the system to handle concurrent, conflicting writes.",
     section: "Conflict avoidance"
   },
@@ -258,8 +258,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Although a quorum system with $w + r > n$ is mathematically expected to return the latest written value, list and explain at least three real-world edge cases where a client might still receive a stale read.",
-    hint: "Think about clock drift, partially completed/failed writes, concurrent read/write races, and node availability anomalies discussed in the text.",
+    q: "A colleague is staring at a monitor, completely puzzled: 'I set up our Cassandra cluster with w + r > n, which mathematically guarantees strong consistency. Yet, some of our test clients are still reading stale data!' Help them debug by listing and explaining at least three real-world edge cases where this quorum rule fails.",
+    hint: "Explain the vulnerabilities involving physical clock drift (LWW), partially failed writes, concurrent read/write races, or sloppy quorums and hinted handoffs.",
     modelAnswer: "Even with a strong quorum ($w + r > n$), stale reads can occur due to several factors: 1) Clock skew in Last-Write-Wins (LWW) conflict resolution can cause a newer write with an earlier local clock to be silently discarded. 2) If a write fails to achieve the required quorum (e.g. succeeding on only 1 out of 3 nodes) and is aborted, subsequent reads may still retrieve the partially written value from the node where it succeeded. 3) If a write and read happen concurrently, the read may only overlap on some nodes, returning the old value. 4) Sloppy quorums and hinted handoffs can write data to fallback nodes, temporarily violating the quorum overlap until the handoff is complete.",
     section: "Using quorums for reading and writing"
   },
@@ -278,8 +278,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Explain the concept of 'concurrency' in distributed systems and how the 'happens-before' relationship is used to determine if two operations are concurrent.",
-    hint: "Discuss physical timestamps vs. causality, dependency, and version tracking.",
+    q: "In a distributed systems training session, you are explaining why physical timestamps cannot define concurrency. How do you define 'concurrency' causally, and how does the 'happens-before' relationship help determine if two operations are concurrent or causally dependent?",
+    hint: "Discuss physical clock unreliability, dependency/causality between events, and how version vectors/version tracking are used to compare state.",
     modelAnswer: "In distributed systems, concurrency is defined causally rather than by physical time. Two operations are concurrent if neither has causal knowledge of the other; that is, neither operation was created with awareness of the other's value. The 'happens-before' relationship defines causality: Operation A happens-before Operation B if B was built upon or had access to A's state. If neither Operation A happens-before B, nor B happens-before A, they are defined as concurrent, and their conflict must be resolved.",
     section: "The happens-before relation and concurrency"
   },
@@ -298,8 +298,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Explain how 'version vectors' differ from a single transaction/logical clock in detecting concurrent writes across multiple replicas in leaderless replication.",
-    hint: "Think about how nodes track changes independently without a centralized counter.",
+    q: "Our team is migrating from a single-leader database (which used a simple auto-incrementing transaction ID) to a leaderless cluster. Explain why a single transaction clock is insufficient here, and how 'version vectors' allow us to detect concurrent writes across multiple replicas.",
+    hint: "Focus on how individual nodes track changes independently without a centralized coordinator, and how we compare vectors to see if one state dominates another.",
     modelAnswer: "A single logical clock or transaction counter requires a centralized coordinator to assign sequential numbers, which is not feasible in multi-leader or leaderless systems where nodes accept writes independently. A version vector consists of a list of version numbers, one for each replica node. When a node accepts a write, it increments its own version number in the vector and sends the updated vector with the write. By comparing vectors from different replicas, the system can determine if one write is a successor of another (causally related) or if they are concurrent. For example, if Node A has version vector [A:1, B:0] and Node B has [A:0, B:1], neither vector dominates the other. This indicates that the writes occurred concurrently and must be merged. Conversely, a vector of [A:2, B:1] dominates [A:1, B:1], indicating that the former is a successor and can overwrite the latter.",
     section: "Version vectors"
   },
@@ -318,8 +318,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "What is a 'sloppy quorum' and 'hinted handoff'? Explain how they improve write availability at the cost of read consistency.",
-    hint: "Think about what happens when home nodes are down, where the data is written, and when it returns.",
+    q: "A network partition isolates the designated 'home' nodes for some of our database keys. To keep the app accepting writes, the database triggers a 'sloppy quorum' and 'hinted handoff'. Explain what these two mechanisms do, how they keep our writes online, and why they temporarily break read consistency.",
+    hint: "Describe what happens when the main replica nodes are unreachable, where the write goes, and how it is returned to the home nodes once the network heals.",
     modelAnswer: "A sloppy quorum is a mechanism in leaderless systems where, if the designated home nodes for a key are unreachable during a network partition, the system accepts writes on temporary fallback nodes outside the key's main replica set. When the partition heals, these fallback nodes asynchronously deliver the writes to the home nodes, a process called hinted handoff. This greatly improves write availability because the system can accept writes as long as any w nodes are reachable. However, it compromises read consistency because clients reading from the remaining home nodes will get stale data until the hinted handoff completes.",
     section: "Using quorums for reading and writing"
   }
@@ -393,42 +393,16 @@ const MISCONCEPTION_EXPLANATIONS = {
 // ── State Management ────────────────────────────────
 
 const STATE_KEY = 'ddia_ch6_learning';
-let _state = null;
+
 
 function loadState() {
-  if (!_state) {
-    try {
-      const raw = localStorage.getItem(STATE_KEY);
-      if (raw) _state = JSON.parse(raw);
-    } catch (e) {}
-
-    if (!_state) {
-      try {
-        if (window.parent && window.parent.__ddiaState && window.parent.__ddiaState[STATE_KEY]) {
-          _state = window.parent.__ddiaState[STATE_KEY];
-        }
-      } catch (e) {}
-    }
-
-    if (!_state) _state = {};
-  }
-  // Return a snapshot, not the live object
-  return JSON.parse(JSON.stringify(_state));
+  return window.loadState ? window.loadState(STATE_KEY) : {};
 }
 
 function saveState(data) {
-  if (!_state) loadState();
-  // Clone incoming data and merge to avoid reference aliasing
-  _state = { ..._state, ...JSON.parse(JSON.stringify(data)) };
-
-  try {
-    localStorage.setItem(STATE_KEY, JSON.stringify(_state));
-  } catch (e) {}
-
-  try {
-    window.parent.__ddiaState = window.parent.__ddiaState || {};
-    window.parent.__ddiaState[STATE_KEY] = _state;
-  } catch (e) {}
+  if (window.saveState) {
+    window.saveState(data, STATE_KEY);
+  }
 }
 
 // ── Navigation ──────────────────────────────────────
@@ -789,91 +763,59 @@ function setupQuizFilters() {
   });
 }
 
-function setupLLMGrading() {
-  const modal = document.getElementById('llmModal');
-  const gradeBtn = document.getElementById('gradeWriteIns');
-  const closeBtn = document.getElementById('closeModal');
-  const copyBtn = document.getElementById('copyLlmPrompt');
-  const copyFeedback = document.getElementById('copyFeedback');
-  const promptArea = document.getElementById('llmPromptArea');
-
-  if (gradeBtn) {
-    gradeBtn.addEventListener('click', () => {
-      const state = loadState();
-      const writeIns = state.writeInAnswers || {};
-      
-      // Collect answered write-ins
-      const answeredList = QUIZ_QUESTIONS.filter((q, idx) => q.type === 'write' && writeIns[idx] && writeIns[idx].trim().length > 0);
-
-      if (answeredList.length === 0) {
-        alert('Please answer at least one write-in question before generating the LLM grading prompt!');
-        return;
-      }
-
-      // Compile prompt
-      let prompt = `You are grading a student's responses to Chapter 6 ("Replication") of Designing Data-Intensive Applications.
-For each question, provide:
-1. A Score from 1 to 5 (1 = Incorrect/No attempt, 3 = Partially correct/Gaps present, 5 = Excellent/Nuanced understanding).
-2. Strengths: What did the student capture accurately?
-3. Gaps: What crucial elements, terms, or architectural trade-offs did they miss?
-4. Model Comparison: Explain why the model answer is complete and how they can bridge any gaps.
-
----
-`;
-
-      QUIZ_QUESTIONS.forEach((q, idx) => {
-        if (q.type === 'write') {
-          const studentAns = writeIns[idx] || '';
-          if (studentAns.trim().length > 0) {
-            prompt += `
-QUESTION #${idx + 1}: ${q.q}
-RUBRIC/MODEL ANSWER: ${q.modelAnswer}
-STUDENT'S RESPONSE: "${studentAns}"
---------------------------------------------------
-`;
-          }
-        }
-      });
-
-      prompt += `
-After grading all questions, provide:
-- Overall conceptual score (e.g., "82% - Solid Conceptual Foundation")
-- Top 2 strengths across their responses
-- Top 2 areas for conceptual improvement
-- A custom 1-2 sentence recommendation on which specific sub-sections of Chapter 6 (e.g. Single-Leader Replication, Replication Lag, Multi-Leader Topologies, Leaderless Quorums, Concurrency Detection) they should review.`;
-
-      promptArea.value = prompt;
-      modal.classList.remove('hidden');
-    });
-  }
-
-  if (closeBtn) {
-    closeBtn.addEventListener('click', () => {
-      modal.classList.add('hidden');
-    });
-  }
-
-  // Close modal on outside click
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) {
-      modal.classList.add('hidden');
+async function gradeWriteIns() {
+  const state = loadState();
+  const writeIns = state.writeInAnswers || {};
+  const answered = {};
+  
+  QUIZ_QUESTIONS.forEach((q, idx) => {
+    if (q.type === 'write' && writeIns[idx] && writeIns[idx].trim().length > 0) {
+      answered[idx] = writeIns[idx];
     }
   });
 
-  if (copyBtn) {
-    copyBtn.addEventListener('click', () => {
-      promptArea.select();
-      navigator.clipboard.writeText(promptArea.value)
-        .then(() => {
-          copyFeedback.classList.remove('hidden');
-          setTimeout(() => {
-            copyFeedback.classList.add('hidden');
-          }, 2000);
-        })
-        .catch(err => {
-          console.error('Failed to copy text: ', err);
-          alert('Could not auto-copy. Please select all text and copy manually.');
-        });
+  if (Object.keys(answered).length === 0) {
+    alert('Please answer at least one write-in question before grading.');
+    return;
+  }
+
+  const response = await fetch('/grade', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      chapterKey: STATE_KEY,
+      writeIns:   answered,
+      username:   getCurrentUsername()   // returns the active username from db.js
+    })
+  });
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  return await response.json();
+}
+
+function setupLLMGrading() {
+  const gradeBtn = document.getElementById('gradeWriteIns');
+  if (gradeBtn) {
+    gradeBtn.addEventListener('click', async () => {
+      const originalText = gradeBtn.textContent;
+      gradeBtn.textContent = 'Grading...';
+      gradeBtn.disabled = true;
+      try {
+        const data = await gradeWriteIns();
+        if (data && data.grades) {
+          alert('Grading completed successfully! Check the console or logs.');
+          console.log('Grades:', data.grades);
+        }
+      } catch (err) {
+        console.error('Error during grading:', err);
+        alert('Grading failed: ' + err.message);
+      } finally {
+        gradeBtn.textContent = originalText;
+        gradeBtn.disabled = false;
+      }
     });
   }
 }
@@ -1290,4 +1232,17 @@ function init() {
 }
 
 // Start
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', async () => {
+  if (typeof initDb !== 'undefined') {
+    await initDb();
+  }
+  const cachedUser = sessionStorage.getItem('ddia_active_user');
+  if (cachedUser) {
+    if (typeof getOrCreateUser !== 'undefined') {
+      getOrCreateUser(cachedUser);
+    }
+    init();
+  } else {
+    window.location.href = '../index.html';
+  }
+});

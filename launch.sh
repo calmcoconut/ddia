@@ -50,5 +50,5 @@ echo "👉 Press Ctrl+C to shut down the server"
 echo "========================================================"
 echo ""
 
-# Start the python HTTP server
-$PYTHON_CMD -m http.server "$PORT" --directory "$DIRECTORY"
+# Start the Flask app server
+$PYTHON_CMD server.py "$PORT"

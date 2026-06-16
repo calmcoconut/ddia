@@ -33,8 +33,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Why does the Unix command pipeline 'sort' scale to files larger than available RAM, whereas a simple Python script using an in-memory hash table might crash?",
-    hint: "Think about memory limits, working set size, and external mergesort.",
+    q: "Your teammate writes a Python script to count user sessions by grouping them in an in-memory dictionary, and it immediately crashes with an Out-of-Memory (OOM) error on a 50 GB log file. In contrast, a simple Unix pipeline of `sort | uniq -c` finishes successfully on the same machine. How does Unix `sort` achieve this stability under memory pressure?",
+    hint: "Look into the mechanism of external mergesort, intermediate disk segments, and memory limits.",
     modelAnswer: "A Python script using a hash table keeps all distinct keys and their counts in memory. If the working set (number of distinct keys) exceeds available RAM, the script will crash with an out-of-memory error. The Unix 'sort' utility, however, implements an external mergesort: it sorts chunks of data in memory, writes them to disk as sorted segment files, and then merges them sequentially. GNU Coreutils 'sort' automatically parallelizes across CPU cores and spills to disk, scaling efficiently to large datasets.",
     section: "Batch Processing with Unix Tools"
   },
@@ -53,8 +53,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Explain the difference between shared-nothing and shared-disk architectures in the context of distributed storage.",
-    hint: "Think about centralized storage appliances, datacenter networks, and commodity hardware.",
+    q: "An enterprise architect recommends hosting a new HDFS cluster on top of a centralized Storage Area Network (SAN) with high-speed fiber channels. Your team lead objects, preferring local drives on cheap commodity servers. Contrast the shared-nothing and shared-disk architectures to explain why the lead is right.",
+    hint: "Think about scalability limits, network bottlenecks, cost, and single points of failure in centralized storage vs. local disks.",
     modelAnswer: "A shared-disk architecture relies on a centralized storage appliance (like SAN or NAS) connected via specialized networks (like Fibre Channel) to compute nodes. In contrast, a shared-nothing architecture distributes data across standard commodity servers connected by a conventional network. Distributed filesystems like HDFS use shared-nothing, where each node runs a daemon (data node) exposing local disk access over the network, avoiding the cost and single-point-of-failure issues of centralized SANs.",
     section: "Distributed Filesystems"
   },
@@ -86,8 +86,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Explain the difference between cluster resource managers (like YARN or Kubernetes) and workflow schedulers (like Airflow or Dagster).",
-    hint: "Focus on resource allocation vs. job dependency graphs (DAGs).",
+    q: "A junior developer asks: 'Since we are already using Kubernetes to schedule our microservices, why do we need to set up Apache Airflow to run our nightly batch pipeline?' Explain the different responsibilities of cluster resource managers and workflow schedulers.",
+    hint: "Distinguish between container resource allocation (CPU/RAM) and managing a dependency graph (DAG) of job tasks.",
     modelAnswer: "Cluster resource managers (YARN, Kubernetes) allocate physical resources (CPU, RAM, GPU) and start/stop individual task executors across nodes. Workflow schedulers (Airflow, Dagster) manage the high-level dependency graphs (DAGs) of multiple batch jobs. They orchestrate when jobs should run (e.g., job B runs only after job A succeeds), handle retries on failure, and integrate with external APIs, without managing individual node resources directly.",
     section: "Distributed Job Orchestration"
   },
@@ -119,8 +119,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Explain how MapReduce achieves fault tolerance if a mapper node crashes during execution.",
-    hint: "Think about deterministic execution, immutability of inputs, and re-running tasks.",
+    q: "During a massive 4-hour MapReduce job, one of the mapper servers experiences a hardware failure and goes offline. Explain how the framework recovers and completes the job without losing data or requiring a full manual restart.",
+    hint: "Consider the immutability of input data blocks, determinism of mapper tasks, and task re-scheduling.",
     modelAnswer: "MapReduce relies on functional programming principles where mappers and reducers do not mutate state and depend only on the input records passed to them. If a node running a mapper task crashes, the scheduler simply re-runs the mapper task on another node that has a replica of the input block. Because inputs are immutable and tasks are deterministic, re-running the task produces the identical outputs, ensuring fault tolerance without complex state replication.",
     section: "MapReduce"
   },
@@ -139,8 +139,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Why is MapReduce generally slower than modern dataflow engines like Spark or Flink?",
-    hint: "Think about intermediate state, disk write overhead, and DAG construction.",
+    q: "A data engineer migrates a pipeline from Hadoop MapReduce to Apache Spark and observes a 10x speedup. Why is MapReduce generally much slower than modern dataflow engines?",
+    hint: "Focus on how intermediate state is handled: disk I/O and replication overhead in HDFS vs. DAG lineage in memory.",
     modelAnswer: "MapReduce writes all intermediate outputs to HDFS/S3 at the end of each map and reduce stage to ensure fault tolerance (rather than because disk is inherently required by the programming model itself). This generates substantial disk I/O and replication network traffic. In contrast, dataflow engines like Spark and Flink construct a unified Directed Acyclic Graph (DAG) for the entire workflow and keep intermediate state in memory or on local disk, resorting to disk/network replication only when necessary because they can recompute lost partitions from the DAG lineage on failure.",
     section: "MapReduce"
   },
@@ -172,8 +172,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Describe the distributed shuffle algorithm in MapReduce. How do mappers and reducers coordinate to sort data?",
-    hint: "Think about local partition files, HTTP pulls, and merging sorted files.",
+    q: "You are explaining the inner workings of MapReduce to a new hire. Describe the steps of the distributed shuffle phase: how do key-value pairs travel from mappers to reducers, and how is sorting coordinated?",
+    hint: "Think about hashing keys, local sorted segment files on mappers, HTTP pulls, and the final mergesort on the reducer side.",
     modelAnswer: "During the shuffle, mappers process inputs and partition key-value pairs by hashing the key. Mappers write these partitioned pairs as sorted segment files on their local disks. Reducers then connect to all mappers to pull their assigned key partition files. Once a reducer has downloaded all its partition segments, it merges them using a mergesort-style operation, ensuring values for the same key are consecutive before the reducer function is called.",
     section: "Shuffling Data"
   },
@@ -205,8 +205,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Compare the network and memory trade-offs of a reduce-side sort-merge join versus a map-side broadcast hash join.",
-    hint: "Think about sharding, shuffle data size, and memory constraints.",
+    q: "You need to join a huge 10 TB clickstream log dataset with a small 50 MB table of user country codes. Explain why a map-side broadcast hash join is much faster here than a standard reduce-side sort-merge join, and detail the resource tradeoffs.",
+    hint: "Compare the network cost of shuffling the 10 TB dataset with the memory cost of loading the 50 MB table on each mapper.",
     modelAnswer: "A reduce-side sort-merge join shuffles all records from both datasets across the network to partition and sort them by the join key. This uses substantial network bandwidth but does not require either dataset to fit in memory. In contrast, a map-side broadcast hash join avoids shuffling the large dataset by loading the entire small dataset into memory on every mapper node, saving network resources but risking out-of-memory errors if the small table exceeds mapper RAM.",
     section: "Joins and Grouping"
   },
@@ -225,8 +225,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Explain how a partitioned hash join (bucketed map join) avoids both the network overhead of a shuffle and the memory limits of a broadcast join.",
-    hint: "Think about pre-partitioning, matching buckets, and local joins.",
+    q: "Your clickstream events and user profiles are both pre-sharded into 64 partitions based on user ID. Describe how a partitioned hash join (bucketed map join) exploits this structure to perform the join efficiently.",
+    hint: "Consider how mappers can load matching shards locally, avoiding both a global network shuffle and the need to load the entire database into memory.",
     modelAnswer: "In a partitioned hash join, both datasets are pre-partitioned (bucketed) by the join key in the same way (using the same hash function and number of partitions). When joining, a mapper only needs to load the corresponding partition of each dataset. The mapper can load the smaller partition into an in-memory hash table and join it with the larger partition locally. This avoids a full network shuffle and only requires a single partition (rather than the entire table) to fit in memory.",
     section: "Joins and Grouping"
   },
@@ -258,8 +258,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Why might a data scientist experience a 'performance surprise' when migrating from a local Pandas DataFrame to a distributed DataFrame in Spark?",
-    hint: "Think about indexing, ordering, and data sharding across nodes.",
+    q: "A data scientist is puzzled because their local Pandas script running index-based lookups and row sorting runs slower after migrating to a distributed Spark DataFrame. Why do distributed DataFrames suffer from such 'performance surprises' when performing row-level ordering or indexing?",
+    hint: "Think about how data is partitioned across nodes, and how index lookups or sorting require expensive network shuffles.",
     modelAnswer: "Local DataFrames (like Pandas) are stored sequentially in memory and support fast row-level indexing and ordering. In contrast, distributed DataFrames (like Spark) are partitioned across multiple machines and are generally unordered. Operations that assume a strict order or rely on fast random row-access index lookups require massive network shuffling and coordination in a distributed environment, leading to unexpected performance bottlenecks. To mitigate this, developers should prefer key-based operations and avoid relying on implicit row order.",
     section: "DataFrames"
   },
@@ -278,8 +278,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Describe three text preprocessing steps that are well-suited for batch processing frameworks when preparing raw web data for training a Large Language Model.",
-    hint: "Think about HTML extraction, de-duplication, and tokenization.",
+    q: "Your team is preparing a raw web scrape dataset of 100 billion tokens to train a large language model. Describe three text preprocessing tasks that are highly suited for a batch processing framework like Spark.",
+    hint: "Think about tasks that are 'embarrassingly parallel' and can operate on individual documents (e.g., cleaning, deduplication, tokenization).",
     modelAnswer: "Three preprocessing steps suited for batch frameworks are: 1) HTML extraction and cleaning, where raw text is parsed from HTML and malformed characters are corrected; 2) Document deduplication and quality filtering, where duplicate pages, low-quality spam, or irrelevant content are discarded; and 3) Tokenization and embedding generation, where text is split into tokens and converted into numerical vector representations. These are embarrassingly parallel tasks that can scale across multiple worker nodes.",
     section: "Machine Learning"
   },
@@ -298,8 +298,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Why is writing directly to a production database from inside parallel tasks of a batch job considered a bad architectural pattern?",
-    hint: "Think about database overload, network latency, and the all-or-nothing guarantee.",
+    q: "An intern proposes writing a Spark job where each executor task connects directly to the production PostgreSQL database and updates user rows in parallel. Explain why this is an architectural anti-pattern.",
+    hint: "Consider the impact of concurrent connections, database load, network latency, and the lack of atomic all-or-nothing rollback guarantees for failed jobs.",
     modelAnswer: "Writing directly to a production database from parallel batch tasks can easily overwhelm the database with concurrent writes, degrading performance for live users. It is also slow because it makes row-by-row network calls rather than sequential bulk writes. Finally, it violates the all-or-nothing guarantee of batch jobs, as failures leave partial, corrupted, or duplicated write side-effects visible in the production database.",
     section: "Serving Derived Data"
   },
@@ -318,8 +318,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Explain the 'sushi principle' (raw data is better) in data lakes, and how it relates to schema-on-read vs. schema-on-write.",
-    hint: "Focus on data preservation, flexibility for future analysis, and the cost of transforming data early.",
+    q: "Your company's data warehouse team wants to transform and clean all incoming raw logs before saving them. The data lake team objects, advocating for the 'sushi principle'. Explain this principle and how it relates to schema-on-read versus schema-on-write.",
+    hint: "Think about preserving raw details for future unexpected queries versus losing information through early transformations.",
     modelAnswer: "The 'sushi principle' states that 'raw data is better.' In a data lake (schema-on-read), raw files are stored in their original formats without transformation, giving downstream analysts the maximum flexibility to interpret the data differently for different use cases. In contrast, a data warehouse (schema-on-write) transforms and structures the data upon import, which optimizes query performance but permanently discards details and limits the questions that can be asked later.",
     section: "Introduction"
   }
@@ -394,42 +394,16 @@ const MISCONCEPTION_EXPLANATIONS = {
 // ── State Management ────────────────────────────────
 
 const STATE_KEY = 'ddia_ch11_learning';
-let _state = null;
+
 
 function loadState() {
-  if (!_state) {
-    try {
-      const raw = localStorage.getItem(STATE_KEY);
-      if (raw) _state = JSON.parse(raw);
-    } catch (e) {}
-
-    if (!_state) {
-      try {
-        if (window.parent && window.parent.__ddiaState && window.parent.__ddiaState[STATE_KEY]) {
-          _state = window.parent.__ddiaState[STATE_KEY];
-        }
-      } catch (e) {}
-    }
-
-    if (!_state) _state = {};
-  }
-  // Return a snapshot, not the live object
-  return JSON.parse(JSON.stringify(_state));
+  return window.loadState ? window.loadState(STATE_KEY) : {};
 }
 
 function saveState(data) {
-  if (!_state) loadState();
-  // Clone incoming data and merge to avoid reference aliasing
-  _state = { ..._state, ...JSON.parse(JSON.stringify(data)) };
-
-  try {
-    localStorage.setItem(STATE_KEY, JSON.stringify(_state));
-  } catch (e) {}
-
-  try {
-    window.parent.__ddiaState = window.parent.__ddiaState || {};
-    window.parent.__ddiaState[STATE_KEY] = _state;
-  } catch (e) {}
+  if (window.saveState) {
+    window.saveState(data, STATE_KEY);
+  }
 }
 
 // ── Navigation ──────────────────────────────────────
@@ -790,91 +764,59 @@ function setupQuizFilters() {
   });
 }
 
-function setupLLMGrading() {
-  const modal = document.getElementById('llmModal');
-  const gradeBtn = document.getElementById('gradeWriteIns');
-  const closeBtn = document.getElementById('closeModal');
-  const copyBtn = document.getElementById('copyLlmPrompt');
-  const copyFeedback = document.getElementById('copyFeedback');
-  const promptArea = document.getElementById('llmPromptArea');
-
-  if (gradeBtn) {
-    gradeBtn.addEventListener('click', () => {
-      const state = loadState();
-      const writeIns = state.writeInAnswers || {};
-      
-      // Collect answered write-ins
-      const answeredList = QUIZ_QUESTIONS.filter((q, idx) => q.type === 'write' && writeIns[idx] && writeIns[idx].trim().length > 0);
-
-      if (answeredList.length === 0) {
-        alert('Please answer at least one write-in question before generating the LLM grading prompt!');
-        return;
-      }
-
-      // Compile prompt
-      let prompt = `You are grading a student's responses to Chapter 11 ("Batch Processing") of Designing Data-Intensive Applications.
-For each question, provide:
-1. A Score from 1 to 5 (1 = Incorrect/No attempt, 3 = Partially correct/Gaps present, 5 = Excellent/Nuanced understanding).
-2. Strengths: What did the student capture accurately?
-3. Gaps: What crucial elements, terms, or architectural trade-offs did they miss?
-4. Model Comparison: Explain why the model answer is complete and how they can bridge any gaps.
-
----
-`;
-
-      QUIZ_QUESTIONS.forEach((q, idx) => {
-        if (q.type === 'write') {
-          const studentAns = writeIns[idx] || '';
-          if (studentAns.trim().length > 0) {
-            prompt += `
-QUESTION #${idx + 1}: ${q.q}
-RUBRIC/MODEL ANSWER: ${q.modelAnswer}
-STUDENT'S RESPONSE: "${studentAns}"
---------------------------------------------------
-`;
-          }
-        }
-      });
-
-      prompt += `
-After grading all questions, provide:
-- Overall conceptual score (e.g., "82% - Solid Conceptual Foundation")
-- Top 2 strengths across their responses
-- Top 2 areas for conceptual improvement
-- A custom 1-2 sentence recommendation on which specific sub-sections of Chapter 11 (e.g. Unix Pipelines, MapReduce Shuffle, Join Strategies, Serving Derived Data) they should review.`;
-
-      promptArea.value = prompt;
-      modal.classList.remove('hidden');
-    });
-  }
-
-  if (closeBtn) {
-    closeBtn.addEventListener('click', () => {
-      modal.classList.add('hidden');
-    });
-  }
-
-  // Close modal on outside click
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) {
-      modal.classList.add('hidden');
+async function gradeWriteIns() {
+  const state = loadState();
+  const writeIns = state.writeInAnswers || {};
+  const answered = {};
+  
+  QUIZ_QUESTIONS.forEach((q, idx) => {
+    if (q.type === 'write' && writeIns[idx] && writeIns[idx].trim().length > 0) {
+      answered[idx] = writeIns[idx];
     }
   });
 
-  if (copyBtn) {
-    copyBtn.addEventListener('click', () => {
-      promptArea.select();
-      navigator.clipboard.writeText(promptArea.value)
-        .then(() => {
-          copyFeedback.classList.remove('hidden');
-          setTimeout(() => {
-            copyFeedback.classList.add('hidden');
-          }, 2000);
-        })
-        .catch(err => {
-          console.error('Failed to copy text: ', err);
-          alert('Could not auto-copy. Please select all text and copy manually.');
-        });
+  if (Object.keys(answered).length === 0) {
+    alert('Please answer at least one write-in question before grading.');
+    return;
+  }
+
+  const response = await fetch('/grade', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      chapterKey: STATE_KEY,
+      writeIns:   answered,
+      username:   getCurrentUsername()   // returns the active username from db.js
+    })
+  });
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  return await response.json();
+}
+
+function setupLLMGrading() {
+  const gradeBtn = document.getElementById('gradeWriteIns');
+  if (gradeBtn) {
+    gradeBtn.addEventListener('click', async () => {
+      const originalText = gradeBtn.textContent;
+      gradeBtn.textContent = 'Grading...';
+      gradeBtn.disabled = true;
+      try {
+        const data = await gradeWriteIns();
+        if (data && data.grades) {
+          alert('Grading completed successfully! Check the console or logs.');
+          console.log('Grades:', data.grades);
+        }
+      } catch (err) {
+        console.error('Error during grading:', err);
+        alert('Grading failed: ' + err.message);
+      } finally {
+        gradeBtn.textContent = originalText;
+        gradeBtn.disabled = false;
+      }
     });
   }
 }
@@ -1290,4 +1232,17 @@ function init() {
 }
 
 // Start
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', async () => {
+  if (typeof initDb !== 'undefined') {
+    await initDb();
+  }
+  const cachedUser = sessionStorage.getItem('ddia_active_user');
+  if (cachedUser) {
+    if (typeof getOrCreateUser !== 'undefined') {
+      getOrCreateUser(cachedUser);
+    }
+    init();
+  } else {
+    window.location.href = '../index.html';
+  }
+});

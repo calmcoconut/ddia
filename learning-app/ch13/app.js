@@ -34,15 +34,15 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Compare distributed transactions (like 2PC) with log-based derived data systems regarding performance, fault tolerance, and timeliness.",
-    hint: "Consider how each approach handles a participant node going offline, and the speed at which updates are visible to reads.",
+    q: "A developer proposes using Two-Phase Commit (2PC) to keep your primary user database, search index, and caching layer perfectly in sync. You are worried about the architectural blast radius. Compare 2PC to an asynchronous, log-based derived data system in terms of system performance, fault tolerance when a node goes offline, and the speed at which users see updates.",
+    hint: "Contrast synchronous coordination/locking and single-point-of-failure vulnerabilities in 2PC with asynchronous eventual consistency in log-based systems.",
     modelAnswer: "Distributed transactions use an atomic commit protocol (like Two-Phase Commit) to apply updates synchronously across multiple systems, ensuring immediate read-after-write consistency (timeliness). However, they have poor fault tolerance because if a single participant fails, the entire transaction must abort, amplifying failures. Log-based derived data systems update systems asynchronously, which increases robustness and scalability because a slow or failed consumer doesn't block the producer, but it sacrifices timeliness by introducing eventual consistency lag.",
     section: "Derived data versus distributed transactions"
   },
   {
     type: "write",
-    q: "Contrast the mechanism of atomic commit in distributed transactions with the recovery mechanism of log-based derived data systems.",
-    hint: "Mention 2PC, retry, and idempotence.",
+    q: "During a system architecture alignment meeting, the team debates correctness guarantees. On one hand, we have distributed transactions that use 2PC to commit or abort atomically. On the other hand, we have log-based derived data systems. Contrast how these two approaches handle node crashes and recover to a consistent state.",
+    hint: "Mention 2PC abort/rollback mechanisms versus log-based retry loops, deterministic processing, and idempotent state updates.",
     modelAnswer: "Distributed transactions achieve correctness through atomic commit protocols like Two-Phase Commit (2PC), which abort the entire operation if any participant fails. In contrast, log-based derived state systems achieve correctness through deterministic processing, at-least-once message delivery, retrying failed processing stages, and ensuring all write operations are idempotent so that duplicate updates do not cause corruption.",
     section: "Derived data versus distributed transactions"
   },
@@ -61,8 +61,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Explain why a social media 'unfriend' event followed immediately by a 'post message' event can lead to a privacy violation if causal dependencies are not captured across separate databases.",
-    hint: "Consider what happens if the friendship database and message database are updated independently and read by a notification system.",
+    q: "A user unfriends an ex-partner on your social platform, then immediately posts a private status update. However, because the friendship database and the message database are separate, uncoordinated systems, a notification worker processes the status post event before the friendship update has propagated to the friendship cache. Explain how this out-of-order execution violates user privacy, and why causal dependencies must be captured.",
+    hint: "Consider how the race condition causes the notification to be sent to the ex-partner because the unfriend event was delayed relative to the post event in the downstream consumer.",
     modelAnswer: "If friendship status and messages are stored in separate, uncoordinated databases, the relative ordering of updates is not guaranteed. If a user unfriends an ex-partner and then posts a message intended only for remaining friends, a notification service might process the 'post message' event before the 'unfriend' event has propagated to the friendship cache. This out-of-order execution causes a notification to be sent to the ex-partner, violating the user's privacy intentions.",
     section: "Ordering events to capture causality"
   },
@@ -94,15 +94,15 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Explain the concept of 'unbundling databases' as described by the author, and compare it with the Unix philosophy.",
-    hint: "Discuss how write synchronization, transaction logs, indexes, and caching are separated, and how they communicate.",
+    q: "Your CTO wants to build a new architecture using Kafka as a commit log, PostgreSQL for relational queries, Elasticsearch for text searches, and Redis for caching, all synced via CDC. They call this 'unbundling the database' and compare it to the Unix philosophy. Explain this concept and how it mirrors Unix pipes and tools.",
+    hint: "Describe how database components like logs, indexes, and caches are separated into specialized tools, and how change streams act as pipes linking them together.",
     modelAnswer: "Unbundling databases means taking the internal components of a single integrated database (such as the transaction log, secondary indexes, caches, and query processor) and separating them into independent tools run on different machines. This mirrors the Unix philosophy of composing small, specialized tools that do one thing well. In an unbundled system, a log-based message broker serves as the central transaction log (write synchronization), while specialized databases, search indexes, and caches act as derived views, kept in sync via change data capture streams (acting like Unix pipes).",
     section: "Unbundled databases"
   },
   {
     type: "write",
-    q: "Explain the role and mechanism of federated databases (polystores) in data integration, and how they differ from unbundled databases.",
-    hint: "Think about unifying reads vs unifying writes.",
+    q: "An intern asks whether the company should use a federated query engine (like Presto or Athena) to query across our systems, or build an unbundled database architecture using CDC logs. Explain how federated databases operate, what they optimize for, and how their coordination model differs from the write-synchronization focus of an unbundled database.",
+    hint: "Think about the distinction between unifying reads dynamically via a query wrapper and unifying writes asynchronously via log replication.",
     modelAnswer: "Federated databases (or polystores) unify reads by providing a single, consistent query interface (like SQL) across multiple underlying, heterogeneous storage engines. They map queries to individual engines dynamically. They differ from unbundled databases because, while federation can route writes through query rewriters in some polystores, its key distinction is that it doesn't enforce write synchronization across systems or produce change logs. Unbundled databases focus on write synchronization, using log-based change data capture streams to keep derived data systems in sync asynchronously.",
     section: "The meta-database of everything"
   },
@@ -121,8 +121,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Explain why the dataflow approach of subscribing to state updates ahead of time makes services more resilient to network failures compared to RPC/REST microservices.",
-    hint: "What happens when the currency exchange rate service goes down in both architectures?",
+    q: "Your microservice-based checkout system relies on a currency exchange rate service. Under high load, the exchange rate service goes down, causing all checkouts to crash because of failed synchronous REST/RPC calls. Explain how refactoring this to a log-based dataflow architecture (where checkout subscribes to rate updates ahead of time) makes the checkout service resilient to these external network outages.",
+    hint: "Contrast what happens during a dependency failure when making synchronous HTTP calls vs when performing lookups against a locally stored copy of a replicated update stream.",
     modelAnswer: "In a REST/RPC microservices architecture, if the currency exchange rate service goes down, the purchase service fails immediately because it cannot make the synchronous network request to fetch the rate. In the dataflow architecture, the purchase service maintains a local cache of the exchange rates updated by a stream. If the exchange service goes down, the purchase service can still process orders using the last known exchange rate stored locally, containing the failure and maintaining service availability.",
     section: "Stream processors and services"
   },
@@ -154,8 +154,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Describe how the write path can be extended all the way to the end user, and how this relates to request/response vs publish/subscribe models.",
-    hint: "Think about EventSource/WebSockets and how client devices act like log subscribers.",
+    q: "You want to build a collaborative document editing tool. Instead of having the client poll the database every second (request/response), you decide to extend the database's write path all the way to the user's browser. Describe the technical components needed to implement this and how it shifts the architecture toward a publish/subscribe model.",
+    hint: "Think about how technologies like WebSockets or Server-Sent Events turn the client device into an event log subscriber that materializes views locally.",
     modelAnswer: "Extending the write path to the end user means actively pushing state changes from the server to connected client devices in real-time, rather than having clients poll for updates. Using WebSockets or Server-Sent Events, the server treats each client as an event log subscriber. When a write occurs on the server, it propagates downstream through event logs and stream processors, and the server pushes the update directly to the client device, which updates its local state and UI immediately, moving away from request/response to publish/subscribe dataflow.",
     section: "Pushing state changes to clients"
   },
@@ -187,8 +187,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Explain why TCP connection-level deduplication is insufficient to guarantee 'exactly-once' execution when a client times out while committing a transaction.",
-    hint: "What happens on the client side when the network drops before they get a response, and how does the retry appear to the database?",
+    q: "A payment gateway client sends a request to charge a credit card. The server processes the transaction, but a network hiccup kills the connection right before the client receives the confirmation. The client times out, opens a new TCP connection, and retries. Explain why the server's TCP-level deduplication fails to stop the user from being double-charged.",
+    hint: "Address why TCP sequence numbers only prevent duplicate packets within a single connection session, and how the retry is seen by the database.",
     modelAnswer: "TCP sequence numbers only suppress duplicate packets within a single TCP connection. If a network interruption occurs after the database commits a transaction but before the client receives the confirmation, the TCP connection times out and is closed. To retry, the client must open a new TCP connection and submit the transaction again. From the database's perspective, this is a brand-new transaction request, which it will execute a second time, potentially causing double execution (e.g., transferring funds twice).",
     section: "Exactly-once execution of an operation"
   },
@@ -220,8 +220,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "State the 'end-to-end argument' and explain how it applies to ensuring data integrity in networks and storage drives.",
-    hint: "Why aren't TCP checksums and hard drive error correction codes (ECC) enough on their own?",
+    q: "An engineer claims that because we are using TCP (which has checksums) and enterprise SSDs (which have ECC), our application is completely safe from data corruption and doesn't need its own application-level checksums or transaction audits. Cite the 'end-to-end argument' to explain why they are wrong.",
+    hint: "Explain why lower-level safety nets cannot protect against data corruption caused by software bugs in memory, processor errors, or database logic.",
     modelAnswer: "The end-to-end argument states that a helper function (like duplicate suppression, encryption, or integrity checking) can only be completely and correctly implemented at the endpoints of the system. While TCP checksums and disk ECC detect corruption in transit or on sectors, they cannot detect data corrupted by software bugs in the application memory, server CPU errors, or bugs in the database code itself. To guarantee complete integrity, the application must perform end-to-end validation, such as signing data at the client and verifying the signature at the storage level.",
     section: "The end-to-end argument"
   },
@@ -253,8 +253,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Explain how a multishard payment transaction (e.g., debiting a payer, crediting a payee, and crediting a fee account) can be processed atomically without using distributed transactions or 2PC.",
-    hint: "Describe the sequence of stages using sharded logs, local state, and unique request IDs.",
+    q: "You are designing a payment platform that must scale horizontally. You want to execute a transaction that debits a payer's account, credits a payee's account, and pays a platform fee—each stored on a different database shard—without using 2PC. Explain how you can achieve atomicity using sharded message logs and asynchronous processing.",
+    hint: "Walk through the sequence: appending a single commit event to the payer's shard, emitting downstream credit events, and using idempotence keys/request IDs for deduplication.",
     modelAnswer: "A multishard transaction can be broken into stages using sharded logs. First, the payment request is appended to the payer's shard. A stream processor validates this request against the payer's local balance. If valid, it reserves the funds and emits outgoing/incoming payment events containing the request ID to the payee and fee shards. The payee and fee processors consume their respective shards asynchronously, applying the credits and ignoring duplicates based on the request ID. Atomicity is achieved because appending the initial event to the payer's log is the single atomic commit point; downstream updates are guaranteed to eventually execute.",
     section: "Multishard request processing"
   },
@@ -286,8 +286,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Explain the concept of 'loosely interpreted constraints' (or apology workflows) and how they allow systems to avoid expensive synchronous coordination.",
-    hint: "Use a real-world example like airline overbooking, hotel reservations, or bank overdraft fees.",
+    q: "A booking system is grinding to a halt because it uses global database locks to ensure we never overbook a hotel room. To scale, you propose using 'loosely interpreted constraints' instead of blocking locks. Explain this concept to your team, giving a real-world example of how a business manages constraint violations after the fact.",
+    hint: "Focus on how optimistic writes can be validated asynchronously and corrected using compensating transactions (apologies, refunds, or upgrades) rather than synchronous locks.",
     modelAnswer: "Loosely interpreted constraints allow temporary violations of rules to avoid the high cost of synchronous coordination. In airline overbooking, instead of using a global lock to strictly prevent double-booking, airlines allow overbooking to maximize occupancy. If too many passengers show up, the business handles the conflict with an apology workflow (providing refunds, travel vouchers, or upgrades). By replacing hard blocking checks with optimistic writes and compensating transactions (apologies), the system achieves massive throughput and availability while bounding business risk.",
     section: "Loosely interpreted constraints"
   },
@@ -319,8 +319,8 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "write",
-    q: "Explain how standard data systems can implement self-auditing or self-validation without paying the high performance penalty of Byzantine fault-tolerant blockchains.",
-    hint: "Mention Certificate Transparency, Merkle trees, and event replay.",
+    q: "Your financial platform wants to prove to regulators that transaction logs have not been retroactively tampered with, and that our read-only caches are 100% consistent with historical events. The management suggests building a blockchain. Propose a much faster, lighter-weight cryptographic auditing alternative.",
+    hint: "Mention how we can use hash chains or Merkle trees (similar to Certificate Transparency) and background processes that continuously replay logs to verify state.",
     modelAnswer: "Standard systems can implement self-auditing by using lighter-weight cryptographic tools without full Byzantine consensus. For instance, like Certificate Transparency, they can use single-leader append-only event logs combined with Merkle trees (hash trees) to efficiently prove that transactions are unmodified and present in the log. Additionally, because the derived data pipeline is deterministic, auditing processes can run in the background, continuously replaying event logs to verify that the current database, search index, or cache state matches the rederived state, detecting corruption early.",
     section: "Tools for auditable data systems"
   }
@@ -392,42 +392,16 @@ const MISCONCEPTION_EXPLANATIONS = {
 // ── State Management ────────────────────────────────
 
 const STATE_KEY = 'ddia_ch13_learning';
-let _state = null;
+
 
 function loadState() {
-  if (!_state) {
-    try {
-      const raw = localStorage.getItem(STATE_KEY);
-      if (raw) _state = JSON.parse(raw);
-    } catch (e) {}
-
-    if (!_state) {
-      try {
-        if (window.parent && window.parent.__ddiaState && window.parent.__ddiaState[STATE_KEY]) {
-          _state = window.parent.__ddiaState[STATE_KEY];
-        }
-      } catch (e) {}
-    }
-
-    if (!_state) _state = {};
-  }
-  // Return a snapshot, not the live object
-  return JSON.parse(JSON.stringify(_state));
+  return window.loadState ? window.loadState(STATE_KEY) : {};
 }
 
 function saveState(data) {
-  if (!_state) loadState();
-  // Clone incoming data and merge to avoid reference aliasing
-  _state = { ..._state, ...JSON.parse(JSON.stringify(data)) };
-
-  try {
-    localStorage.setItem(STATE_KEY, JSON.stringify(_state));
-  } catch (e) {}
-
-  try {
-    window.parent.__ddiaState = window.parent.__ddiaState || {};
-    window.parent.__ddiaState[STATE_KEY] = _state;
-  } catch (e) {}
+  if (window.saveState) {
+    window.saveState(data, STATE_KEY);
+  }
 }
 
 // ── Navigation ──────────────────────────────────────
@@ -785,90 +759,59 @@ function setupQuizFilters() {
   });
 }
 
-function setupLLMGrading() {
-  const modal = document.getElementById('llmModal');
-  const gradeBtn = document.getElementById('gradeWriteIns');
-  const closeBtn = document.getElementById('closeModal');
-  const copyBtn = document.getElementById('copyLlmPrompt');
-  const copyFeedback = document.getElementById('copyFeedback');
-  const promptArea = document.getElementById('llmPromptArea');
-
-  if (gradeBtn) {
-    gradeBtn.addEventListener('click', () => {
-      const state = loadState();
-      const writeIns = state.writeInAnswers || {};
-      
-      // Collect answered write-ins
-      const answeredList = QUIZ_QUESTIONS.filter((q, idx) => q.type === 'write' && writeIns[idx] && writeIns[idx].trim().length > 0);
-
-      if (answeredList.length === 0) {
-        alert('Please answer at least one write-in question before generating the LLM grading prompt!');
-        return;
-      }
-
-      // Compile prompt
-      let prompt = `You are grading a student's responses to Chapter 13 ("A Philosophy of Streaming Systems") of Designing Data-Intensive Applications.
-For each question, provide:
-1. A Score from 1 to 5 (1 = Incorrect/No attempt, 3 = Partially correct/Gaps present, 5 = Excellent/Nuanced understanding).
-2. Strengths: What did the student capture accurately?
-3. Gaps: What crucial elements, terms, or architectural trade-offs did they miss?
-4. Model Comparison: Explain why the model answer is complete and how they can bridge any gaps.
-
----
-`;
-
-      QUIZ_QUESTIONS.forEach((q, idx) => {
-        if (q.type === 'write') {
-          const studentAns = writeIns[idx] || '';
-          if (studentAns.trim().length > 0) {
-            prompt += `
-QUESTION #${idx + 1}: ${q.q}
-RUBRIC/MODEL ANSWER: ${q.modelAnswer}
-STUDENT'S RESPONSE: "${studentAns}"
---------------------------------------------------
-`;
-          }
-        }
-      });
-
-      prompt += `
-After grading all questions, provide:
-- Overall conceptual score (e.g., "82% - Solid Conceptual Foundation")
-- Top 2 strengths across their responses
-- Top 2 areas for conceptual improvement
-- A custom 1-2 sentence recommendation on which specific sub-sections of Chapter 13 (e.g. Data Integration, Unbundling Databases, Timeliness and Integrity, Correctness) they should review.`;
-
-      promptArea.value = prompt;
-      modal.classList.remove('hidden');
-    });
-  }
-
-  if (closeBtn) {
-    closeBtn.addEventListener('click', () => {
-      modal.classList.add('hidden');
-    });
-  }
-
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) {
-      modal.classList.add('hidden');
+async function gradeWriteIns() {
+  const state = loadState();
+  const writeIns = state.writeInAnswers || {};
+  const answered = {};
+  
+  QUIZ_QUESTIONS.forEach((q, idx) => {
+    if (q.type === 'write' && writeIns[idx] && writeIns[idx].trim().length > 0) {
+      answered[idx] = writeIns[idx];
     }
   });
 
-  if (copyBtn) {
-    copyBtn.addEventListener('click', () => {
-      promptArea.select();
-      navigator.clipboard.writeText(promptArea.value)
-        .then(() => {
-          copyFeedback.classList.remove('hidden');
-          setTimeout(() => {
-            copyFeedback.classList.add('hidden');
-          }, 2000);
-        })
-        .catch(err => {
-          console.error('Failed to copy text: ', err);
-          alert('Could not auto-copy. Please select all text and copy manually.');
-        });
+  if (Object.keys(answered).length === 0) {
+    alert('Please answer at least one write-in question before grading.');
+    return;
+  }
+
+  const response = await fetch('/grade', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      chapterKey: STATE_KEY,
+      writeIns:   answered,
+      username:   getCurrentUsername()   // returns the active username from db.js
+    })
+  });
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  return await response.json();
+}
+
+function setupLLMGrading() {
+  const gradeBtn = document.getElementById('gradeWriteIns');
+  if (gradeBtn) {
+    gradeBtn.addEventListener('click', async () => {
+      const originalText = gradeBtn.textContent;
+      gradeBtn.textContent = 'Grading...';
+      gradeBtn.disabled = true;
+      try {
+        const data = await gradeWriteIns();
+        if (data && data.grades) {
+          alert('Grading completed successfully! Check the console or logs.');
+          console.log('Grades:', data.grades);
+        }
+      } catch (err) {
+        console.error('Error during grading:', err);
+        alert('Grading failed: ' + err.message);
+      } finally {
+        gradeBtn.textContent = originalText;
+        gradeBtn.disabled = false;
+      }
     });
   }
 }
@@ -1284,4 +1227,17 @@ function init() {
 }
 
 // Start
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', async () => {
+  if (typeof initDb !== 'undefined') {
+    await initDb();
+  }
+  const cachedUser = sessionStorage.getItem('ddia_active_user');
+  if (cachedUser) {
+    if (typeof getOrCreateUser !== 'undefined') {
+      getOrCreateUser(cachedUser);
+    }
+    init();
+  } else {
+    window.location.href = '../index.html';
+  }
+});
