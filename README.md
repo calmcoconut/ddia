@@ -128,3 +128,19 @@ If you want to clear your local progress files, exported databases, and grader l
 
 This clears `ddia_progress.json`, deletes any exported `ddia_progress.db` files, removes `ddia_grades_report.md`, and empties the log files inside the `logs/` directory.
 
+---
+
+## Development & AI Disclosure
+
+This codebase was generated using agentic AI coding assistants (colloquially known as "vibe coding") under human direction. 
+
+Additionally, the platform uses Generative AI to grade open-ended responses. Please verify AI-generated feedback against the textbook.
+
+---
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+
+
