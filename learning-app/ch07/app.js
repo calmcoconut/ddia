@@ -1,0 +1,1314 @@
+/* ══════════════════════════════════════════════════
+   DDIA Learning Activities — Chapter 7: Sharding
+   ══════════════════════════════════════════════════ */
+
+// ── Data ────────────────────────────────────────────
+
+const QUIZ_QUESTIONS = [
+  {
+    type: "mc",
+    q: "What is the primary reason for sharding a database, as opposed to replication?",
+    options: [
+      "To achieve high availability and fault tolerance",
+      "To scale read throughput by adding replicas",
+      "To handle datasets or write throughput that are too large for a single node",
+      "To support complex transactions and SQL joins across different schemas"
+    ],
+    correct: 2,
+    explanation: "Sharding is primarily used for horizontal scalability of data storage volume and write throughput. If read capacity is the only bottleneck, read replicas (replication) are often a simpler solution.",
+    section: "Pros and Cons of Sharding"
+  },
+  {
+    type: "mc",
+    q: "Which databases are noted for using sharding on a single machine to run one single-threaded process per CPU core, particularly to leverage NUMA architectures?",
+    options: [
+      "PostgreSQL, MySQL, and Oracle",
+      "Redis, VoltDB, and FoundationDB",
+      "Cassandra, MongoDB, and HBase",
+      "BigQuery, Snowflake, and Delta Lake"
+    ],
+    correct: 1,
+    explanation: "Redis, VoltDB, and FoundationDB run single-threaded processes per CPU core, using sharding within a single node to parallelize across cores and optimize for Non-Uniform Memory Access (NUMA).",
+    section: "Pros and Cons of Sharding"
+  },
+  {
+    type: "write",
+    q: "What are the main security and compliance advantages of using sharding to isolate data in a multitenant Software-as-a-Service (SaaS) application?",
+    hint: "Think about physical vs logical separation, data access control bugs, and GDPR data deletion rights.",
+    modelAnswer: "Sharding for multitenancy isolates each customer's data, which enhances security by preventing access control bugs from exposing data across tenants (permission isolation). If a tenant requests data erasure under privacy laws like the GDPR, it is much easier to delete or export an entire separate shard rather than scanning a shared database table. Additionally, it helps satisfy data residency requirements by placing specific tenant shards in servers located in the correct geographical region.",
+    section: "Sharding for Multitenancy"
+  },
+  {
+    type: "mc",
+    q: "Which of the following is a significant architectural challenge when using sharding to implement a multitenant system?",
+    options: [
+      "Tenants are always too small to fit on a single node",
+      "It is impossible to backup shards on a per-tenant basis",
+      "Grouped small tenants are difficult to migrate as they grow, and queries joining data across tenants become hard",
+      "It completely prevents schema rollouts from being done gradually"
+    ],
+    correct: 2,
+    explanation: "If small tenants are grouped on a single shard to reduce overhead, moving a tenant to a new shard as it grows requires complex data migration. Also, features requiring cross-tenant joins or queries are very difficult to implement across different shards.",
+    section: "Sharding for Multitenancy"
+  },
+  {
+    type: "mc",
+    q: "Why are key ranges not necessarily evenly spaced in key-range sharding?",
+    options: [
+      "Because hash functions always produce uneven distributions",
+      "To accommodate uneven data distribution and prevent some shards from being much larger than others",
+      "Because B-tree indexes require key ranges to have a fixed length of 100 elements",
+      "To ensure that all keys starting with the same letter are stored in the same shard size"
+    ],
+    correct: 1,
+    explanation: "Key ranges are adjusted dynamically or manually so that each shard holds a roughly equal amount of data. Equal-width ranges (e.g. two letters of the alphabet per volume) would result in highly skewed shard sizes because data is not uniformly distributed.",
+    section: "Sharding by Key Range"
+  },
+  {
+    type: "write",
+    q: "In a database storing time-series data using key-range sharding where the key is just the timestamp, why does a write hotspot occur, and how can it be mitigated?",
+    hint: "Think about where the writes for the current time land, and how modifying the compound key structure changes the distribution.",
+    modelAnswer: "If the key is just the timestamp, all current writes will have nearby keys and will route to the same active shard (the one covering the current time range), leaving all older shards idle. This write hotspot can be mitigated by prefixing the timestamp with another column, such as a sensor ID or user ID, to form a compound key. This distributes the concurrent writes across different shards, though it makes range queries across multiple sensors or users within a time range more expensive since they must be run on multiple shards.",
+    section: "Sharding by Key Range"
+  },
+  {
+    type: "mc",
+    q: "Which of the following databases utilizes automatic key-range splitting based on shard sizes (e.g. reaching 10 GB)?",
+    options: [
+      "Citus and Riak",
+      "Cassandra and ScyllaDB",
+      "HBase and CockroachDB",
+      "VoltDB and Elasticsearch"
+    ],
+    correct: 2,
+    explanation: "HBase, CockroachDB, RethinkDB, and MongoDB's range sharding automatically split shards when they grow past a configured size threshold, distributing the resulting subranges across nodes.",
+    section: "Sharding by Key Range"
+  },
+  {
+    type: "write",
+    q: "Why is splitting a shard described as an expensive operation that can exacerbate an already overloaded database node?",
+    hint: "Consider the disk I/O and file rewriting involved, similar to log compaction or B-trees.",
+    modelAnswer: "Splitting a shard is an expensive operation because the database must rewrite all the data from the original shard into new, smaller files, which requires substantial disk read/write I/O and network transfer. Because shard splitting is often triggered when a node is already under heavy write load, the added resource consumption of the split process can degrade performance further, potentially pushing the node into failure or timeouts.",
+    section: "Sharding by Key Range"
+  },
+  {
+    type: "mc",
+    q: "Why are the built-in hash functions of languages like Java (`Object.hashCode()`) or Ruby (`Object#hash`) unsuitable for database sharding?",
+    options: [
+      "They are not cryptographically secure and can be easily decrypted",
+      "They return different hash values for the same key in different processes or executions",
+      "They can only hash numeric values, not strings",
+      "They do not distribute keys uniformly"
+    ],
+    correct: 1,
+    explanation: "Many programming languages generate process-specific hashes for strings to prevent hash-collision attacks. If used for sharding, different database processes or clients would compute different shard locations for the same key.",
+    section: "Sharding by Hash of Key"
+  },
+  {
+    type: "mc",
+    q: "What is the main drawback of taking `hash(key) % N` (where N is the number of nodes) to assign keys to shards?",
+    options: [
+      "It does not distribute keys uniformly",
+      "It is computationally slow to calculate modulo operations",
+      "Adding or removing a node (changing N) forces almost all keys to be migrated between nodes",
+      "It requires a centralized ZooKeeper coordinator for every query"
+    ],
+    correct: 2,
+    explanation: "If N changes, the mapping of hashes to nodes shifts completely. For example, going from 3 to 4 nodes changes the destination node of nearly all keys, causing massive, unnecessary data movement during rebalancing.",
+    section: "Hash modulo number of nodes"
+  },
+  {
+    type: "write",
+    q: "Explain how the 'fixed number of shards' approach (used by Elasticsearch and Riak) decoupling shards from nodes resolves the rebalancing inefficiency of modulo hashing.",
+    hint: "Think about what changes and what stays the same when you add or remove nodes in this model.",
+    modelAnswer: "In the fixed number of shards approach, the database is split into a fixed, large number of logical shards (e.g. 1000) from the start, and each key's assignment to a shard (`hash(key) % 1000`) never changes. The system separately maps these logical shards to physical nodes. When a new node is added, only entire logical shards are reassigned and moved from existing nodes to the new node, avoiding any recalculation of key-to-shard mapping and minimizing the volume of data transferred.",
+    section: "Fixed number of shards"
+  },
+  {
+    type: "mc",
+    q: "When using a fixed number of shards, what is the trade-off of choosing the number of shards?",
+    options: [
+      "Too many shards causes queries to be slow, while too few shards makes the hash function non-uniform",
+      "Too many shards increases management and metadata overhead, while too few shards makes shards very large and expensive to rebalance or recover",
+      "Too many shards requires using SSDs, while too few shards requires HDDs",
+      "Too many shards limits the cluster to 2 nodes, while too few shards limits it to 10 nodes"
+    ],
+    correct: 1,
+    explanation: "If the shard count is too high, the system incurs significant management and query planning overhead. If it is too low, each shard holds a large portion of the dataset, making network transfer during rebalancing and recovery from node outages extremely slow and expensive.",
+    section: "Fixed number of shards"
+  },
+  {
+    type: "mc",
+    q: "What are the two core properties that define a consistent hashing algorithm?",
+    options: [
+      "ACID properties are maintained on writes, and reads are guaranteed to be linearly consistent",
+      "Keys are uniformly distributed across shards, and minimal keys are moved when the number of shards changes",
+      "Reads are served from a single node, and writes are replicated asynchronously",
+      "Keys are sorted within each node, and the hash function is cryptographically secure"
+    ],
+    correct: 1,
+    explanation: "Consistent hashing is a technique where keys are mapped to shards such that the load is roughly balanced, and when a node joins or leaves, the number of keys that must be reassigned is minimized.",
+    section: "Consistent hashing"
+  },
+  {
+    type: "write",
+    q: "How does consistent hashing (like Rendezvous or Jump consistent hashing) differ from the fixed number of shards approach when a new node is added?",
+    hint: "Think about where the keys come from to populate the new node.",
+    modelAnswer: "In the fixed number of shards approach, rebalancing is done by moving entire pre-existing logical shards from some nodes to the new node. In contrast, under consistent hashing algorithms like Rendezvous or Jump consistent hashing, there are no fixed logical shards; instead, the new node is assigned individual keys that are collected and pulled from being scattered across all existing nodes, minimizing data movement at the key level directly.",
+    section: "Consistent hashing"
+  },
+  {
+    type: "mc",
+    q: "If a key is highly popular (such as a celebrity user ID on a social network), how can it cause a 'hot spot' even if consistent hashing is used?",
+    options: [
+      "Because the hash function will map that key to multiple shards simultaneously",
+      "Because consistent hashing only ensures uniform distribution of keys, not the request throughput or data volume per key",
+      "Because the celebrity user ID bypasses the hash function",
+      "Because the database automatically locks all other nodes when a celebrity logs in"
+    ],
+    correct: 1,
+    explanation: "Consistent hashing distributes key names uniformly across the partition space, assuming all keys are accessed with equal frequency. If a single key has a massive volume of traffic (like a celebrity), the node containing that key will be overloaded while others are idle.",
+    section: "Skewed Workloads and Relieving Hot Spots"
+  },
+  {
+    type: "mc",
+    q: "If you append a 2-digit random decimal number to a hot key to split its write load across 100 shards, what is the cost when reading data for that key?",
+    options: [
+      "Reads must query a centralized metadata coordinator to know which digit was written",
+      "Reads must perform a scatter-gather query across all 100 keys and merge the results",
+      "Reads will be blocked by a distributed transaction lock for 10 seconds",
+      "Reads are completely prohibited and can only be performed via batch jobs"
+    ],
+    correct: 1,
+    explanation: "Because writes are randomly distributed among the 100 variations of the key (e.g. key_00 to key_99), a read query must scan all 100 keys and aggregate their contents, making reads significantly more expensive.",
+    section: "Skewed Workloads and Relieving Hot Spots"
+  },
+  {
+    type: "write",
+    q: "Describe the trade-offs of using application-level key randomization (adding random suffixes to hot keys) to mitigate write hotspots.",
+    hint: "Contrast write throughput improvements with read complexity, and explain why this shouldn't be applied to all keys.",
+    modelAnswer: "Appending a random suffix to a hot key successfully distributes its write load across multiple shards, allowing high-throughput parallel writes. However, this introduces significant read overhead because any read for that key must query all possible suffixed variations and merge the results. Furthermore, it requires additional application-level bookkeeping to identify which specific keys are hot enough to justify this suffixing, as applying it to all keys would introduce massive unnecessary read overhead.",
+    section: "Skewed Workloads and Relieving Hot Spots"
+  },
+  {
+    type: "mc",
+    q: "What is a major risk associated with fully automated rebalancing in combination with automatic failure detection?",
+    options: [
+      "It makes the database completely read-only during the process",
+      "It can trigger a cascading failure where slow, overloaded nodes are incorrectly assumed dead, shifting load and overloading the rest of the cluster",
+      "It permanently locks the shard boundaries so they can never be split again",
+      "It prevents clients from using DNS to resolve IP addresses"
+    ],
+    correct: 1,
+    explanation: "If a node is slow due to high load, automated failure detection might mark it dead. Shifting its shards to other nodes requires expensive data transfer over the network, overloading the remaining nodes and causing them to fail, leading to a cascading outage.",
+    section: "Operations: Automatic Versus Manual Rebalancing"
+  },
+  {
+    type: "mc",
+    q: "In request routing, which strategy relies on a routing tier?",
+    options: [
+      "Clients contact any random node, which forwards the request if it doesn't own the shard",
+      "A separate, shard-aware load balancer receives all requests, determines the correct node, and forwards them",
+      "Clients are shard-aware and connect directly to the correct node",
+      "Clients store all data in local caches to avoid contacting nodes"
+    ],
+    correct: 1,
+    explanation: "A routing tier acts as a shard-aware proxy or load balancer. It does not store or process data itself but routes the client requests to the appropriate database node.",
+    section: "Request Routing"
+  },
+  {
+    type: "write",
+    q: "How do systems like HBase, SolrCloud, and Kubernetes use coordination services like ZooKeeper or etcd to manage request routing, and how is split-brain avoided?",
+    hint: "Think about metadata registration, client subscriptions, and consensus protocols.",
+    modelAnswer: "These systems use ZooKeeper or etcd as an authoritative registry of which shards live on which nodes. Each database node registers its active shards with the coordination service, and the routing tier or clients subscribe to changes in this registry. Split-brain is avoided because ZooKeeper/etcd run consensus protocols (such as Paxos or Raft) to ensure that only a single, globally agreed-upon shard assignment metadata exists, preventing conflicting coordinators from assigning shards.",
+    section: "Request Routing"
+  },
+  {
+    type: "write",
+    q: "Given a multi-region deployment with untrusted client devices, which request routing strategy (client-side awareness, routing tier, or node-forwarding) would you select, and why?",
+    hint: "Consider network latency, security exposure of internal node topologies, and client complexity.",
+    modelAnswer: "A routing tier (load balancer/proxy) is the preferred choice. For untrusted clients, client-side shard awareness is a security risk because it exposes internal database topology and node IP addresses. A routing tier hides the database topology behind a single entry point, handles SSL termination, and rate-limiting. For a multi-region deployment, the routing tier can route the user to the closest datacenter node. Although it adds a network hop, it is much more secure and keeps the client code simple compared to client-side routing, and is more efficient than random node-forwarding which can cause cross-region WAN hops.",
+    section: "Request Routing"
+  },
+  {
+    type: "mc",
+    q: "What is the main difference between Riak's gossip protocol and ZooKeeper-based shard management?",
+    options: [
+      "Gossip protocols are faster to write but have weaker consistency, allowing temporary split-brain states",
+      "Gossip protocols are only used in relational databases, while ZooKeeper is for NoSQL",
+      "Gossip protocols require manual configuration by an administrator for every query",
+      "ZooKeeper stores actual data, while the gossip protocol only stores backups"
+    ],
+    correct: 0,
+    explanation: "Riak's gossip protocol distributes cluster state changes peer-to-peer. It provides weaker consistency than ZooKeeper, allowing different nodes to temporarily have different views of shard assignments, which leaderless databases can tolerate.",
+    section: "Request Routing"
+  },
+  {
+    type: "mc",
+    q: "Why are writes to a database with local secondary indexes simpler than with global secondary indexes?",
+    options: [
+      "Local secondary indexes do not require any disk writes",
+      "A write only needs to update the single shard that contains the primary key and its local index",
+      "Local secondary indexes are updated by the client application, not the database",
+      "Global secondary indexes require writing to all shards in the database for every single write"
+    ],
+    correct: 1,
+    explanation: "A local secondary index is partitioned in exact alignment with the primary key. Therefore, when writing or updating a record, the database only needs to write to the single shard containing that record's primary key and update its local index.",
+    section: "Local Secondary Indexes"
+  },
+  {
+    type: "write",
+    q: "Why are reads using a local secondary index described as a 'scatter-gather' operation, and what is its impact on tail latency?",
+    hint: "Think about what happens if you don't know the partition key, and how querying multiple nodes in parallel affects response time.",
+    modelAnswer: "If you query a database using a local secondary index without knowing the partition key, the database cannot determine which shard holds the matching records. It must perform a 'scatter-gather' query, sending the request to all shards in parallel and merging the results. This is highly vulnerable to tail latency amplification because the overall response time of the query is bound by the slowest individual shard node to respond, which degrades performance as the cluster grows.",
+    section: "Local Secondary Indexes"
+  },
+  {
+    type: "mc",
+    q: "Which of the following sets of databases rely on local secondary indexes?",
+    options: [
+      "CockroachDB, YugabyteDB, and TiDB",
+      "MongoDB, Cassandra, and Elasticsearch",
+      "BigQuery, Snowflake, and Delta Lake",
+      "VoltDB, BigQuery, and Citus"
+    ],
+    correct: 1,
+    explanation: "MongoDB, Cassandra, Riak, VoltDB, Elasticsearch, and SolrCloud all use local secondary indexes (document-partitioned indexes) for sharding their search capabilities.",
+    section: "Local Secondary Indexes"
+  },
+  {
+    type: "mc",
+    q: "How is a global secondary index (term-partitioned) sharded relative to the primary key?",
+    options: [
+      "It is sharded using the exact same partition key and boundaries as the primary key",
+      "It is sharded based on the indexed value (term), independently of the primary key's partitioning",
+      "It is not sharded and is kept entirely on a single master node",
+      "It is sharded randomly on every write query"
+    ],
+    correct: 1,
+    explanation: "A global secondary index is partitioned by the index values themselves (the 'terms'). This means entries for a specific value (e.g. color:red) are grouped in one shard of the index, even if the primary records they point to are scattered across all primary shards.",
+    section: "Global Secondary Indexes"
+  },
+  {
+    type: "write",
+    q: "Explain why writes to a database with global secondary indexes are more complex and require coordinating multiple shards.",
+    hint: "Think about a record containing multiple fields/terms and where those terms are indexed.",
+    modelAnswer: "In a global secondary index, the index is sharded by the values of the indexed attributes (terms) rather than the primary key. When a single record is written or updated, it may modify multiple indexed fields whose corresponding index entries reside on different shards. Thus, the database must write to the primary shard as well as coordinate updates to multiple index shards, which requires either expensive distributed transactions to guarantee consistency or accepting asynchronous propagation lag. As a consequence of this asynchronous update pipeline (like in DynamoDB), reads against a global secondary index are eventually consistent, meaning strongly consistent reads must go via the primary key or specially configured paths.",
+    section: "Global Secondary Indexes"
+  },
+  {
+    type: "mc",
+    q: "In DynamoDB, how are writes propagated to global secondary indexes, and what does this mean for reads?",
+    options: [
+      "Synchronously via distributed transactions; reads are always strongly consistent",
+      "Asynchronously; reads may return stale data due to replication lag",
+      "They are not propagated; clients must write to the index manually",
+      "Only during weekly database maintenance windows"
+    ],
+    correct: 1,
+    explanation: "DynamoDB propagates writes to global secondary indexes asynchronously. As a result, reads from these indexes are eventually consistent and may temporarily return stale data due to replication lag.",
+    section: "Global Secondary Indexes"
+  },
+  {
+    type: "mc",
+    q: "Which architecture is the primary foundation for horizontally scaling sharded databases?",
+    options: [
+      "Shared-Memory Architecture",
+      "Shared-Disk Architecture",
+      "Shared-Nothing Architecture",
+      "Nonuniform Memory Access (NUMA) Architecture"
+    ],
+    correct: 2,
+    explanation: "Shared-nothing architecture distributes data across independent machines (nodes) that share neither CPU nor RAM nor disk. The nodes coordinate using standard network protocols, which is the basis for scaling out sharded databases.",
+    section: "Pros and Cons of Sharding"
+  },
+  {
+    type: "write",
+    q: "Compare and contrast local and global secondary indexes in terms of read latency, write latency, and overall query scaling.",
+    hint: "Think about what happens on a write (single node vs. multiple nodes) and a read (single node vs. scatter-gather).",
+    modelAnswer: "Local secondary indexes optimize for write latency because updates are confined to the single shard containing the primary record, but they suffer from high read latency for general queries because they require a scatter-gather scan across all shards. Global secondary indexes optimize for read latency because a query on a single attribute can be resolved by scanning a single index shard, but they suffer from high write latency and complexity because writing a record requires updating multiple scattered index shards. Additionally, because global indexes are updated asynchronously, reads from them are eventually consistent, and strongly consistent reads must go via the primary key or specially configured paths.",
+    section: "Sharding and Secondary Indexes"
+  },
+  {
+    type: "write",
+    q: "Explain how sharding by tenant can simplify schema migrations in a SaaS application, and what risks this approach reduces.",
+    hint: "Think about rolling upgrades, database locking, and blast radius of migration bugs.",
+    modelAnswer: "Sharding by tenant allows schema migrations to be rolled out gradually, one tenant at a time, rather than performing a massive migration on a single monolithic database. This reduces operational risk because any migration bugs or performance regressions are isolated to a single tenant's shard (limited blast radius) and can be resolved before impacting other customers. It also avoids locking a shared database table for long periods, which would cause downtime for all tenants.",
+    section: "Sharding for Multitenancy"
+  }
+];
+
+const FLASHCARDS = [
+  { front: "What is the primary difference between replication and sharding?", back: "Replication copies the same data to multiple nodes for fault tolerance. Sharding splits the dataset into smaller subsets (shards) across nodes to scale storage and writes." },
+  { front: "What is a partition key?", back: "The attribute or column used to determine which shard a specific record belongs to." },
+  { front: "What are the security/operational benefits of sharding for multitenancy?", back: "Resource isolation, permission isolation, cell-based fault isolation, per-tenant backups, and easier compliance with data residence or deletion laws." },
+  { front: "Name three databases that use Raft consensus protocol internally to track shard assignments.", back: "CockroachDB, YugabyteDB, and TiDB." },
+  { front: "What is the primary drawback of key-range sharding?", back: "Risk of write hotspots, particularly when writing sorted data like timestamps, since all writes go to the same active shard." },
+  { front: "How does prefixing a key with a sensor ID solve time-series write hotspots?", back: "It distributes writes across different shards based on the sensor ID, rather than appending all writes to the end of the current time range shard." },
+  { front: "Why is modulo hashing (hash(key) % N) bad for dynamic database clusters?", back: "When the node count N changes, nearly all keys map to different nodes, requiring massive, expensive data migration during rebalancing." },
+  { front: "How does the 'fixed number of shards' approach solve the modulo hashing rebalancing issue?", back: "By creating many logical shards at the outset. Shards (not individual keys) are moved to new nodes, meaning key-to-shard assignments never change." },
+  { front: "What is consistent hashing?", back: "A hash mapping technique where changing the number of nodes only requires moving a minimal number of keys between nodes, ensuring balanced distribution." },
+  { front: "What is a 'hot key' in a sharded database?", back: "A single partition key that receives a disproportionately high volume of read or write requests (e.g., a celebrity user's profile)." },
+  { front: "What is the scatter-gather query pattern?", back: "Querying all shards in parallel because the partition key is unknown, then merging the results. It is prone to tail latency amplification." },
+  { front: "What is a local secondary index (document-partitioned index)?", back: "An index where each shard independently maintains search indexes for its own records. Fast writes, but reads require scatter-gather." },
+  { front: "What is a global secondary index (term-partitioned index)?", back: "An index that covers all shards and is itself sharded by the indexed values. Reads only query one shard, but writes require updating multiple shards." },
+  { front: "What is a cell-based architecture?", back: "An architecture where both application services and database shards for a subset of users are grouped into self-contained, independent cells for fault isolation." },
+  { front: "Name three databases that use Raft consensus protocol internally to track shard assignments.", back: "Kafka, YugabyteDB, TiDB, and ScyllaDB." },
+  { front: "How does Riak manage cluster state changes, and what consistency drawback does it have?", back: "Riak uses a gossip protocol to disseminate cluster state, which is eventually consistent and can temporarily result in split-brain shard mappings." }
+];
+
+const CONFIDENCE_LABELS = [
+  "Sharding vs replication trade-offs",
+  "Multitenancy and cell-based architectures",
+  "Key-range sharding and time-series hotspots",
+  "Hash-based sharding and fixed shards",
+  "Request routing and consensus services",
+  "Local vs global secondary indexes"
+];
+
+const SCHEDULE_ITEMS = [
+  { day: "Today", task: "Complete all pre-activity exercises", type: "due" },
+  { day: "Today", task: "Read Chapter 7", type: "due" },
+  { day: "Today", task: "Complete post-activity retrieval", type: "due" },
+  { day: "+1 Day", task: "Flashcard review (all 15 cards)", type: "upcoming" },
+  { day: "+3 Days", task: "Re-attempt sharding trade-offs comparison from memory", type: "upcoming" },
+  { day: "+1 Week", task: "Interleaved scenario challenge", type: "upcoming" },
+  { day: "+2 Weeks", task: "Full retrieval quiz retake", type: "upcoming" },
+  { day: "+1 Month", task: "Teach concepts to someone (Feynman technique)", type: "upcoming" }
+];
+
+const MISCONCEPTION_EXPLANATIONS = {
+  m1: {
+    false: "Correct! If read throughput is the bottleneck, replication (read replicas) is a much simpler and more effective solution than sharding. Sharding is primarily needed for write throughput and data volumes that exceed a single node's capacity.",
+    true: "Not quite. Sharding is a heavyweight solution. The book notes that if read throughput is your only issue, read scaling (replication) is much simpler and cheaper than sharding.",
+    unsure: "Read throughput bottlenecks are often solved differently. Look at the 'Pros and Cons of Sharding' section."
+  },
+  m2: {
+    false: "Correct! Language-specific hash functions often yield different hash values for the same key across different processes or executions, which would break routing. Database sharding requires stable, process-independent hash functions like Murmur3 or MD5.",
+    true: "Be careful! The book warns that built-in language hash functions can vary across runs or processes, making them completely unsuitable for distributed systems.",
+    unsure: "This is a common trap! Look for the discussion on hash functions in 'Sharding by Hash of Key'."
+  },
+  m3: {
+    false: "Correct! Modulo hashing is highly inefficient during rebalancing because changing N forces almost all keys to move. Decoupled shard mapping (fixed shards or consistent hashing) is used instead to minimize data movement.",
+    true: "Actually, modulo hashing is the worst choice for dynamic clusters! Adding or removing a single node forces nearly all data to move to different nodes.",
+    unsure: "Think about what happens to the math when N changes. Look at the 'Hash modulo number of nodes' section."
+  },
+  m4: {
+    true: "Correct! Because a local secondary index only covers the records stored in its own shard, writing a record only requires updating that single shard, making writes highly performant.",
+    false: "Actually, this is true! Local secondary indexes are fast on writes because they don't require cross-shard coordination. Their drawback is on the read side (scatter-gather).",
+    unsure: "This is a key characteristic of local indexes. Read the section 'Local Secondary Indexes' to see the write-path benefits."
+  },
+  m5: {
+    false: "Correct! While some databases use distributed transactions, many (like DynamoDB) update global secondary indexes asynchronously to keep writes fast, which means reads from global indexes can be stale.",
+    true: "Not necessarily. While they can be synchronous, many databases (like DynamoDB) choose to update global indexes asynchronously to avoid the heavy performance cost of distributed transactions.",
+    unsure: "Consistency in global indexes is a major design choice. Look at the 'Global Secondary Indexes' section for how DynamoDB handles it."
+  }
+};
+
+// ── State Management ────────────────────────────────
+
+const STATE_KEY = 'ddia_ch7_learning';
+let _state = null;
+
+function loadState() {
+  if (!_state) {
+    try {
+      const raw = localStorage.getItem(STATE_KEY);
+      if (raw) _state = JSON.parse(raw);
+    } catch (e) {}
+
+    if (!_state) {
+      try {
+        if (window.parent && window.parent.__ddiaState && window.parent.__ddiaState[STATE_KEY]) {
+          _state = window.parent.__ddiaState[STATE_KEY];
+        }
+      } catch (e) {}
+    }
+
+    if (!_state) _state = {};
+  }
+  // Return a snapshot, not the live object
+  return JSON.parse(JSON.stringify(_state));
+}
+
+function saveState(data) {
+  if (!_state) loadState();
+  // Clone incoming data and merge to avoid reference aliasing
+  _state = { ..._state, ...JSON.parse(JSON.stringify(data)) };
+
+  try {
+    localStorage.setItem(STATE_KEY, JSON.stringify(_state));
+  } catch (e) {}
+
+  try {
+    window.parent.__ddiaState = window.parent.__ddiaState || {};
+    window.parent.__ddiaState[STATE_KEY] = _state;
+  } catch (e) {}
+}
+
+// ── Navigation ──────────────────────────────────────
+
+function switchPhase(phase) {
+  document.querySelectorAll('.phase-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`phase-${phase}`).classList.add('active');
+  document.getElementById(`nav-${phase}`).classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+document.querySelectorAll('.nav-btn').forEach(btn => {
+  btn.addEventListener('click', () => switchPhase(btn.dataset.phase));
+});
+
+// ── Pre-Activity: Diagnostic ────────────────────────
+
+document.getElementById('saveDiagnostic').addEventListener('click', () => {
+  const values = [];
+  for (let i = 1; i <= 6; i++) {
+    values.push(parseInt(document.getElementById(`conf-${i}`).value));
+  }
+  saveState({ diagnosticBaseline: values, diagnosticDate: new Date().toISOString() });
+  document.getElementById('diagnosticSaved').classList.remove('hidden');
+  renderConfidenceComparison();
+});
+
+// ── Pre-Activity: Puzzle ────────────────────────────
+
+document.getElementById('savePuzzle').addEventListener('click', () => {
+  const answers = {};
+  for (let i = 1; i <= 3; i++) {
+    answers[`q${i}`] = document.getElementById(`puzzle-a${i}`).value;
+  }
+  saveState({ puzzleAnswers: answers });
+  document.getElementById('puzzleSaved').classList.remove('hidden');
+  renderRevisitPredictions();
+});
+
+// ── Pre-Activity: Misconceptions ────────────────────
+
+document.querySelectorAll('.misconception-item').forEach(item => {
+  const btns = item.querySelectorAll('.mc-btn');
+  const feedbackEl = item.querySelector('.misconception-feedback');
+  const correct = item.dataset.correct;
+  const id = item.dataset.id;
+
+  btns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      btns.forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+
+      const value = btn.dataset.value;
+      const explanations = MISCONCEPTION_EXPLANATIONS[id];
+      feedbackEl.textContent = explanations[value];
+      feedbackEl.className = 'misconception-feedback';
+      if (value === correct || value === 'unsure') {
+        feedbackEl.classList.add(value === correct ? 'correct' : 'noted');
+      } else {
+        feedbackEl.classList.add('noted');
+      }
+      feedbackEl.classList.remove('hidden');
+    });
+  });
+});
+
+// ── Post-Activity: Timer ────────────────────────────
+
+let timerInterval = null;
+let timerRunning = false;
+
+document.getElementById('timerBtn').addEventListener('click', function() {
+  // Step 1: Immediately disable the button to block double-clicks
+  this.disabled = true;
+
+  if (timerRunning) {
+    clearInterval(timerInterval);
+    timerRunning = false;
+    this.textContent = 'Start 5-min Timer';
+    this.disabled = false; // Step 2: Re-enable after stopping
+    return;
+  }
+
+  timerRunning = true;
+  this.textContent = 'Pause';
+  this.disabled = false; // Step 3: Re-enable once state is set
+  let remaining = 300;
+  const total = 300;
+  const display = document.getElementById('timerDisplay');
+  const progress = document.getElementById('timerProgress');
+
+  timerInterval = setInterval(() => {
+    remaining--;
+    const mins = Math.floor(remaining / 60);
+    const secs = remaining % 60;
+    display.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+    progress.style.width = `${((total - remaining) / total) * 100}%`;
+
+    if (remaining <= 0) {
+      clearInterval(timerInterval);
+      timerRunning = false;
+      display.textContent = "0:00";
+      document.getElementById('timerBtn').textContent = 'Done!';
+      display.style.color = '#f43f5e';
+    }
+  }, 1000);
+});
+
+// ── Post-Activity: Brain Dump ───────────────────────
+
+document.getElementById('saveBrainDump').addEventListener('click', () => {
+  saveState({ brainDump: document.getElementById('brainDumpArea').value });
+  document.getElementById('brainDumpSaved').classList.remove('hidden');
+});
+
+// ── Post-Activity: Quiz ─────────────────────────────
+
+let currentFilter = 'all';
+
+function renderQuiz() {
+  const container = document.getElementById('quizContainer');
+  container.innerHTML = '';
+  
+  const state = loadState();
+  const selections = state.quizSelections || {};
+  const writeIns = state.writeInAnswers || {};
+  const graded = state.quizGraded || false;
+
+  let renderedCount = 0;
+
+  QUIZ_QUESTIONS.forEach((q, idx) => {
+    // Apply filters
+    const isMc = q.type === 'mc';
+    const hasSelection = selections[idx] !== undefined;
+    const hasWriteIn = writeIns[idx] && writeIns[idx].trim().length > 0;
+    const isAnswered = isMc ? hasSelection : hasWriteIn;
+
+    if (currentFilter === 'mc' && !isMc) return;
+    if (currentFilter === 'write' && isMc) return;
+    if (currentFilter === 'unanswered' && isAnswered) return;
+
+    renderedCount++;
+
+    const div = document.createElement('div');
+    div.className = `quiz-question ${isMc ? 'type-mc' : 'type-write'}`;
+    div.setAttribute('data-q-index', idx);
+    div.dataset.qIndex = idx;
+
+    if (isMc) {
+      // Multiple Choice Question
+      const selectedOptionIdx = selections[idx];
+      const isCorrect = selectedOptionIdx === q.correct;
+
+      div.innerHTML = `
+        <div class="quiz-q-text">
+          <span class="quiz-q-num">${idx + 1}</span>
+          <span>${q.q}</span>
+          <span class="badge-tag" style="margin-left:auto; font-size:0.65rem; color:var(--accent-indigo); border:1px solid rgba(99,102,241,0.2); padding:0.1rem 0.3rem; border-radius:3px;">${q.section}</span>
+        </div>
+        <div class="quiz-options">
+          ${q.options.map((opt, oi) => {
+            let extraClass = '';
+            let markerText = '';
+            
+            if (graded) {
+              if (oi === q.correct) {
+                extraClass = 'correct-answer';
+                markerText = '✓';
+              } else if (oi === selectedOptionIdx && !isCorrect) {
+                extraClass = 'wrong-answer';
+                markerText = '✗';
+              }
+            } else {
+              if (oi === selectedOptionIdx) {
+                extraClass = 'selected';
+              }
+            }
+
+            return `
+              <button class="quiz-option ${extraClass}" data-q="${idx}" data-o="${oi}" ${graded ? 'disabled' : ''}>
+                <span class="quiz-option-marker">${markerText}</span>
+                <span>${opt}</span>
+              </button>
+            `;
+          }).join('')}
+        </div>
+      `;
+
+      // If graded, append explanation
+      if (graded) {
+        div.classList.add(isCorrect ? 'answered-correct' : 'answered-wrong');
+        const explDiv = document.createElement('div');
+        explDiv.className = 'quiz-explanation';
+        explDiv.textContent = q.explanation;
+        div.appendChild(explDiv);
+      }
+    } else {
+      // Write-In Question
+      const savedText = writeIns[idx] || '';
+      div.innerHTML = `
+        <div class="quiz-q-text">
+          <span class="quiz-q-num">${idx + 1}</span>
+          <span>${q.q}</span>
+          <span class="badge-tag" style="margin-left:auto; font-size:0.65rem; color:var(--accent-cyan); border:1px solid rgba(6,182,212,0.2); padding:0.1rem 0.3rem; border-radius:3px;">${q.section}</span>
+        </div>
+        <div class="quiz-writein-container">
+          <div class="elab-hint">Hint: ${q.hint}</div>
+          <textarea class="quiz-writein-textarea" data-q="${idx}" placeholder="Write your conceptual answer here (saved automatically)..." ${graded ? 'disabled' : ''}>${savedText}</textarea>
+          ${graded ? `<div class="quiz-writein-feedback">✓ Response recorded & locked. Ready for LLM grading.</div>` : ''}
+        </div>
+      `;
+    }
+
+    container.appendChild(div);
+  });
+
+  if (renderedCount === 0) {
+    const emptyMsg = document.createElement('div');
+    emptyMsg.className = 'empty-filter-msg';
+    emptyMsg.style.textAlign = 'center';
+    emptyMsg.style.padding = '2rem';
+    emptyMsg.style.color = 'var(--text-muted)';
+    emptyMsg.style.fontSize = '0.9rem';
+    emptyMsg.textContent = 'No questions match the current filter.';
+    container.appendChild(emptyMsg);
+  }
+
+  // Update progress info
+  updateQuizProgress();
+
+  // Add click handlers for MC options
+  if (!graded) {
+    container.querySelectorAll('.quiz-option').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const qIndex = parseInt(this.dataset.q);
+        const oIndex = parseInt(this.dataset.o);
+        
+        // Remove selection from siblings
+        container.querySelectorAll(`.quiz-option[data-q="${qIndex}"]`).forEach(b => b.classList.remove('selected'));
+        this.classList.add('selected');
+
+        // Save selection to state
+        const state = loadState();
+        const selections = state.quizSelections || {};
+        selections[qIndex] = oIndex;
+        saveState({ quizSelections: selections });
+
+        updateQuizProgress();
+      });
+    });
+
+    // Add input handlers for write-in textareas
+    container.querySelectorAll('.quiz-writein-textarea').forEach(tx => {
+      tx.addEventListener('input', function() {
+        const qIndex = parseInt(this.dataset.q);
+        const val = this.value;
+
+        // Save write-in to state
+        const state = loadState();
+        const writeIns = state.writeInAnswers || {};
+        writeIns[qIndex] = val;
+        saveState({ writeInAnswers: writeIns });
+
+        updateQuizProgress();
+      });
+    });
+  }
+
+  // Show results or submit button
+  if (graded) {
+    showQuizResultsPanel(loadState());
+  } else {
+    // Render submit row
+    const submitRow = document.createElement('div');
+    submitRow.className = 'quiz-submit-row';
+    submitRow.innerHTML = `<button class="btn-primary" id="submitQuiz">Check Answers</button>`;
+    container.appendChild(submitRow);
+    document.getElementById('submitQuiz').addEventListener('click', gradeQuiz);
+  }
+}
+
+function updateQuizProgress() {
+  const state = loadState();
+  const selections = state.quizSelections || {};
+  const writeIns = state.writeInAnswers || {};
+
+  let answeredCount = 0;
+  QUIZ_QUESTIONS.forEach((q, idx) => {
+    if (q.type === 'mc') {
+      if (selections[idx] !== undefined) answeredCount++;
+    } else {
+      if (writeIns[idx] && writeIns[idx].trim().length > 0) answeredCount++;
+    }
+  });
+
+  const total = QUIZ_QUESTIONS.length;
+  document.getElementById('quizProgressText').textContent = `${answeredCount} of ${total} answered`;
+  document.getElementById('quizProgressFill').style.width = `${(answeredCount / total) * 100}%`;
+}
+
+function gradeQuiz() {
+  // Save that we have graded
+  saveState({ quizGraded: true });
+
+  // Re-render quiz in graded state
+  renderQuiz();
+}
+
+function showQuizResultsPanel(state) {
+  const selections = state.quizSelections || {};
+  const writeIns = state.writeInAnswers || {};
+
+  let mcCorrect = 0;
+  let mcTotal = 0;
+  let writeInAnswered = 0;
+
+  QUIZ_QUESTIONS.forEach((q, idx) => {
+    if (q.type === 'mc') {
+      mcTotal++;
+      if (selections[idx] === q.correct) mcCorrect++;
+    } else {
+      if (writeIns[idx] && writeIns[idx].trim().length > 0) writeInAnswered++;
+    }
+  });
+
+  // Update elements
+  document.getElementById('scoreNum').textContent = mcCorrect;
+  document.getElementById('scoreDenom').textContent = `/ ${mcTotal}`;
+  document.getElementById('writeinCount').textContent = writeInAnswered;
+
+  const breakdown = document.getElementById('resultsBreakdown');
+  const percent = Math.round((mcCorrect / mcTotal) * 100);
+
+  if (percent >= 85) {
+    breakdown.innerHTML = `<p style="color: var(--accent-emerald);">🎯 Excellent retrieval! You scored <strong>${percent}%</strong> (${mcCorrect}/${mcTotal}) on Multiple Choice. Focus your remaining review on write-in grading below.</p>`;
+  } else if (percent >= 60) {
+    breakdown.innerHTML = `<p style="color: var(--accent-amber);">👍 Good job! You scored <strong>${percent}%</strong> (${mcCorrect}/${mcTotal}) on Multiple Choice. Analyze the feedback on questions you missed, and evaluate your write-in answers.</p>`;
+  } else {
+    breakdown.innerHTML = `<p style="color: var(--accent-rose);">📖 Retrieval gaps detected: <strong>${percent}%</strong> (${mcCorrect}/${mcTotal}) on Multiple Choice. The struggle of recalling makes re-reading the text highly effective! Use LLM grading below to check your write-in explanations.</p>`;
+  }
+
+  document.getElementById('quizResults').classList.remove('hidden');
+  
+  // Hide submit button just in case
+  const submitBtn = document.getElementById('submitQuiz');
+  if (submitBtn) submitBtn.style.display = 'none';
+}
+
+function setupQuizFilters() {
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      currentFilter = this.dataset.filter;
+      renderQuiz();
+    });
+  });
+}
+
+function setupLLMGrading() {
+  const modal = document.getElementById('llmModal');
+  const gradeBtn = document.getElementById('gradeWriteIns');
+  const closeBtn = document.getElementById('closeModal');
+  const copyBtn = document.getElementById('copyLlmPrompt');
+  const copyFeedback = document.getElementById('copyFeedback');
+  const promptArea = document.getElementById('llmPromptArea');
+
+  if (gradeBtn) {
+    gradeBtn.addEventListener('click', () => {
+      const state = loadState();
+      const writeIns = state.writeInAnswers || {};
+      
+      // Collect answered write-ins
+      const answeredList = QUIZ_QUESTIONS.filter((q, idx) => q.type === 'write' && writeIns[idx] && writeIns[idx].trim().length > 0);
+
+      if (answeredList.length === 0) {
+        alert('Please answer at least one write-in question before generating the LLM grading prompt!');
+        return;
+      }
+
+      // Compile prompt
+      let prompt = `You are grading a student's responses to Chapter 7 ("Sharding") of Designing Data-Intensive Applications.
+For each question, provide:
+1. A Score from 1 to 5 (1 = Incorrect/No attempt, 3 = Partially correct/Gaps present, 5 = Excellent/Nuanced understanding).
+2. Strengths: What did the student capture accurately?
+3. Gaps: What crucial elements, terms, or architectural trade-offs did they miss?
+4. Model Comparison: Explain why the model answer is complete and how they can bridge any gaps.
+
+---
+`;
+
+      QUIZ_QUESTIONS.forEach((q, idx) => {
+        if (q.type === 'write') {
+          const studentAns = writeIns[idx] || '';
+          if (studentAns.trim().length > 0) {
+            prompt += `
+QUESTION #${idx + 1}: ${q.q}
+RUBRIC/MODEL ANSWER: ${q.modelAnswer}
+STUDENT'S RESPONSE: "${studentAns}"
+--------------------------------------------------
+`;
+          }
+        }
+      });
+
+      prompt += `
+After grading all questions, provide:
+- Overall conceptual score (e.g., "82% - Solid Conceptual Foundation")
+- Top 2 strengths across their responses
+- Top 2 areas for conceptual improvement
+- A custom 1-2 sentence recommendation on which specific sub-sections of Chapter 7 (e.g. Sharding by Key Range, Sharding by Hash of Key, Local vs Global Secondary Indexes, Request Routing) they should review.`;
+
+      promptArea.value = prompt;
+      modal.classList.remove('hidden');
+    });
+  }
+
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => {
+      modal.classList.add('hidden');
+    });
+  }
+
+  // Close modal on outside click
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      modal.classList.add('hidden');
+    }
+  });
+
+  if (copyBtn) {
+    copyBtn.addEventListener('click', () => {
+      promptArea.select();
+      navigator.clipboard.writeText(promptArea.value)
+        .then(() => {
+          copyFeedback.classList.remove('hidden');
+          setTimeout(() => {
+            copyFeedback.classList.add('hidden');
+          }, 2000);
+        })
+        .catch(err => {
+          console.error('Failed to copy text: ', err);
+          alert('Could not auto-copy. Please select all text and copy manually.');
+        });
+    });
+  }
+}
+
+document.getElementById('retakeQuiz')?.addEventListener('click', () => {
+  saveState({ quizGraded: false, quizSelections: {}, writeInAnswers: {} });
+  document.getElementById('quizResults').classList.add('hidden');
+  renderQuiz();
+});
+
+// ── Post-Activity: Revisit ──────────────────────────
+
+function renderRevisitPredictions() {
+  const state = loadState();
+  if (state.puzzleAnswers && state.puzzleAnswers.q1) {
+    document.getElementById('revisit-puzzle-1').textContent = `Q1: ${state.puzzleAnswers.q1 || '(No response)'}\n\nQ2: ${state.puzzleAnswers.q2 || '(No response)'}\n\nQ3: ${state.puzzleAnswers.q3 || '(No response)'}`;
+  }
+}
+
+function renderConfidenceComparison() {
+  const state = loadState();
+  const container = document.getElementById('confidenceComparison');
+  if (!container) return;
+  container.innerHTML = '';
+
+  const baseline = state.diagnosticBaseline || [3,3,3,3,3,3];
+  const levelLabels = ['—', 'No clue', 'Vaguely', 'Somewhat', 'Well', 'Could teach'];
+
+  CONFIDENCE_LABELS.forEach((label, i) => {
+    const div = document.createElement('div');
+    div.className = 'conf-compare-item';
+    div.innerHTML = `
+      <span class="conf-compare-label">${label}</span>
+      <span class="conf-compare-before">Before: ${levelLabels[baseline[i]]}</span>
+      <div class="conf-compare-after">
+        <span>Now:</span>
+        <select data-conf-idx="${i}">
+          <option value="1">No clue</option>
+          <option value="2">Vaguely</option>
+          <option value="3" selected>Somewhat</option>
+          <option value="4">Well</option>
+          <option value="5">Could teach</option>
+        </select>
+      </div>
+    `;
+    container.appendChild(div);
+  });
+}
+
+document.getElementById('saveRevisit').addEventListener('click', () => {
+  const selectElements = document.querySelectorAll('#confidenceComparison select');
+  const nowConfidence = [];
+  selectElements.forEach(select => {
+    nowConfidence.push(parseInt(select.value));
+  });
+
+  saveState({
+    revisitAnswer: document.getElementById('revisit-a1').value,
+    postConfidence: nowConfidence,
+    revisitDate: new Date().toISOString()
+  });
+  document.getElementById('revisitSaved').classList.remove('hidden');
+});
+
+// ── Sustained: Schedule ─────────────────────────────
+
+function renderSchedule() {
+  const container = document.getElementById('scheduleGrid');
+  const state = loadState();
+  const completed = state.scheduleCompleted || {};
+
+  container.innerHTML = '';
+
+  SCHEDULE_ITEMS.forEach((item, idx) => {
+    const isCompleted = completed[idx];
+    const isToday = item.type === 'due';
+    const div = document.createElement('div');
+    div.className = `schedule-item ${isCompleted ? 'completed' : ''} ${isToday && !isCompleted ? 'today' : ''} ${!isToday && !isCompleted ? 'future' : ''}`;
+    div.innerHTML = `
+      <span class="schedule-day">${item.day}</span>
+      <span class="schedule-task">${item.task}</span>
+      <span class="schedule-status ${isCompleted ? 'done' : isToday ? 'due' : 'upcoming'}">
+        ${isCompleted ? '✓ Completed' : isToday ? '● Due now' : '○ Upcoming'}
+      </span>
+      ${!isCompleted ? `<span class="schedule-check" data-idx="${idx}">✓ Mark Complete</span>` : ''}
+    `;
+    container.appendChild(div);
+  });
+
+  container.querySelectorAll('.schedule-check').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const idx = btn.dataset.idx;
+      const state = loadState();
+      const completed = state.scheduleCompleted || {};
+      completed[idx] = true;
+      saveState({ scheduleCompleted: completed });
+      renderSchedule();
+    });
+  });
+}
+
+// ── Sustained: Flashcards ───────────────────────────
+
+let fcIndex = 0;
+let fcRatings = [];
+let fcDeck = [...FLASHCARDS];
+
+function shuffleArray(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function renderFlashcard() {
+  const card = fcDeck[fcIndex];
+  document.getElementById('fcFront').textContent = card.front;
+  document.getElementById('fcBack').textContent = card.back;
+  document.getElementById('fcProgress').textContent = `Card ${fcIndex + 1} of ${fcDeck.length}`;
+  document.getElementById('fcProgressFill').style.width = `${((fcIndex + 1) / fcDeck.length) * 100}%`;
+
+  // Reset flip
+  document.getElementById('flashcardInner').classList.remove('flipped');
+  document.getElementById('fcRating').classList.add('hidden');
+  document.getElementById('fcFlip').classList.remove('hidden');
+
+  // Show deck, hide completion
+  document.getElementById('flashcardDeck').classList.remove('hidden');
+  document.getElementById('fcComplete').classList.add('hidden');
+}
+
+document.getElementById('fcFlip').addEventListener('click', () => {
+  document.getElementById('flashcardInner').classList.toggle('flipped');
+  if (document.getElementById('flashcardInner').classList.contains('flipped')) {
+    document.getElementById('fcRating').classList.remove('hidden');
+    document.getElementById('fcFlip').classList.add('hidden');
+  }
+});
+
+document.getElementById('flashcard').addEventListener('click', () => {
+  if (!document.getElementById('flashcardInner').classList.contains('flipped')) {
+    document.getElementById('flashcardInner').classList.add('flipped');
+    document.getElementById('fcRating').classList.remove('hidden');
+    document.getElementById('fcFlip').classList.add('hidden');
+  }
+});
+
+document.querySelectorAll('.fc-rate-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const rating = parseInt(btn.dataset.rating);
+    fcRatings.push({ card: fcIndex, rating });
+
+    fcIndex++;
+    if (fcIndex >= fcDeck.length) {
+      showFcComplete();
+    } else {
+      renderFlashcard();
+    }
+  });
+});
+
+function showFcComplete() {
+  document.getElementById('flashcardDeck').classList.add('hidden');
+  document.getElementById('fcComplete').classList.remove('hidden');
+
+  const counts = { 1: 0, 2: 0, 3: 0, 4: 0 };
+  fcRatings.forEach(r => counts[r.rating]++);
+
+  document.getElementById('fcStats').innerHTML = `
+    <div>😤 Didn't know: <strong>${counts[1]}</strong></div>
+    <div>😓 Hard: <strong>${counts[2]}</strong></div>
+    <div>🙂 Good: <strong>${counts[3]}</strong></div>
+    <div>😎 Easy: <strong>${counts[4]}</strong></div>
+    <div style="margin-top:0.75rem; color: var(--text-muted); font-size: 0.82rem;">
+      Cards rated "Didn't know" or "Hard" should be reviewed again tomorrow.
+      Cards rated "Easy" can be pushed to next week.
+    </div>
+  `;
+
+  saveState({
+    fcSession: {
+      date: new Date().toISOString(),
+      ratings: fcRatings,
+      counts
+    }
+  });
+
+  // Step 1: Reset ratings immediately after saving to prevent double-counting on next session
+  fcRatings = [];
+}
+
+document.getElementById('fcRestart').addEventListener('click', () => {
+  fcIndex = 0;
+  fcRatings = [];
+  fcDeck = shuffleArray(FLASHCARDS);
+  renderFlashcard();
+});
+
+// ── Sustained: Scenarios ────────────────────────────
+
+let currentScenario = 0;
+const totalScenarios = 4;
+
+function renderScenarioDots() {
+  const dots = document.getElementById('scenarioDots');
+  dots.innerHTML = '';
+  for (let i = 0; i < totalScenarios; i++) {
+    const dot = document.createElement('span');
+    dot.className = `scenario-dot ${i === currentScenario ? 'active' : ''}`;
+    dot.addEventListener('click', () => goToScenario(i));
+    dots.appendChild(dot);
+  }
+}
+
+function goToScenario(idx) {
+  const card = document.querySelector(`.scenario-card[data-scenario="${idx}"]`);
+  if (!card) return;
+
+  currentScenario = idx;
+  document.querySelectorAll('.scenario-card').forEach(c => c.classList.remove('active'));
+  card.classList.add('active');
+  document.getElementById('scenarioPrev').disabled = idx === 0;
+  document.getElementById('scenarioNext').disabled = idx === (totalScenarios - 1);
+  renderScenarioDots();
+}
+
+document.getElementById('scenarioNext').addEventListener('click', () => {
+  if (currentScenario < totalScenarios - 1) goToScenario(currentScenario + 1);
+});
+document.getElementById('scenarioPrev').addEventListener('click', () => {
+  if (currentScenario > 0) goToScenario(currentScenario - 1);
+});
+
+document.getElementById('saveScenarios').addEventListener('click', () => {
+  const answers = {};
+  for (let s = 1; s <= 4; s++) {
+    for (let q = 1; q <= 3; q++) {
+      const el = document.getElementById(`sc-${s}-${q}`);
+      if (el) answers[`s${s}q${q}`] = el.value;
+    }
+  }
+  saveState({ scenarioAnswers: answers });
+  document.getElementById('scenariosSaved').classList.remove('hidden');
+});
+
+// ── Sustained: Forgetting Curve ─────────────────────
+
+function drawForgettingCurve() {
+  const canvas = document.getElementById('forgettingCurve');
+  if (!canvas) return;
+
+  // Step 1: Read logical size from CSS/layout, not from canvas attributes
+  const W = canvas.offsetWidth || 600;
+  const H = canvas.offsetHeight || 300;
+
+  const dpr = window.devicePixelRatio || 1;
+  // Step 2: Set physical pixel size once, without re-reading canvas.width
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  const padding = { top: 30, right: 20, bottom: 40, left: 50 };
+  const plotW = W - padding.left - padding.right;
+  const plotH = H - padding.top - padding.bottom;
+
+  ctx.clearRect(0, 0, W, H);
+
+  // Axes
+  ctx.strokeStyle = 'rgba(99, 102, 241, 0.15)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(padding.left, padding.top);
+  ctx.lineTo(padding.left, H - padding.bottom);
+  ctx.lineTo(W - padding.right, H - padding.bottom);
+  ctx.stroke();
+
+  // Labels
+  ctx.fillStyle = '#6b7280';
+  ctx.font = '11px Inter, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Time →', W / 2, H - 8);
+  ctx.save();
+  ctx.translate(14, H / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText('Memory Retention', 0, 0);
+  ctx.restore();
+
+  // Y-axis labels
+  ctx.textAlign = 'right';
+  ctx.fillText('100%', padding.left - 8, padding.top + 5);
+  ctx.fillText('50%', padding.left - 8, padding.top + plotH / 2 + 5);
+  ctx.fillText('0%', padding.left - 8, H - padding.bottom + 5);
+
+  // X-axis labels
+  ctx.textAlign = 'center';
+  const days = ['0', '1d', '3d', '1w', '2w', '1m'];
+  days.forEach((label, i) => {
+    const x = padding.left + (plotW / (days.length - 1)) * i;
+    ctx.fillText(label, x, H - padding.bottom + 18);
+  });
+
+  function toX(t) { return padding.left + (t / 30) * plotW; }
+  function toY(v) { return padding.top + (1 - v) * plotH; }
+
+  // Without review curve (exponential decay)
+  ctx.beginPath();
+  ctx.strokeStyle = '#ef4444';
+  ctx.lineWidth = 2.5;
+  ctx.setLineDash([6, 4]);
+  for (let t = 0; t <= 30; t += 0.5) {
+    const v = Math.exp(-t * 0.12);
+    const x = toX(t); const y = toY(v);
+    t === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // With spaced review curve
+  const reviewPoints = [0, 1, 3, 7, 14];
+  ctx.beginPath();
+  ctx.strokeStyle = '#22c55e';
+  ctx.lineWidth = 2.5;
+
+  let retention = 1;
+  let lastReview = 0;
+  const points = [];
+
+  for (let t = 0; t <= 30; t += 0.25) {
+    if (reviewPoints.includes(t) && t > 0) {
+      retention = Math.min(1, retention + 0.35);
+      lastReview = t;
+      points.push({ x: toX(t), y: toY(retention) });
+    }
+    const decay = Math.exp(-(t - lastReview) * 0.06);
+    const v = retention * decay;
+    const x = toX(t); const y = toY(v);
+    t === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  // Review point dots
+  points.forEach(p => {
+    ctx.beginPath();
+    ctx.fillStyle = '#6366f1';
+    ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#0a0a0f';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  });
+}
+
+// ── Initialization ──────────────────────────────────
+
+function init() {
+  // Bug 10: Save total questions count to state for dashboard accuracy
+  saveState({ totalQuestions: QUIZ_QUESTIONS.length });
+
+  // Restore saved data
+  const state = loadState();
+
+  // Restore diagnostic sliders
+  if (state.diagnosticBaseline) {
+    state.diagnosticBaseline.forEach((v, i) => {
+      const el = document.getElementById(`conf-${i + 1}`);
+      if (el) el.value = v;
+    });
+    document.getElementById('diagnosticSaved').classList.remove('hidden');
+  }
+
+  // Restore puzzle answers
+  if (state.puzzleAnswers) {
+    Object.keys(state.puzzleAnswers).forEach(key => {
+      const idx = key.replace('q', '');
+      const el = document.getElementById(`puzzle-a${idx}`);
+      if (el) el.value = state.puzzleAnswers[key];
+    });
+    document.getElementById('puzzleSaved').classList.remove('hidden');
+  }
+
+  // Restore brain dump
+  if (state.brainDump) {
+    document.getElementById('brainDumpArea').value = state.brainDump;
+  }
+
+  // Restore scenario answers
+  if (state.scenarioAnswers) {
+    Object.keys(state.scenarioAnswers).forEach(key => {
+      const match = key.match(/s(\d)q(\d)/);
+      if (match) {
+        const el = document.getElementById(`sc-${match[1]}-${match[2]}`);
+        if (el) el.value = state.scenarioAnswers[key];
+      }
+    });
+  }
+
+  // Render components
+  setupQuizFilters();
+  setupLLMGrading();
+  renderQuiz();
+  renderSchedule();
+  renderScenarioDots();
+  renderConfidenceComparison();
+  renderRevisitPredictions();
+
+  // Flashcards
+  fcDeck = shuffleArray(FLASHCARDS);
+  renderFlashcard();
+
+  // Draw forgetting curve
+  drawForgettingCurve();
+  window.addEventListener('resize', drawForgettingCurve);
+}
+
+// Start
+document.addEventListener('DOMContentLoaded', init);

@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DDIA Chapter 10 — Learning Activities</title>
+  <meta name="description" content="Evidence-based learning activities for Designing Data-Intensive Applications Chapter 10: Consistency and Consensus">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+  <!-- Ambient background -->
+  <div class="ambient-bg">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <!-- Header -->
+  <header class="site-header">
+    <div class="header-content">
+      <div class="logo-area">
+        <div class="logo-icon">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+            <rect x="2" y="6" width="8" height="16" rx="2" fill="url(#grad1)" opacity="0.9"/>
+            <rect x="10" y="3" width="8" height="22" rx="2" fill="url(#grad2)" opacity="0.9"/>
+            <rect x="18" y="8" width="8" height="12" rx="2" fill="url(#grad3)" opacity="0.9"/>
+            <defs>
+              <linearGradient id="grad1" x1="2" y1="6" x2="10" y2="22"><stop stop-color="#6366f1"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient>
+              <linearGradient id="grad2" x1="10" y1="3" x2="18" y2="25"><stop stop-color="#8b5cf6"/><stop offset="1" stop-color="#a78bfa"/></linearGradient>
+              <linearGradient id="grad3" x1="18" y1="8" x2="26" y2="20"><stop stop-color="#a78bfa"/><stop offset="1" stop-color="#c4b5fd"/></linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <div class="logo-text">
+          <span class="logo-title">DDIA · Chapter 10</span>
+          <span class="logo-subtitle">Consistency and Consensus</span>
+        </div>
+      </div>
+      <nav class="main-nav" id="mainNav">
+        <button class="nav-btn active" data-phase="pre" id="nav-pre">
+          <span class="nav-icon">⚡</span>
+          <span class="nav-label">Pre-Activity</span>
+          <span class="nav-tag">Prime</span>
+        </button>
+        <button class="nav-btn" data-phase="post" id="nav-post">
+          <span class="nav-icon">🧠</span>
+          <span class="nav-label">Post-Activity</span>
+          <span class="nav-tag">Retrieve</span>
+        </button>
+        <button class="nav-btn" data-phase="sustained" id="nav-sustained">
+          <span class="nav-icon">🔄</span>
+          <span class="nav-label">Sustained Practice</span>
+          <span class="nav-tag">Retain</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="main-content">
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- PRE-ACTIVITY PHASE                         -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section class="phase-section active" id="phase-pre">
+      <div class="phase-hero">
+        <div class="phase-badge">Phase 1 · Before Reading</div>
+        <h1 class="phase-title">Pre-Activity: Prime Your Brain</h1>
+        <p class="phase-description">
+          Research shows that <strong>struggling with a problem before learning the answer</strong> creates 
+          "conceptual folders" in your mind, making subsequent reading far more meaningful. 
+          You are <em>not</em> expected to know these answers yet.
+        </p>
+        <div class="science-note">
+          <span class="science-icon">🔬</span>
+          <span><strong>ABC Pedagogy</strong> — Activity Before Content primes retrieval pathways and activates prior knowledge</span>
+        </div>
+      </div>
+
+      <!-- Pre-Activity 1: Diagnostic -->
+      <div class="activity-card" id="pre-diagnostic">
+        <div class="card-header">
+          <div class="card-number">01</div>
+          <div class="card-meta">
+            <h2 class="card-title">Diagnostic: What Do You Already Know?</h2>
+            <p class="card-purpose">Activates prior knowledge · Identifies gaps · ~5 min</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <p class="card-instruction">Rate your confidence on each concept. Be honest — <strong>low confidence is perfectly fine</strong> and helps you focus your reading.</p>
+          
+          <div class="confidence-grid" id="diagnosticGrid">
+            <div class="confidence-item" data-topic="linearizability">
+              <span class="confidence-label">I can explain the difference between linearizability and other consistency models (like serializability or eventual consistency)</span>
+              <div class="confidence-slider">
+                <input type="range" min="1" max="5" value="3" class="slider" id="conf-1">
+                <div class="slider-labels">
+                  <span>No clue</span><span>Vaguely</span><span>Somewhat</span><span>Well</span><span>Could teach it</span>
+                </div>
+              </div>
+            </div>
+            <div class="confidence-item" data-topic="cap-theorem">
+              <span class="confidence-label">I understand the exact trade-offs of the CAP theorem and its limitations</span>
+              <div class="confidence-slider">
+                <input type="range" min="1" max="5" value="3" class="slider" id="conf-2">
+                <div class="slider-labels">
+                  <span>No clue</span><span>Vaguely</span><span>Somewhat</span><span>Well</span><span>Could teach it</span>
+                </div>
+              </div>
+            </div>
+            <div class="confidence-item" data-topic="logical-clocks">
+              <span class="confidence-label">I can explain Lamport timestamps, hybrid logical clocks, and vector clocks</span>
+              <div class="confidence-slider">
+                <input type="range" min="1" max="5" value="3" class="slider" id="conf-3">
+                <div class="slider-labels">
+                  <span>No clue</span><span>Vaguely</span><span>Somewhat</span><span>Well</span><span>Could teach it</span>
+                </div>
+              </div>
+            </div>
+            <div class="confidence-item" data-topic="consensus">
+              <span class="confidence-label">I understand the formal safety and liveness properties of consensus</span>
+              <div class="confidence-slider">
+                <input type="range" min="1" max="5" value="3" class="slider" id="conf-4">
+                <div class="slider-labels">
+                  <span>No clue</span><span>Vaguely</span><span>Somewhat</span><span>Well</span><span>Could teach it</span>
+                </div>
+              </div>
+            </div>
+            <div class="confidence-item" data-topic="two-phase-commit">
+              <span class="confidence-label">I can compare Two-Phase Commit (2PC) with fault-tolerant consensus (Raft/Paxos)</span>
+              <div class="confidence-slider">
+                <input type="range" min="1" max="5" value="3" class="slider" id="conf-5">
+                <div class="slider-labels">
+                  <span>No clue</span><span>Vaguely</span><span>Somewhat</span><span>Well</span><span>Could teach it</span>
+                </div>
+              </div>
+            </div>
+            <div class="confidence-item" data-topic="coordination-services">
+              <span class="confidence-label">I understand how coordination services utilize consensus for locking and membership</span>
+              <div class="confidence-slider">
+                <input type="range" min="1" max="5" value="3" class="slider" id="conf-6">
+                <div class="slider-labels">
+                  <span>No clue</span><span>Vaguely</span><span>Somewhat</span><span>Well</span><span>Could teach it</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <button class="btn-primary" id="saveDiagnostic">Save My Baseline</button>
+          <div class="save-confirmation hidden" id="diagnosticSaved">
+            <span>✓</span> Baseline saved! You'll retake this after reading to see your growth.
+          </div>
+        </div>
+      </div>
+
+      <!-- Pre-Activity 2: Architecture Puzzle -->
+      <div class="activity-card" id="pre-puzzle">
+        <div class="card-header">
+          <div class="card-number">02</div>
+          <div class="card-meta">
+            <h2 class="card-title">Architecture Puzzle: Design Before You Know</h2>
+            <p class="card-purpose">Creates conceptual folders · Generates curiosity · ~10 min</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="puzzle-scenario">
+            <div class="scenario-header">
+              <span class="scenario-icon">🏗️</span>
+              <h3>The Scenario</h3>
+            </div>
+            <p>You are the lead architect for a ticket booking platform. The platform must handle booking for a highly anticipated concert where 10,000 seats will sell out in minutes. Here are the constraints:</p>
+            <ul class="scenario-list">
+              <li>The platform is deployed across three geographic regions: US, Europe, and Asia to minimize latency.</li>
+              <li>If a network partition occurs between Asia and the other regions, users in Asia must still be able to use the app, but you must strictly prevent double-booking the same seat.</li>
+              <li>The business team wants real-time sales metrics, while engineers want to ensure high availability for checkouts.</li>
+            </ul>
+          </div>
+
+          <div class="puzzle-questions">
+            <div class="puzzle-q" id="puzzle-q1">
+              <label class="puzzle-label">
+                <span class="q-num">Q1</span>
+                To guarantee that no seat is booked twice, does your database replication system need to be linearizable? Why or why not? What is the trade-off during a network partition?
+              </label>
+              <textarea class="puzzle-textarea" placeholder="Think out loud here... there's no wrong answer yet" id="puzzle-a1"></textarea>
+            </div>
+            <div class="puzzle-q" id="puzzle-q2">
+              <label class="puzzle-label">
+                <span class="q-num">Q2</span>
+                If you choose to prioritize availability (AP) in Asia during a partition, how could you handle concurrent attempts to book the same seat in Asia and the US? What is the &quot;compensating action&quot;?
+              </label>
+              <textarea class="puzzle-textarea" placeholder="What's the worst that could happen?" id="puzzle-a2"></textarea>
+            </div>
+            <div class="puzzle-q" id="puzzle-q3">
+              <label class="puzzle-label">
+                <span class="q-num">Q3</span>
+                If you decide to use a distributed lock service (like ZooKeeper/etcd) to coordinate seat allocation, what could happen if a node in Asia acquires a lock, undergoes a long garbage collection pause (GC pause), and then attempts to complete the write after its lease expires? How does fencing resolve this?
+              </label>
+              <textarea class="puzzle-textarea" placeholder="What would you need to know first?" id="puzzle-a3"></textarea>
+            </div>
+          </div>
+          <button class="btn-primary" id="savePuzzle">Save My Predictions</button>
+          <div class="save-confirmation hidden" id="puzzleSaved">
+            <span>✓</span> Predictions saved! After reading Ch. 10, you'll revisit these with fresh eyes.
+          </div>
+        </div>
+      </div>
+
+      <!-- Pre-Activity 3: Misconception Detector -->
+      <div class="activity-card" id="pre-misconceptions">
+        <div class="card-header">
+          <div class="card-number">03</div>
+          <div class="card-meta">
+            <h2 class="card-title">Misconception Detector</h2>
+            <p class="card-purpose">Surfaces faulty mental models · Prepares for correction · ~3 min</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <p class="card-instruction">For each statement, decide: <strong>True, False, or I'm Not Sure.</strong> Don't guess — &quot;Not Sure&quot; is the best answer if you genuinely don't know.</p>
+          
+          <div class="misconception-list" id="misconceptionList">
+            <div class="misconception-item" data-correct="false" data-id="m1">
+              <p class="misconception-text">"Linearizability and serializability are basically the same thing since they both ensure operations are executed in a sequential order."</p>
+              <div class="misconception-btns">
+                <button class="mc-btn" data-value="true">True</button>
+                <button class="mc-btn" data-value="false">False</button>
+                <button class="mc-btn" data-value="unsure">Not Sure</button>
+              </div>
+              <div class="misconception-feedback hidden"></div>
+            </div>
+            <div class="misconception-item" data-correct="false" data-id="m2">
+              <p class="misconception-text">"Any system that uses quorum reads and writes (w + r > n) is guaranteed to be linearizable."</p>
+              <div class="misconception-btns">
+                <button class="mc-btn" data-value="true">True</button>
+                <button class="mc-btn" data-value="false">False</button>
+                <button class="mc-btn" data-value="unsure">Not Sure</button>
+              </div>
+              <div class="misconception-feedback hidden"></div>
+            </div>
+            <div class="misconception-item" data-correct="false" data-id="m3">
+              <p class="misconception-text">"The CAP theorem states that you can choose any two of Consistency, Availability, and Partition Tolerance."</p>
+              <div class="misconception-btns">
+                <button class="mc-btn" data-value="true">True</button>
+                <button class="mc-btn" data-value="false">False</button>
+                <button class="mc-btn" data-value="unsure">Not Sure</button>
+              </div>
+              <div class="misconception-feedback hidden"></div>
+            </div>
+            <div class="misconception-item" data-correct="true" data-id="m4">
+              <p class="misconception-text">"Lamport timestamps provide a total ordering of events consistent with causality, but they are not sufficient to enforce constraints like uniqueness in a fault-tolerant way."</p>
+              <div class="misconception-btns">
+                <button class="mc-btn" data-value="true">True</button>
+                <button class="mc-btn" data-value="false">False</button>
+                <button class="mc-btn" data-value="unsure">Not Sure</button>
+              </div>
+              <div class="misconception-feedback hidden"></div>
+            </div>
+            <div class="misconception-item" data-correct="false" data-id="m5">
+              <p class="misconception-text">"Two-Phase Commit (2PC) and Paxos/Raft are just different names for the same fault-tolerant consensus protocol."</p>
+              <div class="misconception-btns">
+                <button class="mc-btn" data-value="true">True</button>
+                <button class="mc-btn" data-value="false">False</button>
+                <button class="mc-btn" data-value="unsure">Not Sure</button>
+              </div>
+              <div class="misconception-feedback hidden"></div>
+            </div>
+          </div>
+
+          <div class="misconception-summary hidden" id="misconceptionSummary">
+            <h3>Your Pre-Reading Profile</h3>
+            <p id="misconceptionResult"></p>
+            <p class="summary-note">These will make much more sense after reading Chapter 10. Look for the answers as you read!</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pre-Activity CTA -->
+      <div class="phase-cta">
+        <div class="cta-icon">📖</div>
+        <h2>Now Read Chapter 10</h2>
+        <p>Your brain is primed. As you read, pay special attention to the concepts you rated low-confidence, and look for answers to the architecture puzzle. Come back for the Post-Activity when you're done.</p>
+        <button class="btn-secondary" onclick="switchPhase('post')">I've finished reading → Go to Post-Activity</button>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- POST-ACTIVITY PHASE                        -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section class="phase-section" id="phase-post">
+      <div class="phase-hero">
+        <div class="phase-badge">Phase 2 · After Reading</div>
+        <h1 class="phase-title">Post-Activity: Retrieve & Consolidate</h1>
+        <p class="phase-description">
+          You've read the chapter. Now the real learning begins. <strong>Retrieval practice</strong> — actively 
+          pulling information from memory — strengthens recall 80% more than re-reading. 
+          Struggle is the signal that learning is happening.
+        </p>
+        <div class="science-note">
+          <span class="science-icon">🔬</span>
+          <span><strong>Testing Effect</strong> — Roediger & Karpicke (2006): retrieval practice produced 80% better retention than re-study after one week</span>
+        </div>
+      </div>
+
+      <!-- Post-Activity 1: Brain Dump -->
+      <div class="activity-card" id="post-braindump">
+        <div class="card-header">
+          <div class="card-number">01</div>
+          <div class="card-meta">
+            <h2 class="card-title">Brain Dump: Free Recall</h2>
+            <p class="card-purpose">Maximum retrieval effort · Exposes real gaps · ~5 min</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <p class="card-instruction">Close the book. Set a timer. Write <strong>everything you remember</strong> from Chapter 10. Don't worry about organization — just dump it all out.</p>
+          <div class="timer-bar">
+            <button class="timer-btn" id="timerBtn">Start 5-min Timer</button>
+            <div class="timer-display" id="timerDisplay">5:00</div>
+            <div class="timer-progress" id="timerProgress"></div>
+          </div>
+          <textarea class="brain-dump-area" id="brainDumpArea" placeholder="Everything I remember from Chapter 10...&#10;&#10;• The chapter was about...&#10;• Linearizability is...&#10;• CAP theorem states that...&#10;• Lamport timestamps differ from vector clocks because...&#10;• 2PC vs Raft/Paxos..."></textarea>
+          <button class="btn-primary" id="saveBrainDump">Save Brain Dump</button>
+          <div class="save-confirmation hidden" id="brainDumpSaved">
+            <span>✓</span> Saved! Don't peek at the chapter yet — try the retrieval quiz next.
+          </div>
+        </div>
+      </div>
+
+      <!-- Post-Activity 2: Chapter Assessment (30 Questions) -->
+      <div class="activity-card" id="post-retrieval">
+        <div class="card-header">
+          <div class="card-number">02</div>
+          <div class="card-meta">
+            <h2 class="card-title">Chapter 10 Assessment</h2>
+            <p class="card-purpose">30 questions · Multiple choice + write-in · ~25 min</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="quiz-toolbar">
+            <div class="quiz-progress-info">
+              <span id="quizProgressText">0 of 30 answered</span>
+              <div class="quiz-progress-bar"><div class="quiz-progress-fill" id="quizProgressFill"></div></div>
+            </div>
+            <div class="quiz-filter-btns">
+              <button class="filter-btn active" data-filter="all">All</button>
+              <button class="filter-btn" data-filter="mc">Multiple Choice</button>
+              <button class="filter-btn" data-filter="write">Write-In</button>
+              <button class="filter-btn" data-filter="unanswered">Unanswered</button>
+            </div>
+          </div>
+          <div class="quiz-container" id="quizContainer">
+            <!-- Quiz questions rendered by JS -->
+          </div>
+          <div class="quiz-results hidden" id="quizResults">
+            <div class="results-header">
+              <div class="results-score">
+                <div class="score-circle" id="scoreCircle">
+                  <span class="score-num" id="scoreNum">0</span>
+                  <span class="score-denom" id="scoreDenom">/ 18</span>
+                </div>
+                <span class="score-label">Multiple Choice Score</span>
+              </div>
+              <div class="results-writein-badge">
+                <span class="writein-count" id="writeinCount">0</span>
+                <span class="writein-label">Write-in responses saved</span>
+              </div>
+            </div>
+            <div class="results-breakdown" id="resultsBreakdown"></div>
+            <div class="results-actions">
+              <button class="btn-primary" id="gradeWriteIns">📋 Grade Write-Ins with LLM</button>
+              <button class="btn-secondary" id="retakeQuiz">Retake Quiz</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LLM Grading Modal -->
+      <div class="modal-overlay hidden" id="llmModal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2>📋 LLM Grading Prompt</h2>
+            <button class="modal-close" id="closeModal">✕</button>
+          </div>
+          <div class="modal-body">
+            <p class="modal-instruction">Copy the prompt below and paste it into your preferred LLM (ChatGPT, Claude, Gemini, etc.) to receive detailed grading and feedback on your write-in responses.</p>
+            <textarea class="llm-prompt-area" id="llmPromptArea" readonly></textarea>
+            <div class="modal-actions">
+              <button class="btn-primary" id="copyLlmPrompt">📋 Copy to Clipboard</button>
+              <span class="copy-feedback hidden" id="copyFeedback">✓ Copied!</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Post-Activity 4: Revisit Predictions -->
+      <div class="activity-card" id="post-revisit">
+        <div class="card-header">
+          <div class="card-number">04</div>
+          <div class="card-meta">
+            <h2 class="card-title">Revisit Your Pre-Activity Predictions</h2>
+            <p class="card-purpose">Closes the loop · Measures growth · ~5 min</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="revisit-container">
+            <div class="revisit-item">
+              <h3>Your Architecture Puzzle Answers</h3>
+              <p class="revisit-instruction">Look at what you wrote before reading. What would you change now?</p>
+              <div class="revisit-comparison">
+                <div class="revisit-before">
+                  <span class="revisit-tag">Before Reading</span>
+                  <p class="revisit-saved" id="revisit-puzzle-1">Complete the pre-activity first to see your predictions here.</p>
+                </div>
+                <div class="revisit-after">
+                  <span class="revisit-tag revisit-tag-after">After Reading</span>
+                  <textarea class="revisit-textarea" id="revisit-a1" placeholder="Now I would say..."></textarea>
+                </div>
+              </div>
+            </div>
+            <div class="revisit-item">
+              <h3>Confidence Re-Assessment</h3>
+              <p class="revisit-instruction">Rate the same concepts again. Compare with your baseline.</p>
+              <div class="confidence-comparison" id="confidenceComparison">
+                <!-- Rendered by JS -->
+              </div>
+            </div>
+          </div>
+          <button class="btn-primary" id="saveRevisit">Save Post-Reading Reflection</button>
+          <div class="save-confirmation hidden" id="revisitSaved">
+            <span>✓</span> Growth captured! Head to Sustained Practice to lock this knowledge in long-term.
+          </div>
+        </div>
+      </div>
+
+      <div class="phase-cta">
+        <div class="cta-icon">🔄</div>
+        <h2>Ready for Long-Term Retention?</h2>
+        <p>You've learned it once. Now let's make sure you remember it in a week, a month, and beyond.</p>
+        <button class="btn-secondary" onclick="switchPhase('sustained')">Go to Sustained Practice →</button>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- SUSTAINED PRACTICE PHASE                   -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section class="phase-section" id="phase-sustained">
+      <div class="phase-hero">
+        <div class="phase-badge">Phase 3 · Ongoing</div>
+        <h1 class="phase-title">Sustained Practice: Space & Interleave</h1>
+        <p class="phase-description">
+          Without review, you'll forget <strong>~70% within 24 hours</strong>. Spaced repetition and 
+          interleaved practice are the two most reliable techniques in cognitive psychology 
+          for building durable, flexible knowledge.
+        </p>
+        <div class="science-note">
+          <span class="science-icon">🔬</span>
+          <span><strong>Spacing Effect</strong> (d = 0.42–0.60) — one of the most replicated findings in all of cognitive science</span>
+        </div>
+      </div>
+
+      <!-- Spaced Repetition Schedule -->
+      <div class="activity-card" id="sustained-schedule">
+        <div class="card-header">
+          <div class="card-number">01</div>
+          <div class="card-meta">
+            <h2 class="card-title">Your Review Schedule</h2>
+            <p class="card-purpose">Expanding intervals · Fights the forgetting curve · Tracks progress</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="schedule-grid" id="scheduleGrid">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Flashcard Deck -->
+      <div class="activity-card" id="sustained-flashcards">
+        <div class="card-header">
+          <div class="card-number">02</div>
+          <div class="card-meta">
+            <h2 class="card-title">Spaced Repetition Flashcards</h2>
+            <p class="card-purpose">Active recall · Self-graded difficulty · ~10 min per session</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="flashcard-deck" id="flashcardDeck">
+            <div class="flashcard-progress">
+              <span id="fcProgress">Card 1 of 15</span>
+              <div class="fc-progress-bar"><div class="fc-progress-fill" id="fcProgressFill"></div></div>
+            </div>
+            <div class="flashcard" id="flashcard">
+              <div class="flashcard-inner" id="flashcardInner">
+                <div class="flashcard-front">
+                  <span class="fc-side-label">Question</span>
+                  <p class="fc-text" id="fcFront"></p>
+                </div>
+                <div class="flashcard-back">
+                  <span class="fc-side-label">Answer</span>
+                  <p class="fc-text" id="fcBack"></p>
+                </div>
+              </div>
+            </div>
+            <div class="fc-controls">
+              <button class="fc-flip-btn" id="fcFlip">Flip Card</button>
+            </div>
+            <div class="fc-rating hidden" id="fcRating">
+              <p class="fc-rating-prompt">How well did you know this?</p>
+              <div class="fc-rating-btns">
+                <button class="fc-rate-btn fc-rate-again" data-rating="1">
+                  <span class="rate-emoji">😤</span>
+                  <span>Didn't know</span>
+                </button>
+                <button class="fc-rate-btn fc-rate-hard" data-rating="2">
+                  <span class="rate-emoji">😓</span>
+                  <span>Hard</span>
+                </button>
+                <button class="fc-rate-btn fc-rate-good" data-rating="3">
+                  <span class="rate-emoji">🙂</span>
+                  <span>Good</span>
+                </button>
+                <button class="fc-rate-btn fc-rate-easy" data-rating="4">
+                  <span class="rate-emoji">😎</span>
+                  <span>Easy</span>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="fc-session-complete hidden" id="fcComplete">
+            <div class="fc-complete-icon">🎉</div>
+            <h3>Session Complete!</h3>
+            <div class="fc-stats" id="fcStats"></div>
+            <button class="btn-primary" id="fcRestart">Practice Again</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Interleaved Challenge -->
+      <div class="activity-card" id="sustained-interleave">
+        <div class="card-header">
+          <div class="card-number">03</div>
+          <div class="card-meta">
+            <h2 class="card-title">Interleaved Scenario Challenge</h2>
+            <p class="card-purpose">Mixes all topics · Builds discrimination · Forces transfer · ~10 min</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <p class="card-instruction">Each scenario requires you to <strong>combine knowledge from multiple sections</strong> of Chapter 10. This deliberate mixing forces your brain to select the right framework — the hallmark of expert-level understanding.</p>
+          
+          <div class="scenario-deck" id="scenarioDeck">
+            <div class="scenario-card active" data-scenario="0">
+              <div class="scenario-badge">Scenario 1 of 4</div>
+              <div class="scenario-content">
+                <h3>🏥 Distributed Medical Registry</h3>
+                <p>A global healthcare database stores patient allergy records. Consider these constraints:</p>
+                <ul>
+                  <li>Doctors in different clinics globally must read and write allergy records.</li>
+                  <li>A doctor in Europe updates a patient's allergy profile to record a severe Penicillin allergy.</li>
+                  <li>Seconds later, a doctor in Asia administers a medication to the same patient.</li>
+                  <li>The network between Europe and Asia is completely partitioned.</li>
+                </ul>
+              </div>
+              <div class="scenario-prompts">
+                <div class="scenario-prompt">
+                  <label>What is the danger if the database uses multi-leader replication with eventual consistency? Refer to the Aaliyah/Bryce example.</label>
+                  <textarea class="scenario-textarea" id="sc-1-1" placeholder="Under eventual consistency, the doctor in Asia might..."></textarea>
+                </div>
+                <div class="scenario-prompt">
+                  <label>If you enforce linearizability (CP) to prevent this danger, what happens to doctors in Asia when the trans-oceanic cable breaks?</label>
+                  <textarea class="scenario-textarea" id="sc-1-2" placeholder="Given a partition, a linearizable system would..."></textarea>
+                </div>
+                <div class="scenario-prompt">
+                  <label>If you decide to go with an AP (available) design, what alternative application-level mechanism could you use to mitigate the safety risk?</label>
+                  <textarea class="scenario-textarea" id="sc-1-3" placeholder="Instead of locking writes globally, we could..."></textarea>
+                </div>
+              </div>
+            </div>
+
+            <div class="scenario-card" data-scenario="1">
+              <div class="scenario-badge">Scenario 2 of 4</div>
+              <div class="scenario-content">
+                <h3>💳 High-Throughput Bank Ledger</h3>
+                <p>A bank is designing a ledger system for peer-to-peer transfers. Consider these constraints:</p>
+                <ul>
+                  <li>The system must process 5,000 transactions per second (TPS) globally.</li>
+                  <li>It must enforce that account balances never drop below zero (a hard constraint).</li>
+                  <li>The database cluster consists of 5 nodes geographically distributed.</li>
+                </ul>
+              </div>
+              <div class="scenario-prompts">
+                <div class="scenario-prompt">
+                  <label>Can you implement this strict balance constraint using only Lamport timestamps without consensus? Why or why not?</label>
+                  <textarea class="scenario-textarea" id="sc-2-1" placeholder="Lamport timestamps are not sufficient because..."></textarea>
+                </div>
+                <div class="scenario-prompt">
+                  <label>If you use Raft/Paxos consensus for every transaction, what is the impact on your write throughput? Why?</label>
+                  <textarea class="scenario-textarea" id="sc-2-2" placeholder="Consensus on every write would..."></textarea>
+                </div>
+                <div class="scenario-prompt">
+                  <label>How does separating your ledger into partitions (sharding) help scalability, and what new consensus problem arises for transfers between different shards?</label>
+                  <textarea class="scenario-textarea" id="sc-2-3" placeholder="Sharding helps by... but transfers across shards require..."></textarea>
+                </div>
+              </div>
+            </div>
+
+            <div class="scenario-card" data-scenario="2">
+              <div class="scenario-badge">Scenario 3 of 4</div>
+              <div class="scenario-content">
+                <h3>🤖 Cluster Management in a Cloud Platform</h3>
+                <p>A container orchestration platform (like Kubernetes) manages 10,000 physical servers. Consider these constraints:</p>
+                <ul>
+                  <li>A master controller must coordinate worker nodes and allocate workloads.</li>
+                  <li>It elects a single active leader controller to prevent split-brain conflicts.</li>
+                  <li>It relies on etcd (a coordination service running Raft) for leader election.</li>
+                </ul>
+              </div>
+              <div class="scenario-prompts">
+                <div class="scenario-prompt">
+                  <label>Why is linearizability critical for leader election in this platform, and what is a &quot;split-brain&quot; scenario?</label>
+                  <textarea class="scenario-textarea" id="sc-3-1" placeholder="Linearizability ensures that only..."></textarea>
+                </div>
+                <div class="scenario-prompt">
+                  <label>A leader controller is active, but experiences a 30-second JVM Garbage Collection pause. The lease expires and etcd elects a new leader. The old leader wakes up. Explain the role of a fencing token in preventing the old leader from corrupting worker state.</label>
+                  <textarea class="scenario-textarea" id="sc-3-2" placeholder="When the old leader wakes up and attempts a write, the fencing token..."></textarea>
+                </div>
+                <div class="scenario-prompt">
+                  <label>Why are coordination services like etcd inappropriate for storing raw application logs or high-frequency telemetry data?</label>
+                  <textarea class="scenario-textarea" id="sc-3-3" placeholder="These services are optimized for... because consensus overhead..."></textarea>
+                </div>
+              </div>
+            </div>
+
+            <div class="scenario-card" data-scenario="3">
+              <div class="scenario-badge">Scenario 4 of 4</div>
+              <div class="scenario-content">
+                <h3>🔀 Trade-Off Tribunal</h3>
+                <p>You must make a ruling on each trade-off. There is no &quot;right answer&quot; — only well-reasoned arguments.</p>
+              </div>
+              <div class="scenario-prompts">
+                <div class="scenario-prompt">
+                  <label>Unclean Leader Election vs. Strict Consensus: Argue for and against enabling Kafka's `unclean.leader.election.enable`. When is data durability less important than service availability?</label>
+                  <textarea class="scenario-textarea" id="sc-4-1" placeholder="For availability: ... For consistency: ..."></textarea>
+                </div>
+                <div class="scenario-prompt">
+                  <label>Wait-Time-based Linearizability (Spanner) vs. Quorum-based Linearizability (Raft): Contrast Spanner's reliance on GPS/Atomic clocks (TrueTime) with Raft's quorum round-trips. What are the operational trade-offs of each approach?</label>
+                  <textarea class="scenario-textarea" id="sc-4-2" placeholder="Spanner provides... but requires... whereas Raft..."></textarea>
+                </div>
+                <div class="scenario-prompt">
+                  <label>Eventual Consistency with CRDTs vs. Linearizable Consensus: When should an engineer completely abandon consensus in favor of conflict-free replicated data types (CRDTs)? Argue both sides.</label>
+                  <textarea class="scenario-textarea" id="sc-4-3" placeholder="CRDTs are perfect when... but consensus remains necessary when..."></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="scenario-nav">
+            <button class="btn-scenario-nav" id="scenarioPrev" disabled>← Previous</button>
+            <div class="scenario-dots" id="scenarioDots"></div>
+            <button class="btn-scenario-nav" id="scenarioNext">Next →</button>
+          </div>
+          <button class="btn-primary" id="saveScenarios" style="margin-top:1.5rem">Save All Scenarios</button>
+          <div class="save-confirmation hidden" id="scenariosSaved">
+            <span>✓</span> Scenarios saved! These exercises build the transfer skills that distinguish novices from experts.
+          </div>
+        </div>
+      </div>
+
+      <!-- Forgetting Curve Visualization -->
+      <div class="activity-card" id="sustained-curve">
+        <div class="card-header">
+          <div class="card-number">04</div>
+          <div class="card-meta">
+            <h2 class="card-title">Your Forgetting Curve</h2>
+            <p class="card-purpose">Visual motivation · Shows the science behind spacing</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="curve-container">
+            <canvas id="forgettingCurve" width="700" height="300"></canvas>
+            <div class="curve-legend">
+              <div class="legend-item"><span class="legend-dot" style="background:#ef4444"></span> Without review</div>
+              <div class="legend-item"><span class="legend-dot" style="background:#22c55e"></span> With spaced review</div>
+              <div class="legend-item"><span class="legend-dot" style="background:#6366f1"></span> Review points</div>
+            </div>
+          </div>
+          <p class="curve-caption">Each review session <strong>resets and flattens</strong> the forgetting curve. After 4–5 well-spaced reviews, the memory becomes nearly permanent.</p>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="footer-content">
+      <p class="footer-text">Built on the <strong>2026 Pedagogical Consensus</strong> · Spaced Practice · Retrieval Practice · Interleaving · Elaborative Interrogation · Concrete Examples · Dual Coding</p>
+      <p class="footer-sub">Progress is saved locally in your browser</p>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

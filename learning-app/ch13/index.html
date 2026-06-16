@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DDIA Chapter 13 — Learning Activities</title>
+  <meta name="description" content="Evidence-based learning activities for Designing Data-Intensive Applications Chapter 13: A Philosophy of Streaming Systems">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+  <!-- Ambient background -->
+  <div class="ambient-bg">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <!-- Header -->
+  <header class="site-header">
+    <div class="header-content">
+      <div class="logo-area">
+        <div class="logo-icon">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+            <rect x="2" y="6" width="8" height="16" rx="2" fill="url(#grad1)" opacity="0.9"/>
+            <rect x="10" y="3" width="8" height="22" rx="2" fill="url(#grad2)" opacity="0.9"/>
+            <rect x="18" y="8" width="8" height="12" rx="2" fill="url(#grad3)" opacity="0.9"/>
+            <defs>
+              <linearGradient id="grad1" x1="2" y1="6" x2="10" y2="22"><stop stop-color="#6366f1"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient>
+              <linearGradient id="grad2" x1="10" y1="3" x2="18" y2="25"><stop stop-color="#8b5cf6"/><stop offset="1" stop-color="#a78bfa"/></linearGradient>
+              <linearGradient id="grad3" x1="18" y1="8" x2="26" y2="20"><stop stop-color="#a78bfa"/><stop offset="1" stop-color="#c4b5fd"/></linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <div class="logo-text">
+          <span class="logo-title">DDIA · Chapter 13</span>
+          <span class="logo-subtitle">A Philosophy of Streaming Systems</span>
+        </div>
+      </div>
+      <nav class="main-nav" id="mainNav">
+        <button class="nav-btn active" data-phase="pre" id="nav-pre">
+          <span class="nav-icon">⚡</span>
+          <span class="nav-label">Pre-Activity</span>
+          <span class="nav-tag">Prime</span>
+        </button>
+        <button class="nav-btn" data-phase="post" id="nav-post">
+          <span class="nav-icon">🧠</span>
+          <span class="nav-label">Post-Activity</span>
+          <span class="nav-tag">Retrieve</span>
+        </button>
+        <button class="nav-btn" data-phase="sustained" id="nav-sustained">
+          <span class="nav-icon">🔄</span>
+          <span class="nav-label">Sustained Practice</span>
+          <span class="nav-tag">Retain</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="main-content">
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- PRE-ACTIVITY PHASE                         -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section class="phase-section active" id="phase-pre">
+      <div class="phase-hero">
+        <div class="phase-badge">Phase 1 · Before Reading</div>
+        <h1 class="phase-title">Pre-Activity: Prime Your Brain</h1>
+        <p class="phase-description">
+          Research shows that <strong>struggling with a problem before learning the answer</strong> creates 
+          "conceptual folders" in your mind, making subsequent reading far more meaningful. 
+          You are <em>not</em> expected to know these answers yet.
+        </p>
+        <div class="science-note">
+          <span class="science-icon">🔬</span>
+          <span><strong>ABC Pedagogy</strong> — Activity Before Content primes retrieval pathways and activates prior knowledge</span>
+        </div>
+      </div>
+
+      <!-- Pre-Activity 1: Diagnostic -->
+      <div class="activity-card" id="pre-diagnostic">
+        <div class="card-header">
+          <div class="card-number">01</div>
+          <div class="card-meta">
+            <h2 class="card-title">Diagnostic: What Do You Already Know?</h2>
+            <p class="card-purpose">Activates prior knowledge · Identifies gaps · ~5 min</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <p class="card-instruction">Rate your confidence on each concept. Be honest — <strong>low confidence is perfectly fine</strong> and helps you focus your reading.</p>
+          
+          <div class="confidence-grid" id="diagnosticGrid">
+            <div class="confidence-item" data-topic="unbundled-db">
+              <span class="confidence-label">I understand how to unbundle databases and compose systems using event logs and specialized query engines.</span>
+              <div class="confidence-slider">
+                <input type="range" min="1" max="5" value="3" class="slider" id="conf-1">
+                <div class="slider-labels">
+                  <span>No clue</span><span>Vaguely</span><span>Somewhat</span><span>Well</span><span>Could teach it</span>
+                </div>
+              </div>
+            </div>
+            <div class="confidence-item" data-topic="timeliness-integrity">
+              <span class="confidence-label">I can distinguish between timeliness and integrity and explain eventual consistency vs database corruption.</span>
+              <div class="confidence-slider">
+                <input type="range" min="1" max="5" value="3" class="slider" id="conf-2">
+                <div class="slider-labels">
+                  <span>No clue</span><span>Vaguely</span><span>Somewhat</span><span>Well</span><span>Could teach it</span>
+                </div>
+              </div>
+            </div>
+            <div class="confidence-item" data-topic="end-to-end-idempotence">
+              <span class="confidence-label">I can apply the end-to-end argument to design duplicate suppression using application-level request IDs.</span>
+              <div class="confidence-slider">
+                <input type="range" min="1" max="5" value="3" class="slider" id="conf-3">
+                <div class="slider-labels">
+                  <span>No clue</span><span>Vaguely</span><span>Somewhat</span><span>Well</span><span>Could teach it</span>
+                </div>
+              </div>
+            </div>
+            <div class="confidence-item" data-topic="coordination-avoidance">
+              <span class="confidence-label">I understand how coordination-avoiding data systems use apologies and compensating transactions to achieve scale.</span>
+              <div class="confidence-slider">
+                <input type="range" min="1" max="5" value="3" class="slider" id="conf-4">
+                <div class="slider-labels">
+                  <span>No clue</span><span>Vaguely</span><span>Somewhat</span><span>Well</span><span>Could teach it</span>
+                </div>
+              </div>
+            </div>
+            <div class="confidence-item" data-topic="data-integration-cdc">
+              <span class="confidence-label">I can explain how to keep specialized storage systems in sync using log-based change data capture (CDC).</span>
+              <div class="confidence-slider">
+                <input type="range" min="1" max="5" value="3" class="slider" id="conf-5">
+                <div class="slider-labels">
+                  <span>No clue</span><span>Vaguely</span><span>Somewhat</span><span>Well</span><span>Could teach it</span>
+                </div>
+              </div>
+            </div>
+            <div class="confidence-item" data-topic="self-auditing-integrity">
+              <span class="confidence-label">I understand how to design self-auditing systems that verify data integrity using event replays and Merkle trees.</span>
+              <div class="confidence-slider">
+                <input type="range" min="1" max="5" value="3" class="slider" id="conf-6">
+                <div class="slider-labels">
+                  <span>No clue</span><span>Vaguely</span><span>Somewhat</span><span>Well</span><span>Could teach it</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <button class="btn-primary" id="saveDiagnostic">Save My Baseline</button>
+          <div class="save-confirmation hidden" id="diagnosticSaved">
+            <span>✓</span> Baseline saved! You'll retake this after reading to see your growth.
+          </div>
+        </div>
+      </div>
+
+      <!-- Pre-Activity 2: Architecture Puzzle -->
+      <div class="activity-card" id="pre-puzzle">
+        <div class="card-header">
+          <div class="card-number">02</div>
+          <div class="card-meta">
+            <h2 class="card-title">Architecture Puzzle: Design Before You Know</h2>
+            <p class="card-purpose">Creates conceptual folders · Generates curiosity · ~10 min</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="puzzle-scenario">
+            <div class="scenario-header">
+              <span class="scenario-icon">🏗️</span>
+              <h3>The Scenario</h3>
+            </div>
+            <p>You are the lead architect for a high-throughput, global ride-sharing application (like Uber) that pairs drivers and riders, handles ride bookings, processes driver payments, and generates regional driver availability reports. Currently, you use a single massive, centralized SQL database which suffers from lock contention during peak hours, and regional network partitions occasionally cause matching services to fail entirely.</p>
+          </div>
+
+          <div class="puzzle-questions">
+            <div class="puzzle-q" id="puzzle-q1">
+              <label class="puzzle-label">
+                <span class="q-num">Q1</span>
+                How would you unbundle the write path and read path for driver availability, ensuring regional matching services can continue to operate even during a network partition from the primary database?
+              </label>
+              <textarea class="puzzle-textarea" placeholder="Think out loud here... there's no wrong answer yet" id="puzzle-a1"></textarea>
+            </div>
+            <div class="puzzle-q" id="puzzle-q2">
+              <label class="puzzle-label">
+                <span class="q-num">Q2</span>
+                If a rider books a ride, how can you guarantee the driver is booked exactly once, even if the passenger's mobile connection drops during the payment request and they retry?
+              </label>
+              <textarea class="puzzle-textarea" placeholder="What's the worst that could happen?" id="puzzle-a2"></textarea>
+            </div>
+            <div class="puzzle-q" id="puzzle-q3">
+              <label class="puzzle-label">
+                <span class="q-num">Q3</span>
+                Instead of enforcing a hard distributed lock to guarantee 'one driver per ride' at all times, how could the business handle matching conflicts using a 'coordination-avoiding' apology workflow?
+              </label>
+              <textarea class="puzzle-textarea" placeholder="What would you need to know first?" id="puzzle-a3"></textarea>
+            </div>
+          </div>
+          <button class="btn-primary" id="savePuzzle">Save My Predictions</button>
+          <div class="save-confirmation hidden" id="puzzleSaved">
+            <span>✓</span> Predictions saved! After reading Ch. 13, you'll revisit these with fresh eyes.
+          </div>
+        </div>
+      </div>
+
+      <!-- Pre-Activity 3: Misconception Detector -->
+      <div class="activity-card" id="pre-misconceptions">
+        <div class="card-header">
+          <div class="card-number">03</div>
+          <div class="card-meta">
+            <h2 class="card-title">Misconception Detector</h2>
+            <p class="card-purpose">Surfaces faulty mental models · Prepares for correction · ~3 min</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <p class="card-instruction">For each statement, decide: <strong>True, False, or I'm Not Sure.</strong> Don't guess — "Not Sure" is the best answer if you genuinely don't know.</p>
+          
+          <div class="misconception-list" id="misconceptionList">
+            <div class="misconception-item" data-correct="false" data-id="m1">
+              <p class="misconception-text">"Distributed transactions (like 2PC/XA) are the most scalable way to keep databases, caches, and search indexes in sync."</p>
+              <div class="misconception-btns">
+                <button class="mc-btn" data-value="true">True</button>
+                <button class="mc-btn" data-value="false">False</button>
+                <button class="mc-btn" data-value="unsure">Not Sure</button>
+              </div>
+              <div class="misconception-feedback hidden"></div>
+            </div>
+            <div class="misconception-item" data-correct="false" data-id="m2">
+              <p class="misconception-text">"Eventual consistency is a violation of database integrity."</p>
+              <div class="misconception-btns">
+                <button class="mc-btn" data-value="true">True</button>
+                <button class="mc-btn" data-value="false">False</button>
+                <button class="mc-btn" data-value="unsure">Not Sure</button>
+              </div>
+              <div class="misconception-feedback hidden"></div>
+            </div>
+            <div class="misconception-item" data-correct="false" data-id="m3">
+              <p class="misconception-text">"TCP duplicate suppression guarantees that a database will never execute the same transaction twice."</p>
+              <div class="misconception-btns">
+                <button class="mc-btn" data-value="true">True</button>
+                <button class="mc-btn" data-value="false">False</button>
+                <button class="mc-btn" data-value="unsure">Not Sure</button>
+              </div>
+              <div class="misconception-feedback hidden"></div>
+            </div>
+            <div class="misconception-item" data-correct="true" data-id="m4">
+              <p class="misconception-text">"Strictly guaranteeing that a boundary constraint (such as a bank balance never going negative) is never violated in real-time under concurrent writes always requires synchronous coordination (consensus)."</p>
+              <div class="misconception-btns">
+                <button class="mc-btn" data-value="true">True</button>
+                <button class="mc-btn" data-value="false">False</button>
+                <button class="mc-btn" data-value="unsure">Not Sure</button>
+              </div>
+              <div class="misconception-feedback hidden"></div>
+            </div>
+            <div class="misconception-item" data-correct="false" data-id="m5">
+              <p class="misconception-text">"Blockchains are highly scalable databases suitable for general-purpose application auditing."</p>
+              <div class="misconception-btns">
+                <button class="mc-btn" data-value="true">True</button>
+                <button class="mc-btn" data-value="false">False</button>
+                <button class="mc-btn" data-value="unsure">Not Sure</button>
+              </div>
+              <div class="misconception-feedback hidden"></div>
+            </div>
+          </div>
+
+          <div class="misconception-summary hidden" id="misconceptionSummary">
+            <h3>Your Pre-Reading Profile</h3>
+            <p id="misconceptionResult"></p>
+            <p class="summary-note">These will make much more sense after reading Chapter 13. Look for the answers as you read!</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pre-Activity CTA -->
+      <div class="phase-cta">
+        <div class="cta-icon">📖</div>
+        <h2>Now Read Chapter 13</h2>
+        <p>Your brain is primed. As you read, pay special attention to the concepts you rated low-confidence, and look for answers to the architecture puzzle. Come back for the Post-Activity when you're done.</p>
+        <button class="btn-secondary" onclick="switchPhase('post')">I've finished reading → Go to Post-Activity</button>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- POST-ACTIVITY PHASE                        -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section class="phase-section" id="phase-post">
+      <div class="phase-hero">
+        <div class="phase-badge">Phase 2 · After Reading</div>
+        <h1 class="phase-title">Post-Activity: Retrieve & Consolidate</h1>
+        <p class="phase-description">
+          You've read the chapter. Now the real learning begins. <strong>Retrieval practice</strong> — actively 
+          pulling information from memory — strengthens recall 80% more than re-reading. 
+          Struggle is the signal that learning is happening.
+        </p>
+        <div class="science-note">
+          <span class="science-icon">🔬</span>
+          <span><strong>Testing Effect</strong> — Roediger & Karpicke (2006): retrieval practice produced 80% better retention than re-study after one week</span>
+        </div>
+      </div>
+
+      <!-- Post-Activity 1: Brain Dump -->
+      <div class="activity-card" id="post-braindump">
+        <div class="card-header">
+          <div class="card-number">01</div>
+          <div class="card-meta">
+            <h2 class="card-title">Brain Dump: Free Recall</h2>
+            <p class="card-purpose">Maximum retrieval effort · Exposes real gaps · ~5 min</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <p class="card-instruction">Close the book. Set a timer. Write <strong>everything you remember</strong> from Chapter 13. Don't worry about organization — just dump it all out.</p>
+          <div class="timer-bar">
+            <button class="timer-btn" id="timerBtn">Start 5-min Timer</button>
+            <div class="timer-display" id="timerDisplay">5:00</div>
+            <div class="timer-progress" id="timerProgress"></div>
+          </div>
+          <textarea class="brain-dump-area" id="brainDumpArea" placeholder="Everything I remember from Chapter 13...&#10;&#10;• The chapter was about...&#10;• Key concepts included...&#10;• Unbundling databases means...&#10;• Timeliness vs integrity..."></textarea>
+          <button class="btn-primary" id="saveBrainDump">Save Brain Dump</button>
+          <div class="save-confirmation hidden" id="brainDumpSaved">
+            <span>✓</span> Saved! Don't peek at the chapter yet — try the retrieval quiz next.
+          </div>
+        </div>
+      </div>
+
+      <!-- Post-Activity 2: Chapter Assessment (30 Questions) -->
+      <div class="activity-card" id="post-retrieval">
+        <div class="card-header">
+          <div class="card-number">02</div>
+          <div class="card-meta">
+            <h2 class="card-title">Chapter 13 Assessment</h2>
+            <p class="card-purpose">30 questions · Multiple choice + write-in · ~25 min</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="quiz-toolbar">
+            <div class="quiz-progress-info">
+              <span id="quizProgressText">0 of 30 answered</span>
+              <div class="quiz-progress-bar"><div class="quiz-progress-fill" id="quizProgressFill"></div></div>
+            </div>
+            <div class="quiz-filter-btns">
+              <button class="filter-btn active" data-filter="all">All</button>
+              <button class="filter-btn" data-filter="mc">Multiple Choice</button>
+              <button class="filter-btn" data-filter="write">Write-In</button>
+              <button class="filter-btn" data-filter="unanswered">Unanswered</button>
+            </div>
+          </div>
+          <div class="quiz-container" id="quizContainer">
+            <!-- Quiz questions rendered by JS -->
+          </div>
+          <div class="quiz-results hidden" id="quizResults">
+            <div class="results-header">
+              <div class="results-score">
+                <div class="score-circle" id="scoreCircle">
+                  <span class="score-num" id="scoreNum">0</span>
+                  <span class="score-denom" id="scoreDenom">/ 18</span>
+                </div>
+                <span class="score-label">Multiple Choice Score</span>
+              </div>
+              <div class="results-writein-badge">
+                <span class="writein-count" id="writeinCount">0</span>
+                <span class="writein-label">Write-in responses saved</span>
+              </div>
+            </div>
+            <div class="results-breakdown" id="resultsBreakdown"></div>
+            <div class="results-actions">
+              <button class="btn-primary" id="gradeWriteIns">📋 Grade Write-Ins with LLM</button>
+              <button class="btn-secondary" id="retakeQuiz">Retake Quiz</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LLM Grading Modal -->
+      <div class="modal-overlay hidden" id="llmModal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2>📋 LLM Grading Prompt</h2>
+            <button class="modal-close" id="closeModal">✕</button>
+          </div>
+          <div class="modal-body">
+            <p class="modal-instruction">Copy the prompt below and paste it into your preferred LLM (ChatGPT, Claude, Gemini, etc.) to receive detailed grading and feedback on your write-in responses.</p>
+            <textarea class="llm-prompt-area" id="llmPromptArea" readonly></textarea>
+            <div class="modal-actions">
+              <button class="btn-primary" id="copyLlmPrompt">📋 Copy to Clipboard</button>
+              <span class="copy-feedback hidden" id="copyFeedback">✓ Copied!</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Post-Activity 4: Revisit Predictions -->
+      <div class="activity-card" id="post-revisit">
+        <div class="card-header">
+          <div class="card-number">04</div>
+          <div class="card-meta">
+            <h2 class="card-title">Revisit Your Pre-Activity Predictions</h2>
+            <p class="card-purpose">Closes the loop · Measures growth · ~5 min</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="revisit-container">
+            <div class="revisit-item">
+              <h3>Your Architecture Puzzle Answers</h3>
+              <p class="revisit-instruction">Look at what you wrote before reading. What would you change now?</p>
+              <div class="revisit-comparison">
+                <div class="revisit-before">
+                  <span class="revisit-tag">Before Reading</span>
+                  <p class="revisit-saved" id="revisit-puzzle-1">Complete the pre-activity first to see your predictions here.</p>
+                </div>
+                <div class="revisit-after">
+                  <span class="revisit-tag revisit-tag-after">After Reading</span>
+                  <textarea class="revisit-textarea" id="revisit-a1" placeholder="Now I would say..."></textarea>
+                </div>
+              </div>
+            </div>
+            <div class="revisit-item">
+              <h3>Confidence Re-Assessment</h3>
+              <p class="revisit-instruction">Rate the same concepts again. Compare with your baseline.</p>
+              <div class="confidence-comparison" id="confidenceComparison">
+                <!-- Rendered by JS -->
+              </div>
+            </div>
+          </div>
+          <button class="btn-primary" id="saveRevisit">Save Post-Reading Reflection</button>
+          <div class="save-confirmation hidden" id="revisitSaved">
+            <span>✓</span> Growth captured! Head to Sustained Practice to lock this knowledge in long-term.
+          </div>
+        </div>
+      </div>
+
+      <div class="phase-cta">
+        <div class="cta-icon">🔄</div>
+        <h2>Ready for Long-Term Retention?</h2>
+        <p>You've learned it once. Now let's make sure you remember it in a week, a month, and beyond.</p>
+        <button class="btn-secondary" onclick="switchPhase('sustained')">Go to Sustained Practice →</button>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- SUSTAINED PRACTICE PHASE                   -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section class="phase-section" id="phase-sustained">
+      <div class="phase-hero">
+        <div class="phase-badge">Phase 3 · Ongoing</div>
+        <h1 class="phase-title">Sustained Practice: Space & Interleave</h1>
+        <p class="phase-description">
+          Without review, you'll forget <strong>~70% within 24 hours</strong>. Spaced repetition and 
+          interleaved practice are the two most reliable techniques in cognitive psychology 
+          for building durable, flexible knowledge.
+        </p>
+        <div class="science-note">
+          <span class="science-icon">🔬</span>
+          <span><strong>Spacing Effect</strong> (d = 0.42–0.60) — one of the most replicated findings in all of cognitive science</span>
+        </div>
+      </div>
+
+      <!-- Spaced Repetition Schedule -->
+      <div class="activity-card" id="sustained-schedule">
+        <div class="card-header">
+          <div class="card-number">01</div>
+          <div class="card-meta">
+            <h2 class="card-title">Your Review Schedule</h2>
+            <p class="card-purpose">Expanding intervals · Fights the forgetting curve · Tracks progress</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="schedule-grid" id="scheduleGrid">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Flashcard Deck -->
+      <div class="activity-card" id="sustained-flashcards">
+        <div class="card-header">
+          <div class="card-number">02</div>
+          <div class="card-meta">
+            <h2 class="card-title">Spaced Repetition Flashcards</h2>
+            <p class="card-purpose">Active recall · Self-graded difficulty · ~10 min per session</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="flashcard-deck" id="flashcardDeck">
+            <div class="flashcard-progress">
+              <span id="fcProgress">Card 1 of 12</span>
+              <div class="fc-progress-bar"><div class="fc-progress-fill" id="fcProgressFill"></div></div>
+            </div>
+            <div class="flashcard" id="flashcard">
+              <div class="flashcard-inner" id="flashcardInner">
+                <div class="flashcard-front">
+                  <span class="fc-side-label">Question</span>
+                  <p class="fc-text" id="fcFront"></p>
+                </div>
+                <div class="flashcard-back">
+                  <span class="fc-side-label">Answer</span>
+                  <p class="fc-text" id="fcBack"></p>
+                </div>
+              </div>
+            </div>
+            <div class="fc-controls">
+              <button class="fc-flip-btn" id="fcFlip">Flip Card</button>
+            </div>
+            <div class="fc-rating hidden" id="fcRating">
+              <p class="fc-rating-prompt">How well did you know this?</p>
+              <div class="fc-rating-btns">
+                <button class="fc-rate-btn fc-rate-again" data-rating="1">
+                  <span class="rate-emoji">😤</span>
+                  <span>Didn't know</span>
+                </button>
+                <button class="fc-rate-btn fc-rate-hard" data-rating="2">
+                  <span class="rate-emoji">😓</span>
+                  <span>Hard</span>
+                </button>
+                <button class="fc-rate-btn fc-rate-good" data-rating="3">
+                  <span class="rate-emoji">🙂</span>
+                  <span>Good</span>
+                </button>
+                <button class="fc-rate-btn fc-rate-easy" data-rating="4">
+                  <span class="rate-emoji">😎</span>
+                  <span>Easy</span>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="fc-session-complete hidden" id="fcComplete">
+            <div class="fc-complete-icon">🎉</div>
+            <h3>Session Complete!</h3>
+            <div class="fc-stats" id="fcStats"></div>
+            <button class="btn-primary" id="fcRestart">Practice Again</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Interleaved Challenge -->
+      <div class="activity-card" id="sustained-interleave">
+        <div class="card-header">
+          <div class="card-number">03</div>
+          <div class="card-meta">
+            <h2 class="card-title">Interleaved Scenario Challenge</h2>
+            <p class="card-purpose">Mixes all topics · Builds discrimination · Forces transfer · ~10 min</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <p class="card-instruction">Each scenario requires you to <strong>combine knowledge from multiple sections</strong> of Chapter 13. This deliberate mixing forces your brain to select the right framework — the hallmark of expert-level understanding.</p>
+          
+          <div class="scenario-deck" id="scenarioDeck">
+            <div class="scenario-card active" data-scenario="0">
+              <div class="scenario-badge">Scenario 1 of 4</div>
+              <div class="scenario-content">
+                <h3>🎫 Global Concert Ticketing System</h3>
+                <p>You are designing a high-throughput ticketing platform for major concerts. The system needs to:</p>
+                <ul>
+                  <li>Prevent the same seat from being sold twice (strict uniqueness check)</li>
+                  <li>Keep regional query search indexes updated with event and seat details</li>
+                  <li>Track ticket sales in real-time for promoter dashboards</li>
+                  <li>Handle sudden massive load spikes (millions of concurrent users booking tickets) without system outages</li>
+                </ul>
+              </div>
+              <div class="scenario-prompts">
+                <div class="scenario-prompt">
+                  <label>Should you enforce a strict synchronous lock across all regional nodes to prevent double-booking a seat, or use a coordination-avoiding 'apology' workflow (e.g., ticket refund + voucher)? Explain the trade-offs.</label>
+                  <textarea class="scenario-textarea" id="sc-1-1" placeholder="Synchronous locks will guarantee... but it limits availability because..."></textarea>
+                </div>
+                <div class="scenario-prompt">
+                  <label>How would you unbundle this database to keep search indexes and promoters' dashboard analytics updated as tickets sell?</label>
+                  <textarea class="scenario-textarea" id="sc-1-2" placeholder="The system of record would be... and updates would propagate via..."></textarea>
+                </div>
+                <div class="scenario-prompt">
+                  <label>How does the end-to-end argument apply if a customer's phone disconnects while purchasing tickets, and how do you prevent them from being charged twice?</label>
+                  <textarea class="scenario-textarea" id="sc-1-3" placeholder="If the client drops, the client must generate a... which the database validates by..."></textarea>
+                </div>
+              </div>
+            </div>
+
+            <div class="scenario-card" data-scenario="1">
+              <div class="scenario-badge">Scenario 2 of 4</div>
+              <div class="scenario-content">
+                <h3>🚚 IoT Logistics Fleet Tracker</h3>
+                <p>A logistics company tracks 100,000 delivery trucks in real-time. The trucks stream GPS coordinates, engine temperature, and cargo status to a central system:</p>
+                <ul>
+                  <li>Regional dispatchers need up-to-date truck locations on live maps</li>
+                  <li>Data analysts run nightly routes optimization jobs</li>
+                  <li>Automated maintenance systems trigger alerts if a truck's engine overheats</li>
+                </ul>
+              </div>
+              <div class="scenario-prompts">
+                <div class="scenario-prompt">
+                  <label>Describe the write path and read path for dispatcher maps and explain how they meet at a derived dataset.</label>
+                  <textarea class="scenario-textarea" id="sc-2-1" placeholder="The write path consists of... which eagerly updates a... while the read path queries it..."></textarea>
+                </div>
+                <div class="scenario-prompt">
+                  <label>If the regional dispatch map shows a truck is at Location A, but the truck has actually moved to Location B (network latency lag), is this a violation of timeliness or integrity? Why?</label>
+                  <textarea class="scenario-textarea" id="sc-2-2" placeholder="This is a violation of... because the inconsistency is..."></textarea>
+                </div>
+                <div class="scenario-prompt">
+                  <label>How would you design a self-auditing check to verify that no GPS coordinates were dropped or corrupted in transit from the trucks to the analytics database?</label>
+                  <textarea class="scenario-textarea" id="sc-2-3" placeholder="A background auditor can... and verify the hash integrity by..."></textarea>
+                </div>
+              </div>
+            </div>
+
+            <div class="scenario-card" data-scenario="2">
+              <div class="scenario-badge">Scenario 3 of 4</div>
+              <div class="scenario-content">
+                <h3>🏦 Multi-Currency Digital Wallet</h3>
+                <p>You are developing a global digital wallet where users hold balances in multiple currencies and can transfer funds instantly to other users. You want to scale the system globally using a multi-leader database setup across three datacenters (US, EU, Asia) to ensure low latency.</p>
+                <ul>
+                  <li>Transfers should be fast and available even during temporary inter-region fiber cuts</li>
+                  <li>Account balance states must remain correct and consistent without disappearing money</li>
+                </ul>
+              </div>
+              <div class="scenario-prompts">
+                <div class="scenario-prompt">
+                  <label>Explain why enforcing a strict constraint that a user's wallet balance can never go below zero is extremely difficult in a multi-leader configuration.</label>
+                  <textarea class="scenario-textarea" id="sc-3-1" placeholder="Without coordination, concurrent withdrawals in different regions can..."></textarea>
+                </div>
+                <div class="scenario-prompt">
+                  <label>How would you use a coordination-avoiding design to resolve this, and what business measures would you apply?</label>
+                  <textarea class="scenario-textarea" id="sc-3-2" placeholder="I would allow withdrawals to proceed... and handle negative balances by..."></textarea>
+                </div>
+                <div class="scenario-prompt">
+                  <label>How could you structure the transfer of funds as an atomic operation across separate sharded logs (payer log and payee log) without 2PC?</label>
+                  <textarea class="scenario-textarea" id="sc-3-3" placeholder="First, write to the payer's log... which checks the balance and then streams a credit event to the payee's log with a..."></textarea>
+                </div>
+              </div>
+            </div>
+
+            <div class="scenario-card" data-scenario="3">
+              <div class="scenario-badge">Scenario 4 of 4</div>
+              <div class="scenario-content">
+                <h3>⚖️ Trade-Off Tribunal</h3>
+                <p>You are the Chief Architect at a financial analytics firm. The product manager wants to build a new feature: a real-time portfolio value tracker. The engineering team is divided into two camps:</p>
+                <ul>
+                  <li><strong>Camp A:</strong> Advocates for an ACID-compliant, strictly serializable relational database to guarantee that all calculations are 100% accurate at all times.</li>
+                  <li><strong>Camp B:</strong> Advocates for a fully unbundled, log-based, eventually consistent dataflow system using Kafka and Flink to achieve maximum scalability and low-latency updates.</li>
+                </ul>
+              </div>
+              <div class="scenario-prompts">
+                <div class="scenario-prompt">
+                  <label>Argue the case for Camp A (ACID/Serializability). What are the main engineering risks of ignoring timeliness and coordination in a portfolio tracking system?</label>
+                  <textarea class="scenario-textarea" id="sc-4-1" placeholder="Camp A argues that without strict serializability, users will see... which could lead to..."></textarea>
+                </div>
+                <div class="scenario-prompt">
+                  <label>Argue the case for Camp B (Unbundled Dataflow). Why is a monolithic transactional database a bad fit for real-time calculation of complex financial derivatives and aggregates under high market volatility?</label>
+                  <textarea class="scenario-textarea" id="sc-4-2" placeholder="Camp B argues that during heavy updates, a transactional DB will suffer from... causing..."></textarea>
+                </div>
+                <div class="scenario-prompt">
+                  <label>As the Chief Architect, make a final ruling. How can you blend these two approaches to achieve both scalability and correctness? (Specify which parts run with strict consistency and which run with eventual consistency).</label>
+                  <textarea class="scenario-textarea" id="sc-4-3" placeholder="I would use an ACID database for... and an unbundled dataflow pipeline for... allowing the portfolio updates to be..."></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="scenario-nav">
+            <button class="btn-scenario-nav" id="scenarioPrev" disabled>← Previous</button>
+            <div class="scenario-dots" id="scenarioDots"></div>
+            <button class="btn-scenario-nav" id="scenarioNext">Next →</button>
+          </div>
+          <button class="btn-primary" id="saveScenarios" style="margin-top:1.5rem">Save All Scenarios</button>
+          <div class="save-confirmation hidden" id="scenariosSaved">
+            <span>✓</span> Scenarios saved! These exercises build the transfer skills that distinguish novices from experts.
+          </div>
+        </div>
+      </div>
+
+      <!-- Forgetting Curve Visualization -->
+      <div class="activity-card" id="sustained-curve">
+        <div class="card-header">
+          <div class="card-number">04</div>
+          <div class="card-meta">
+            <h2 class="card-title">Your Forgetting Curve</h2>
+            <p class="card-purpose">Visual motivation · Shows the science behind spacing</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="curve-container">
+            <canvas id="forgettingCurve" width="700" height="300"></canvas>
+            <div class="curve-legend">
+              <div class="legend-item"><span class="legend-dot" style="background:#ef4444"></span> Without review</div>
+              <div class="legend-item"><span class="legend-dot" style="background:#22c55e"></span> With spaced review</div>
+              <div class="legend-item"><span class="legend-dot" style="background:#6366f1"></span> Review points</div>
+            </div>
+          </div>
+          <p class="curve-caption">Each review session <strong>resets and flattens</strong> the forgetting curve. After 4–5 well-spaced reviews, the memory becomes nearly permanent.</p>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="footer-content">
+      <p class="footer-text">Built on the <strong>2026 Pedagogical Consensus</strong> · Spaced Practice · Retrieval Practice · Interleaving · Elaborative Interrogation · Concrete Examples · Dual Coding</p>
+      <p class="footer-sub">Progress is saved locally in your browser</p>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

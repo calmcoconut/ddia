@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DDIA Chapter 12 — Learning Activities</title>
+  <meta name="description" content="Evidence-based learning activities for Designing Data-Intensive Applications Chapter 12: Stream Processing">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+  <!-- Ambient background -->
+  <div class="ambient-bg">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <!-- Header -->
+  <header class="site-header">
+    <div class="header-content">
+      <div class="logo-area">
+        <div class="logo-icon">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+            <rect x="2" y="6" width="8" height="16" rx="2" fill="url(#grad1)" opacity="0.9"/>
+            <rect x="10" y="3" width="8" height="22" rx="2" fill="url(#grad2)" opacity="0.9"/>
+            <rect x="18" y="8" width="8" height="12" rx="2" fill="url(#grad3)" opacity="0.9"/>
+            <defs>
+              <linearGradient id="grad1" x1="2" y1="6" x2="10" y2="22"><stop stop-color="#6366f1"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient>
+              <linearGradient id="grad2" x1="10" y1="3" x2="18" y2="25"><stop stop-color="#8b5cf6"/><stop offset="1" stop-color="#a78bfa"/></linearGradient>
+              <linearGradient id="grad3" x1="18" y1="8" x2="26" y2="20"><stop stop-color="#a78bfa"/><stop offset="1" stop-color="#c4b5fd"/></linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <div class="logo-text">
+          <span class="logo-title">DDIA · Chapter 12</span>
+          <span class="logo-subtitle">Stream Processing</span>
+        </div>
+      </div>
+      <nav class="main-nav" id="mainNav">
+        <button class="nav-btn active" data-phase="pre" id="nav-pre">
+          <span class="nav-icon">⚡</span>
+          <span class="nav-label">Pre-Activity</span>
+          <span class="nav-tag">Prime</span>
+        </button>
+        <button class="nav-btn" data-phase="post" id="nav-post">
+          <span class="nav-icon">🧠</span>
+          <span class="nav-label">Post-Activity</span>
+          <span class="nav-tag">Retrieve</span>
+        </button>
+        <button class="nav-btn" data-phase="sustained" id="nav-sustained">
+          <span class="nav-icon">🔄</span>
+          <span class="nav-label">Sustained Practice</span>
+          <span class="nav-tag">Retain</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="main-content">
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- PRE-ACTIVITY PHASE                         -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section class="phase-section active" id="phase-pre">
+      <div class="phase-hero">
+        <div class="phase-badge">Phase 1 · Before Reading</div>
+        <h1 class="phase-title">Pre-Activity: Prime Your Brain</h1>
+        <p class="phase-description">
+          Research shows that <strong>struggling with a problem before learning the answer</strong> creates 
+          "conceptual folders" in your mind, making subsequent reading far more meaningful. 
+          You are <em>not</em> expected to know these answers yet.
+        </p>
+        <div class="science-note">
+          <span class="science-icon">🔬</span>
+          <span><strong>ABC Pedagogy</strong> — Activity Before Content primes retrieval pathways and activates prior knowledge</span>
+        </div>
+      </div>
+
+      <!-- Pre-Activity 1: Diagnostic -->
+      <div class="activity-card" id="pre-diagnostic">
+        <div class="card-header">
+          <div class="card-number">01</div>
+          <div class="card-meta">
+            <h2 class="card-title">Diagnostic: What Do You Already Know?</h2>
+            <p class="card-purpose">Activates prior knowledge · Identifies gaps · ~5 min</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <p class="card-instruction">Rate your confidence on each concept. Be honest — <strong>low confidence is perfectly fine</strong> and helps you focus your reading.</p>
+          
+          <div class="confidence-grid" id="diagnosticGrid">
+            <div class="confidence-item" data-topic="stream-brokers">
+              <span class="confidence-label">I can explain the difference between AMQP/JMS style message brokers and log-based message brokers.</span>
+              <div class="confidence-slider">
+                <input type="range" min="1" max="5" value="3" class="slider" id="conf-1">
+                <div class="slider-labels">
+                  <span>No clue</span><span>Vaguely</span><span>Somewhat</span><span>Well</span><span>Could teach it</span>
+                </div>
+              </div>
+            </div>
+            <div class="confidence-item" data-topic="cdc-event-sourcing">
+              <span class="confidence-label">I understand Change Data Capture (CDC) and how it compares to Event Sourcing.</span>
+              <div class="confidence-slider">
+                <input type="range" min="1" max="5" value="3" class="slider" id="conf-2">
+                <div class="slider-labels">
+                  <span>No clue</span><span>Vaguely</span><span>Somewhat</span><span>Well</span><span>Could teach it</span>
+                </div>
+              </div>
+            </div>
+            <div class="confidence-item" data-topic="event-vs-processing-time">
+              <span class="confidence-label">I understand how to handle event-time versus processing-time in stream joins and aggregations.</span>
+              <div class="confidence-slider">
+                <input type="range" min="1" max="5" value="3" class="slider" id="conf-3">
+                <div class="slider-labels">
+                  <span>No clue</span><span>Vaguely</span><span>Somewhat</span><span>Well</span><span>Could teach it</span>
+                </div>
+              </div>
+            </div>
+            <div class="confidence-item" data-topic="stream-windows">
+              <span class="confidence-label">I can distinguish between tumbling, hopping, sliding, and session windows.</span>
+              <div class="confidence-slider">
+                <input type="range" min="1" max="5" value="3" class="slider" id="conf-4">
+                <div class="slider-labels">
+                  <span>No clue</span><span>Vaguely</span><span>Somewhat</span><span>Well</span><span>Could teach it</span>
+                </div>
+              </div>
+            </div>
+            <div class="confidence-item" data-topic="stream-joins">
+              <span class="confidence-label">I can explain stream-stream, stream-table, and table-table joins.</span>
+              <div class="confidence-slider">
+                <input type="range" min="1" max="5" value="3" class="slider" id="conf-5">
+                <div class="slider-labels">
+                  <span>No clue</span><span>Vaguely</span><span>Somewhat</span><span>Well</span><span>Could teach it</span>
+                </div>
+              </div>
+            </div>
+            <div class="confidence-item" data-topic="exactly-once">
+              <span class="confidence-label">I understand fault tolerance guarantees in stream processing, including exactly-once / idempotent processing.</span>
+              <div class="confidence-slider">
+                <input type="range" min="1" max="5" value="3" class="slider" id="conf-6">
+                <div class="slider-labels">
+                  <span>No clue</span><span>Vaguely</span><span>Somewhat</span><span>Well</span><span>Could teach it</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <button class="btn-primary" id="saveDiagnostic">Save My Baseline</button>
+          <div class="save-confirmation hidden" id="diagnosticSaved">
+            <span>✓</span> Baseline saved! You'll retake this after reading to see your growth.
+          </div>
+        </div>
+      </div>
+
+      <!-- Pre-Activity 2: Architecture Puzzle -->
+      <div class="activity-card" id="pre-puzzle">
+        <div class="card-header">
+          <div class="card-number">02</div>
+          <div class="card-meta">
+            <h2 class="card-title">Architecture Puzzle: Design Before You Know</h2>
+            <p class="card-purpose">Creates conceptual folders · Generates curiosity · ~10 min</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="puzzle-scenario">
+            <div class="scenario-header">
+              <span class="scenario-icon">🏗️</span>
+              <h3>The Scenario</h3>
+            </div>
+            <p>You are designing a real-time analytics dashboard for a global ride-sharing application. The system must:</p>
+            <ul class="scenario-list">
+              <li>Calculate the average wait time for passengers in each city in rolling 10-minute windows.</li>
+              <li>Ingest location and state updates uploaded from driver and passenger mobile apps.</li>
+              <li>Operate over spiky cellular networks where devices frequently go offline (e.g. in tunnels) and upload delayed bursts of coordinates.</li>
+            </ul>
+          </div>
+
+          <div class="puzzle-questions">
+            <div class="puzzle-q" id="puzzle-q1">
+              <label class="puzzle-label">
+                <span class="q-num">Q1</span>
+                Would you calculate rolling 10-minute average wait times using processing time (server arrival) or event time (device timestamp)? Why?
+              </label>
+              <textarea class="puzzle-textarea" placeholder="Think out loud here... there's no wrong answer yet" id="puzzle-a1"></textarea>
+            </div>
+            <div class="puzzle-q" id="puzzle-q2">
+              <label class="puzzle-label">
+                <span class="q-num">Q2</span>
+                If a driver's phone is offline in a tunnel for 20 minutes, how should your aggregation windows handle their late-arriving updates when the connection is restored?
+              </label>
+              <textarea class="puzzle-textarea" placeholder="What's the worst that could happen, and how would you fix it?" id="puzzle-a2"></textarea>
+            </div>
+            <div class="puzzle-q" id="puzzle-q3">
+              <label class="puzzle-label">
+                <span class="q-num">Q3</span>
+                The billing and payout teams both need to process the "ride completion" event exactly once. How do you prevent double-charging or double-paying if network errors cause event retransmissions?
+              </label>
+              <textarea class="puzzle-textarea" placeholder="What technical guarantees are needed?" id="puzzle-a3"></textarea>
+            </div>
+          </div>
+          <button class="btn-primary" id="savePuzzle">Save My Predictions</button>
+          <div class="save-confirmation hidden" id="puzzleSaved">
+            <span>✓</span> Predictions saved! After reading Ch. 12, you'll revisit these with fresh eyes.
+          </div>
+        </div>
+      </div>
+
+      <!-- Pre-Activity 3: Misconception Detector -->
+      <div class="activity-card" id="pre-misconceptions">
+        <div class="card-header">
+          <div class="card-number">03</div>
+          <div class="card-meta">
+            <h2 class="card-title">Misconception Detector</h2>
+            <p class="card-purpose">Surfaces faulty mental models · Prepares for correction · ~3 min</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <p class="card-instruction">For each statement, decide: <strong>True, False, or I'm Not Sure.</strong> Don't guess — "Not Sure" is the best answer if you genuinely don't know.</p>
+          
+          <div class="misconception-list" id="misconceptionList">
+            <div class="misconception-item" data-correct="false" data-id="m1">
+              <p class="misconception-text">"Log-based message brokers like Kafka always delete messages as soon as they are acknowledged by consumers."</p>
+              <div class="misconception-btns">
+                <button class="mc-btn" data-value="true">True</button>
+                <button class="mc-btn" data-value="false">False</button>
+                <button class="mc-btn" data-value="unsure">Not Sure</button>
+              </div>
+              <div class="misconception-feedback hidden"></div>
+            </div>
+            <div class="misconception-item" data-correct="false" data-id="m2">
+              <p class="misconception-text">"Event time and processing time are identical, so stream processors can use them interchangeably without affecting correctness."</p>
+              <div class="misconception-btns">
+                <button class="mc-btn" data-value="true">True</button>
+                <button class="mc-btn" data-value="false">False</button>
+                <button class="mc-btn" data-value="unsure">Not Sure</button>
+              </div>
+              <div class="misconception-feedback hidden"></div>
+            </div>
+            <div class="misconception-item" data-correct="false" data-id="m3">
+              <p class="misconception-text">"Exactly-once processing in stream processors guarantees that a message is only ever sent and received exactly one time over the network."</p>
+              <div class="misconception-btns">
+                <button class="mc-btn" data-value="true">True</button>
+                <button class="mc-btn" data-value="false">False</button>
+                <button class="mc-btn" data-value="unsure">Not Sure</button>
+              </div>
+              <div class="misconception-feedback hidden"></div>
+            </div>
+            <div class="misconception-item" data-correct="false" data-id="m4">
+              <p class="misconception-text">"In a stream-table join, the join is completely immune to timing delays or out-of-order events."</p>
+              <div class="misconception-btns">
+                <button class="mc-btn" data-value="true">True</button>
+                <button class="mc-btn" data-value="false">False</button>
+                <button class="mc-btn" data-value="unsure">Not Sure</button>
+              </div>
+              <div class="misconception-feedback hidden"></div>
+            </div>
+            <div class="misconception-item" data-correct="true" data-id="m5">
+              <p class="misconception-text">"Achieving exactly-once semantics end-to-end requires cooperation from the output sink, not just the stream processor."</p>
+              <div class="misconception-btns">
+                <button class="mc-btn" data-value="true">True</button>
+                <button class="mc-btn" data-value="false">False</button>
+                <button class="mc-btn" data-value="unsure">Not Sure</button>
+              </div>
+              <div class="misconception-feedback hidden"></div>
+            </div>
+          </div>
+
+          <div class="misconception-summary hidden" id="misconceptionSummary">
+            <h3>Your Pre-Reading Profile</h3>
+            <p id="misconceptionResult"></p>
+            <p class="summary-note">These will make much more sense after reading Chapter 12. Look for the answers as you read!</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pre-Activity CTA -->
+      <div class="phase-cta">
+        <div class="cta-icon">📖</div>
+        <h2>Now Read Chapter 12</h2>
+        <p>Your brain is primed. As you read, pay special attention to the concepts you rated low-confidence, and look for answers to the architecture puzzle. Come back for the Post-Activity when you're done.</p>
+        <button class="btn-secondary" onclick="switchPhase('post')">I've finished reading → Go to Post-Activity</button>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- POST-ACTIVITY PHASE                        -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section class="phase-section" id="phase-post">
+      <div class="phase-hero">
+        <div class="phase-badge">Phase 2 · After Reading</div>
+        <h1 class="phase-title">Post-Activity: Retrieve & Consolidate</h1>
+        <p class="phase-description">
+          You've read the chapter. Now the real learning begins. <strong>Retrieval practice</strong> — actively 
+          pulling information from memory — strengthens recall 80% more than re-reading. 
+          Struggle is the signal that learning is happening.
+        </p>
+        <div class="science-note">
+          <span class="science-icon">🔬</span>
+          <span><strong>Testing Effect</strong> — Roediger & Karpicke (2006): retrieval practice produced 80% better retention than re-study after one week</span>
+        </div>
+      </div>
+
+      <!-- Post-Activity 1: Brain Dump -->
+      <div class="activity-card" id="post-braindump">
+        <div class="card-header">
+          <div class="card-number">01</div>
+          <div class="card-meta">
+            <h2 class="card-title">Brain Dump: Free Recall</h2>
+            <p class="card-purpose">Maximum retrieval effort · Exposes real gaps · ~5 min</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <p class="card-instruction">Close the book. Set a timer. Write <strong>everything you remember</strong> from Chapter 12. Don't worry about organization — just dump it all out.</p>
+          <div class="timer-bar">
+            <button class="timer-btn" id="timerBtn">Start 5-min Timer</button>
+            <div class="timer-display" id="timerDisplay">5:00</div>
+            <div class="timer-progress" id="timerProgress"></div>
+          </div>
+          <textarea class="brain-dump-area" id="brainDumpArea" placeholder="Everything I remember from Chapter 12...&#10;&#10;• The chapter was about...&#10;• Key concepts included...&#10;• Log-based brokers (Kafka) work by...&#10;• The difference between event-time and processing-time is..."></textarea>
+          <button class="btn-primary" id="saveBrainDump">Save Brain Dump</button>
+          <div class="save-confirmation hidden" id="brainDumpSaved">
+            <span>✓</span> Saved! Don't peek at the chapter yet — try the retrieval quiz next.
+          </div>
+        </div>
+      </div>
+
+      <!-- Post-Activity 2: Chapter Assessment (30 Questions) -->
+      <div class="activity-card" id="post-retrieval">
+        <div class="card-header">
+          <div class="card-number">02</div>
+          <div class="card-meta">
+            <h2 class="card-title">Chapter 12 Assessment</h2>
+            <p class="card-purpose">30 questions · Multiple choice + write-in · ~25 min</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="quiz-toolbar">
+            <div class="quiz-progress-info">
+              <span id="quizProgressText">0 of 30 answered</span>
+              <div class="quiz-progress-bar"><div class="quiz-progress-fill" id="quizProgressFill"></div></div>
+            </div>
+            <div class="quiz-filter-btns">
+              <button class="filter-btn active" data-filter="all">All</button>
+              <button class="filter-btn" data-filter="mc">Multiple Choice</button>
+              <button class="filter-btn" data-filter="write">Write-In</button>
+              <button class="filter-btn" data-filter="unanswered">Unanswered</button>
+            </div>
+          </div>
+          <div class="quiz-container" id="quizContainer">
+            <!-- Quiz questions rendered by JS -->
+          </div>
+          <div class="quiz-results hidden" id="quizResults">
+            <div class="results-header">
+              <div class="results-score">
+                <div class="score-circle" id="scoreCircle">
+                  <span class="score-num" id="scoreNum">0</span>
+                  <span class="score-denom" id="scoreDenom">/ 18</span>
+                </div>
+                <span class="score-label">Multiple Choice Score</span>
+              </div>
+              <div class="results-writein-badge">
+                <span class="writein-count" id="writeinCount">0</span>
+                <span class="writein-label">Write-in responses saved</span>
+              </div>
+            </div>
+            <div class="results-breakdown" id="resultsBreakdown"></div>
+            <div class="results-actions">
+              <button class="btn-primary" id="gradeWriteIns">📋 Grade Write-Ins with LLM</button>
+              <button class="btn-secondary" id="retakeQuiz">Retake Quiz</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LLM Grading Modal -->
+      <div class="modal-overlay hidden" id="llmModal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2>📋 LLM Grading Prompt</h2>
+            <button class="modal-close" id="closeModal">✕</button>
+          </div>
+          <div class="modal-body">
+            <p class="modal-instruction">Copy the prompt below and paste it into your preferred LLM (ChatGPT, Claude, Gemini, etc.) to receive detailed grading and feedback on your write-in responses.</p>
+            <textarea class="llm-prompt-area" id="llmPromptArea" readonly></textarea>
+            <div class="modal-actions">
+              <button class="btn-primary" id="copyLlmPrompt">📋 Copy to Clipboard</button>
+              <span class="copy-feedback hidden" id="copyFeedback">✓ Copied!</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Post-Activity 4: Revisit Predictions -->
+      <div class="activity-card" id="post-revisit">
+        <div class="card-header">
+          <div class="card-number">04</div>
+          <div class="card-meta">
+            <h2 class="card-title">Revisit Your Pre-Activity Predictions</h2>
+            <p class="card-purpose">Closes the loop · Measures growth · ~5 min</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="revisit-container">
+            <div class="revisit-item">
+              <h3>Your Architecture Puzzle Answers</h3>
+              <p class="revisit-instruction">Look at what you wrote before reading. What would you change now?</p>
+              <div class="revisit-comparison">
+                <div class="revisit-before">
+                  <span class="revisit-tag">Before Reading</span>
+                  <p class="revisit-saved" id="revisit-puzzle-1">Complete the pre-activity first to see your predictions here.</p>
+                </div>
+                <div class="revisit-after">
+                  <span class="revisit-tag revisit-tag-after">After Reading</span>
+                  <textarea class="revisit-textarea" id="revisit-a1" placeholder="Now I would say..."></textarea>
+                </div>
+              </div>
+            </div>
+            <div class="revisit-item">
+              <h3>Confidence Re-Assessment</h3>
+              <p class="revisit-instruction">Rate the same concepts again. Compare with your baseline.</p>
+              <div class="confidence-comparison" id="confidenceComparison">
+                <!-- Rendered by JS -->
+              </div>
+            </div>
+          </div>
+          <button class="btn-primary" id="saveRevisit">Save Post-Reading Reflection</button>
+          <div class="save-confirmation hidden" id="revisitSaved">
+            <span>✓</span> Growth captured! Head to Sustained Practice to lock this knowledge in long-term.
+          </div>
+        </div>
+      </div>
+
+      <div class="phase-cta">
+        <div class="cta-icon">🔄</div>
+        <h2>Ready for Long-Term Retention?</h2>
+        <p>You've learned it once. Now let's make sure you remember it in a week, a month, and beyond.</p>
+        <button class="btn-secondary" onclick="switchPhase('sustained')">Go to Sustained Practice →</button>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- SUSTAINED PRACTICE PHASE                   -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section class="phase-section" id="phase-sustained">
+      <div class="phase-hero">
+        <div class="phase-badge">Phase 3 · Ongoing</div>
+        <h1 class="phase-title">Sustained Practice: Space & Interleave</h1>
+        <p class="phase-description">
+          Without review, you'll forget <strong>~70% within 24 hours</strong>. Spaced repetition and 
+          interleaved practice are the two most reliable techniques in cognitive psychology 
+          for building durable, flexible knowledge.
+        </p>
+        <div class="science-note">
+          <span class="science-icon">🔬</span>
+          <span><strong>Spacing Effect</strong> (d = 0.42–0.60) — one of the most replicated findings in all of cognitive science</span>
+        </div>
+      </div>
+
+      <!-- Spaced Repetition Schedule -->
+      <div class="activity-card" id="sustained-schedule">
+        <div class="card-header">
+          <div class="card-number">01</div>
+          <div class="card-meta">
+            <h2 class="card-title">Your Review Schedule</h2>
+            <p class="card-purpose">Expanding intervals · Fights the forgetting curve · Tracks progress</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="schedule-grid" id="scheduleGrid">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Flashcard Deck -->
+      <div class="activity-card" id="sustained-flashcards">
+        <div class="card-header">
+          <div class="card-number">02</div>
+          <div class="card-meta">
+            <h2 class="card-title">Spaced Repetition Flashcards</h2>
+            <p class="card-purpose">Active recall · Self-graded difficulty · ~10 min per session</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="flashcard-deck" id="flashcardDeck">
+            <div class="flashcard-progress">
+              <span id="fcProgress">Card 1 of 15</span>
+              <div class="fc-progress-bar"><div class="fc-progress-fill" id="fcProgressFill"></div></div>
+            </div>
+            <div class="flashcard" id="flashcard">
+              <div class="flashcard-inner" id="flashcardInner">
+                <div class="flashcard-front">
+                  <span class="fc-side-label">Question</span>
+                  <p class="fc-text" id="fcFront"></p>
+                </div>
+                <div class="flashcard-back">
+                  <span class="fc-side-label">Answer</span>
+                  <p class="fc-text" id="fcBack"></p>
+                </div>
+              </div>
+            </div>
+            <div class="fc-controls">
+              <button class="fc-flip-btn" id="fcFlip">Flip Card</button>
+            </div>
+            <div class="fc-rating hidden" id="fcRating">
+              <p class="fc-rating-prompt">How well did you know this?</p>
+              <div class="fc-rating-btns">
+                <button class="fc-rate-btn fc-rate-again" data-rating="1">
+                  <span class="rate-emoji">😤</span>
+                  <span>Didn't know</span>
+                </button>
+                <button class="fc-rate-btn fc-rate-hard" data-rating="2">
+                  <span class="rate-emoji">😓</span>
+                  <span>Hard</span>
+                </button>
+                <button class="fc-rate-btn fc-rate-good" data-rating="3">
+                  <span class="rate-emoji">🙂</span>
+                  <span>Good</span>
+                </button>
+                <button class="fc-rate-btn fc-rate-easy" data-rating="4">
+                  <span class="rate-emoji">😎</span>
+                  <span>Easy</span>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="fc-session-complete hidden" id="fcComplete">
+            <div class="fc-complete-icon">🎉</div>
+            <h3>Session Complete!</h3>
+            <div class="fc-stats" id="fcStats"></div>
+            <button class="btn-primary" id="fcRestart">Practice Again</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Interleaved Challenge -->
+      <div class="activity-card" id="sustained-interleave">
+        <div class="card-header">
+          <div class="card-number">03</div>
+          <div class="card-meta">
+            <h2 class="card-title">Interleaved Scenario Challenge</h2>
+            <p class="card-purpose">Mixes all topics · Builds discrimination · Forces transfer · ~10 min</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <p class="card-instruction">Each scenario requires you to <strong>combine knowledge from multiple sections</strong> of Chapter 12. This deliberate mixing forces your brain to select the right framework — the hallmark of expert-level understanding.</p>
+          
+          <div class="scenario-deck" id="scenarioDeck">
+            <div class="scenario-card active" data-scenario="0">
+              <div class="scenario-badge">Scenario 1 of 4</div>
+              <div class="scenario-content">
+                <h3>💳 Financial Transaction Fraud Pipeline</h3>
+                <p>A payment processing platform handles transaction events at 10,000 req/sec. It needs to:</p>
+                <ul>
+                  <li>Flag fraudulent events within 100ms by comparing the current transaction against the user's 2-hour sliding transaction history.</li>
+                  <li>Join transaction events with a database table of user profile details (e.g., home address).</li>
+                  <li>Ensure all transactions are written to a regulatory audit log without any data loss.</li>
+                </ul>
+              </div>
+              <div class="scenario-prompts">
+                <div class="scenario-prompt">
+                  <label>Would you choose a traditional broker (RabbitMQ) or a log-based broker (Kafka) for the ingest? Why?</label>
+                  <textarea class="scenario-textarea" id="sc-1-1" placeholder="For high throughput and audit logging, I would choose..."></textarea>
+                </div>
+                <div class="scenario-prompt">
+                  <label>What style of join is needed for user profile enrichment? What is the risk if profiles are updated in-place?</label>
+                  <textarea class="scenario-textarea" id="sc-1-2" placeholder="This is a stream-table join. The risk is..."></textarea>
+                </div>
+                <div class="scenario-prompt">
+                  <label>How would you implement the 2-hour fraud check efficiently without querying a centralized DB on every event?</label>
+                  <textarea class="scenario-textarea" id="sc-1-3" placeholder="I would use a local state store like... to hold a sliding window of..."></textarea>
+                </div>
+              </div>
+            </div>
+
+            <div class="scenario-card" data-scenario="1">
+              <div class="scenario-badge">Scenario 2 of 4</div>
+              <div class="scenario-content">
+                <h3>🚚 IoT Fleet Location Tracker</h3>
+                <p>A logistics company tracks 5,000 trucks via cell networks. The trucks:</p>
+                <ul>
+                  <li>Send periodic GPS coordinates and speed readings.</li>
+                  <li>Travel through tunnels or remote zones, buffering events on the device for up to 30 minutes.</li>
+                  <li>Trigger alerts on a dashboard when a truck has been speeding for over 5 minutes continuously.</li>
+                </ul>
+              </div>
+              <div class="scenario-prompts">
+                <div class="scenario-prompt">
+                  <label>Should the 5-minute speeding aggregate use event time or processing time? Why?</label>
+                  <textarea class="scenario-textarea" id="sc-2-1" placeholder="I would use event time because..."></textarea>
+                </div>
+                <div class="scenario-prompt">
+                  <label>Which window type (tumbling, hopping, sliding, session) is best for detecting 'speeding for 5 minutes continuously'?</label>
+                  <textarea class="scenario-textarea" id="sc-2-2" placeholder="The most appropriate window type is... because..."></textarea>
+                </div>
+                <div class="scenario-prompt">
+                  <label>How should the stream engine handle the sudden influx of 30 minutes of buffered data when a truck exits a tunnel?</label>
+                  <textarea class="scenario-textarea" id="sc-2-3" placeholder="To handle late-arriving events, the engine should use..."></textarea>
+                </div>
+              </div>
+            </div>
+
+            <div class="scenario-card" data-scenario="2">
+              <div class="scenario-badge">Scenario 3 of 4</div>
+              <div class="scenario-content">
+                <h3>🛍️ Search Personalization & Clickstream Join</h3>
+                <p>An e-commerce site wants to personalize search results in real-time. The requirements are:</p>
+                <ul>
+                  <li>Join search query events with product click events within 1 hour to see what users clicked after searching.</li>
+                  <li>Expose search query logs to an indexer to update search autosuggestions.</li>
+                  <li>Mirror the PostgreSQL product inventory changes into a search index (Elasticsearch).</li>
+                </ul>
+              </div>
+              <div class="scenario-prompts">
+                <div class="scenario-prompt">
+                  <label>What type of join (stream-stream, stream-table, table-table) is needed between search queries and click events? How is it implemented?</label>
+                  <textarea class="scenario-textarea" id="sc-3-1" placeholder="The join between queries and clicks is a... because..."></textarea>
+                </div>
+                <div class="scenario-prompt">
+                  <label>Explain how you would sync PostgreSQL updates with Elasticsearch without using dual writes from the web app.</label>
+                  <textarea class="scenario-textarea" id="sc-3-2" placeholder="Instead of dual writes, I would use... which works by..."></textarea>
+                </div>
+                <div class="scenario-prompt">
+                  <label>If search suggestions are derived from an immutable log of queries, how do you handle a request to delete a user's queries under GDPR?</label>
+                  <textarea class="scenario-textarea" id="sc-3-3" placeholder="To satisfy GDPR deletion requests on an immutable log, I would..."></textarea>
+                </div>
+              </div>
+            </div>
+
+            <div class="scenario-card" data-scenario="3">
+              <div class="scenario-badge">Scenario 4 of 4</div>
+              <div class="scenario-content">
+                <h3>⚖️ Trade-Off Tribunal</h3>
+                <p>You are the lead architect presenting to the board. Argue both sides of these major architectural choices:</p>
+              </div>
+              <div class="scenario-prompts">
+                <div class="scenario-prompt">
+                  <label>Log Compaction vs. Standard Log Retention: When would you use each, and how do they differ in practice?</label>
+                  <textarea class="scenario-textarea" id="sc-4-1" placeholder="I would use compaction when... and time-based retention when..."></textarea>
+                </div>
+                <div class="scenario-prompt">
+                  <label>Event-Sourcing (events as source of truth) vs. Traditional CRUD Database. Argue the pros and cons of each.</label>
+                  <textarea class="scenario-textarea" id="sc-4-2" placeholder="For Event-Sourcing: ... For Traditional CRUD: ..."></textarea>
+                </div>
+                <div class="scenario-prompt">
+                  <label>Microbatching (Spark Streaming) vs. Continuous processing (Flink). Argue when latency outweighs throughput and vice-versa.</label>
+                  <textarea class="scenario-textarea" id="sc-4-3" placeholder="Microbatching is better when... Continuous processing is better when..."></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="scenario-nav">
+            <button class="btn-scenario-nav" id="scenarioPrev" disabled>← Previous</button>
+            <div class="scenario-dots" id="scenarioDots"></div>
+            <button class="btn-scenario-nav" id="scenarioNext">Next →</button>
+          </div>
+          <button class="btn-primary" id="saveScenarios" style="margin-top:1.5rem">Save All Scenarios</button>
+          <div class="save-confirmation hidden" id="scenariosSaved">
+            <span>✓</span> Scenarios saved! These exercises build the transfer skills that distinguish novices from experts.
+          </div>
+        </div>
+      </div>
+
+      <!-- Forgetting Curve Visualization -->
+      <div class="activity-card" id="sustained-curve">
+        <div class="card-header">
+          <div class="card-number">04</div>
+          <div class="card-meta">
+            <h2 class="card-title">Your Forgetting Curve</h2>
+            <p class="card-purpose">Visual motivation · Shows the science behind spacing</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="curve-container">
+            <canvas id="forgettingCurve" width="700" height="300"></canvas>
+            <div class="curve-legend">
+              <div class="legend-item"><span class="legend-dot" style="background:#ef4444"></span> Without review</div>
+              <div class="legend-item"><span class="legend-dot" style="background:#22c55e"></span> With spaced review</div>
+              <div class="legend-item"><span class="legend-dot" style="background:#6366f1"></span> Review points</div>
+            </div>
+          </div>
+          <p class="curve-caption">Each review session <strong>resets and flattens</strong> the forgetting curve. After 4–5 well-spaced reviews, the memory becomes nearly permanent.</p>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="footer-content">
+      <p class="footer-text">Built on the <strong>2026 Pedagogical Consensus</strong> · Spaced Practice · Retrieval Practice · Interleaving · Elaborative Interrogation · Concrete Examples · Dual Coding</p>
+      <p class="footer-sub">Progress is saved locally in your browser</p>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

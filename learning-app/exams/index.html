@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cumulative Exam — DDIA Applied Learning</title>
+  <meta name="description" content="Cumulative exam testing environment for Designing Data-Intensive Applications.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+  <!-- Ambient background -->
+  <div class="ambient-bg">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <!-- Header -->
+  <header class="site-header">
+    <div class="header-content">
+      <div class="logo-area">
+        <div class="logo-icon">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+            <rect x="2" y="6" width="8" height="16" rx="2" fill="url(#grad1)" opacity="0.9"/>
+            <rect x="10" y="3" width="8" height="22" rx="2" fill="url(#grad2)" opacity="0.9"/>
+            <rect x="18" y="8" width="8" height="12" rx="2" fill="url(#grad3)" opacity="0.9"/>
+            <defs>
+              <linearGradient id="grad1" x1="2" y1="6" x2="10" y2="22"><stop stop-color="#6366f1"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient>
+              <linearGradient id="grad2" x1="10" y1="3" x2="18" y2="25"><stop stop-color="#8b5cf6"/><stop offset="1" stop-color="#a78bfa"/></linearGradient>
+              <linearGradient id="grad3" x1="18" y1="8" x2="26" y2="20"><stop stop-color="#a78bfa"/><stop offset="1" stop-color="#c4b5fd"/></linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <div class="logo-text">
+          <span class="logo-title" id="examLogoTitle">DDIA Exam</span>
+          <span class="logo-subtitle" id="examLogoSubtitle">Loading Exam...</span>
+        </div>
+      </div>
+      <div class="logo-area" style="margin-left: auto;">
+        <a href="../index.html" class="nav-btn" style="padding: 0.5rem 1rem; text-decoration: none; display: flex; align-items: center; gap: 0.5rem;">
+          <span>←</span> <span>Exit to Hub</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Loading State overlay -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-text" id="loadingText">Assembling Question Pool...</div>
+  </div>
+
+  <!-- Main Container -->
+  <main class="main-content exam-layout hidden" id="examMain">
+    
+    <!-- Question Area (Left) -->
+    <div class="exam-question-area">
+      <div class="activity-card" style="margin-top: 0; min-height: 400px; display: flex; flex-direction: column;">
+        
+        <div class="card-header" style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 1rem; margin-bottom: 1.5rem;">
+          <div class="card-number" id="questionNumDisplay">Q01</div>
+          <div class="card-meta">
+            <h2 class="card-title" id="questionSectionDisplay">Loading Section...</h2>
+            <div style="display: flex; gap: 1rem; align-items: center; margin-top: 0.25rem;">
+              <span class="science-icon" style="font-size: 0.85rem;" id="questionTypeBadge">Multiple Choice</span>
+              <label class="flag-checkbox-label">
+                <input type="checkbox" id="flagQuestionCheckbox">
+                <span class="flag-icon">🚩</span> Flag for review
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-body" style="flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between;">
+          <!-- Question Content -->
+          <div class="exam-question-body">
+            <p class="question-text" id="questionText" style="font-size: 1.15rem; font-weight: 600; margin-bottom: 1.5rem; line-height: 1.5; color: var(--text-primary);"></p>
+            
+            <!-- Answer Containers (Only one shown depending on type) -->
+            <div class="options-container" id="mcOptionsContainer">
+              <!-- Radio option buttons will be rendered here -->
+            </div>
+            
+            <div class="writein-container hidden" id="writeInContainer">
+              <span class="hint-text" id="writeInHint" style="display: block; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.75rem; font-style: italic;"></span>
+              <textarea class="puzzle-textarea" id="writeInAnswerArea" placeholder="Enter your detailed engineering explanation here..." style="min-height: 150px; font-family: inherit;"></textarea>
+            </div>
+          </div>
+
+          <!-- Bottom Navigation Row -->
+          <div class="exam-nav-row" style="display: flex; justify-content: space-between; margin-top: 2rem; border-top: 1px solid var(--border-subtle); padding-top: 1.25rem;">
+            <button class="btn-secondary" id="prevQuestionBtn">← Previous</button>
+            <button class="btn-primary" id="nextQuestionBtn">Next →</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Sidebar (Right) -->
+    <aside class="exam-sidebar">
+      
+      <!-- Timer block -->
+      <div class="activity-card" style="margin-top: 0; padding: 1.25rem;">
+        <h3 style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 0.5rem; text-align: center;">Time Remaining</h3>
+        <div class="exam-timer-display" id="examTimerDisplay">00:00:00</div>
+        
+        <div style="margin-top: 1rem; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 1rem;">
+          <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.4rem;">
+            <span>Exam Progress</span>
+            <span id="answeredRatio">0 / 40 Answered</span>
+          </div>
+          <div class="hub-card-progress-bar-bg" style="height: 8px;">
+            <div class="hub-card-progress-bar-fg" id="examProgressBar" style="width: 0%;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Question list grid -->
+      <div class="activity-card" style="padding: 1.25rem; flex-grow: 1;">
+        <h3 style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 1rem;">Question Map</h3>
+        
+        <div class="q-nav-grid" id="qNavGrid">
+          <!-- Numbers 1..N generated by JS -->
+        </div>
+
+        <div class="q-legend" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; margin-top: 1.25rem; font-size: 0.7rem; color: var(--text-muted); border-top: 1px solid rgba(255,255,255,0.06); padding-top: 0.75rem;">
+          <div style="display: flex; align-items: center; gap: 0.4rem;"><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--bg-elevated); border: 1px solid var(--border-subtle); display: inline-block;"></span> Unanswered</div>
+          <div style="display: flex; align-items: center; gap: 0.4rem;"><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--accent-indigo); display: inline-block;"></span> Answered</div>
+          <div style="display: flex; align-items: center; gap: 0.4rem;"><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--accent-amber); display: inline-block;"></span> Flagged</div>
+          <div style="display: flex; align-items: center; gap: 0.4rem;"><span style="width: 8px; height: 8px; border-radius: 50%; box-shadow: 0 0 0 2px var(--accent-purple); background: var(--bg-elevated); display: inline-block;"></span> Current</div>
+        </div>
+
+        <button class="btn-primary" id="submitExamBtn" style="margin-top: 1.5rem; width: 100%; padding: 0.75rem; background: var(--gradient-warm);">Submit Exam</button>
+      </div>
+
+    </aside>
+
+  </main>
+
+  <!-- Results Modal -->
+  <div class="modal-backdrop hidden" id="resultsModal">
+    <div class="modal-content" style="max-width: 700px;">
+      <h2 style="font-size: 1.75rem; font-weight: 800; background: var(--gradient-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 0.5rem;" id="resultsTitle">Exam Submitted</h2>
+      <p style="color: var(--text-secondary); margin-bottom: 1.5rem;" id="resultsSubtitle">Cumulative assessment completed.</p>
+      
+      <!-- Scores block -->
+      <div class="revisit-comparison" style="display: grid; grid-template-columns: repeat(3, 1fr); margin-bottom: 1.5rem; gap: 1rem;" id="resultsScoreBlock">
+        <div class="comparison-panel" style="padding: 1.25rem; text-align: center;">
+          <span class="score-label" style="margin-top: 0;">Multiple Choice Score</span>
+          <div class="writein-count" id="resultsMcScore">0%</div>
+          <span class="score-label" id="resultsMcRatio">0 / 0 correct</span>
+        </div>
+        <div class="comparison-panel" style="padding: 1.25rem; text-align: center;">
+          <span class="score-label" style="margin-top: 0;">Write-in Answers</span>
+          <div class="writein-count" style="color: var(--accent-purple);" id="resultsWriteInCount">0</div>
+          <span class="score-label">Pending LLM Evaluation</span>
+        </div>
+        <div class="comparison-panel" style="padding: 1.25rem; text-align: center;">
+          <span class="score-label" style="margin-top: 0;">Time Used</span>
+          <div class="writein-count" style="color: var(--accent-rose);" id="resultsTimeUsed">00:00</div>
+          <span class="score-label" id="resultsTimeLimit">out of 60 mins</span>
+        </div>
+      </div>
+
+      <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1.5rem; line-height: 1.5;">
+        PEDAGOGICAL NOTE: To evaluate your write-in answers, copy the prompt below and paste it into Claude, ChatGPT, or Gemini. The LLM will grade your responses against Martin Kleppmann's database design principles and assign scores.
+      </p>
+
+      <button class="btn-primary" id="copyLlmPromptBtn" style="width: 100%; margin-bottom: 1rem;">Copy LLM Grading Prompt</button>
+      <div class="save-confirmation hidden" id="promptCopiedMsg" style="text-align: center; margin-bottom: 1rem; padding: 0.5rem;">
+        ✓ Prompt copied to clipboard!
+      </div>
+      
+      <div style="display: flex; gap: 0.5rem; flex-direction: column; margin-top: 0.5rem;">
+        <button class="btn-secondary" id="reviewExamBtn" style="width: 100%; background: var(--bg-hover);">Review Graded Questions</button>
+        <button class="btn-secondary" id="retakeExamBtn" style="width: 100%; background: var(--bg-hover);">Retake Exam (Start Fresh)</button>
+        <button class="btn-secondary" id="closeResultsModalBtn" style="width: 100%;">Return to Learning Hub</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="exam.js"></script>
+</body>
+</html>

@@ -1,0 +1,1296 @@
+/* ══════════════════════════════════════════════════
+   DDIA Learning Activities — Application Logic
+   Chapter 3: Data Models and Query Languages
+   ══════════════════════════════════════════════════ */
+
+// ── Data ────────────────────────────────────────────
+
+const QUIZ_QUESTIONS = [
+  {
+    type: "mc",
+    q: "What is the N+1 query problem commonly encountered when using Object-Relational Mapping (ORM) frameworks?",
+    options: [
+      "Executing a query that returns N rows, and then performing N additional database queries to resolve a relationship for each row.",
+      "A database deadlock that happens when N transactions try to acquire the same locks.",
+      "An optimization technique that caches N queries in memory and aggregates them into a single final query.",
+      "A query that runs N times slower than handwritten SQL due to gRPC network serialization overhead."
+    ],
+    correct: 0,
+    explanation: "The N+1 query problem occurs when an application fetches a list of records (1 query) and then loops through them, executing a separate query for each record (N queries) to load a related object (e.g., author of a comment).",
+    section: "Object-relational mismatch"
+  },
+  {
+    type: "mc",
+    q: "For what type of relationships is the document (JSON) model most naturally suited, according to the chapter?",
+    options: [
+      "Highly interconnected many-to-many relationships",
+      "Hierarchical one-to-many tree structures where relationships between documents are rare",
+      "Relational tables that require strict multi-row ACID transactions",
+      "Ad-hoc multiway joins with dimension tables in business intelligence"
+    ],
+    correct: 1,
+    explanation: "JSON documents naturally represent tree-like, hierarchical one-to-many relationships (e.g., jobs list and education under a single user profile) where all data is nested and read together.",
+    section: "The document data model for one-to-many relationships"
+  },
+  {
+    type: "write",
+    q: "Explain the concept of 'impedance mismatch' (object-relational mismatch) in application development.",
+    hint: "Think about how data is represented in object-oriented code versus relational database tables.",
+    modelAnswer: "The impedance mismatch refers to the translation layer required to bridge the gap between object-oriented programming models and relational database models. Objects in code contain nested structures, inheritance, and behavior, whereas relational databases store data flatly in tables, rows, and columns. Translating between these two representations requires significant boilerplate code or complex Object-Relational Mapping (ORM) tools, which can introduce performance and design inefficiencies.",
+    section: "Object-relational mismatch"
+  },
+  {
+    type: "mc",
+    q: "What is the primary advantage of normalizing database tables by storing a geographical region as a unique ID (e.g., 'region_id') instead of a raw text string?",
+    options: [
+      "It increases write performance because IDs can be inserted in parallel.",
+      "It allows for schema-on-read processing when querying the regions table.",
+      "It ensures consistent spelling, eases global updates, avoids name ambiguity, and supports localization.",
+      "It eliminates the need for any SQL joins when displaying the user's profile."
+    ],
+    correct: 2,
+    explanation: "Storing an ID (normalized) ensures that user-meaningful information is in only one place, making updates easy, ensuring consistent naming, avoiding ambiguity, and allowing translation/localization without changing user records.",
+    section: "Normalization, Denormalization, and Joins"
+  },
+  {
+    type: "mc",
+    q: "What is the key difference between schema-on-write and schema-on-read?",
+    options: [
+      "Schema-on-write is used for OLAP systems, while schema-on-read is used for OLTP transaction systems.",
+      "Schema-on-write databases do not support indexing, whereas schema-on-read databases index every field automatically.",
+      "Schema-on-write databases enforce database schemas on insertion, whereas schema-on-read databases structure the data during query execution.",
+      "Schema-on-write allows developers to insert arbitrary JSON, while schema-on-read requires strict SQL tables."
+    ],
+    correct: 2,
+    explanation: "Schema-on-write databases (like traditional relational DBs) ensure data conforms to a schema before writing. Schema-on-read (like document databases) accepts any structure and parses it when read.",
+    section: "Schema flexibility in the document model"
+  },
+  {
+    type: "write",
+    q: "Contrast the process of adding a new field (e.g., 'middle_name') to a schema-on-write relational database versus a schema-on-read document database.",
+    hint: "Consider migrations, table locks, default values, and how client code handles missing data.",
+    modelAnswer: "In a schema-on-write relational database, adding a new field requires executing an ALTER TABLE migration, which can lock the table and cause downtime on large datasets, along with setting up defaults or nullability. In a schema-on-read document database, no database-level migration is needed; new documents are simply written with the new field. However, the client application code must handle the schema flexibility by dynamically checking if the field is present when reading older documents.",
+    section: "Schema flexibility in the document model"
+  },
+  {
+    type: "mc",
+    q: "What is the concept of 'data locality' in document databases, and how does it affect read performance?",
+    options: [
+      "It stores data in servers that are geographically closest to the user.",
+      "It stores all related data in a single nested document, allowing a complete record to be fetched in a single disk read.",
+      "It compresses JSON documents to locate them on the fastest sector of an SSD.",
+      "It replicates data across three separate database nodes for regional availability."
+    ],
+    correct: 1,
+    explanation: "If your application frequently reads the entire record (e.g., a profile), having it in a single document provides data locality, fetching it in one operation rather than running multiple joins or lookups.",
+    section: "Data locality for reads and writes"
+  },
+  {
+    type: "mc",
+    q: "Which of the following represents a convergence of relational and document databases in recent years?",
+    options: [
+      "Relational databases adding support for JSON columns, and document databases adding support for joins in query APIs.",
+      "Both models switching entirely to Cypher as their primary query language.",
+      "The complete elimination of SQL in modern relational database systems.",
+      "Relational databases abandoning ACID transactions to copy NoSQL architectures."
+    ],
+    correct: 0,
+    explanation: "Modern relational databases (like PostgreSQL, MySQL) have added support for storing and indexing JSON documents, while document databases (like MongoDB) have added lookup/join operators and transaction support.",
+    section: "Convergence of document and relational databases"
+  },
+  {
+    type: "write",
+    q: "Under what conditions does the data locality of a document database become a disadvantage for writes?",
+    hint: "Think about updates that change document size, rewrite overhead, and partial updates.",
+    modelAnswer: "Data locality in a document database becomes a disadvantage when updating or writing data. If an update increases the size of a document, the database engine may need to relocate the entire document on disk, which involves writing the new copy and updating all indexes pointing to it. Furthermore, document databases suffer from partial update inefficiency: even if the document size does not change, the entire document must be re-serialized and written atomically to disk, creating significant write amplification compared to modifying a single field in a normalized relational database.",
+    section: "Data locality for reads and writes"
+  },
+  {
+    type: "mc",
+    q: "In a data warehouse star schema, what is the purpose of the central 'fact table'?",
+    options: [
+      "To store metadata, rules, and configuration settings for the data pipeline.",
+      "To log individual events that occurred in the past, containing numeric attributes and foreign keys.",
+      "To store human-readable descriptions of products, customers, and stores.",
+      "To store the database schemas for all the snowflake dimension tables."
+    ],
+    correct: 1,
+    explanation: "The fact table contains rows representing discrete events (like sales transactions, page clicks) with numeric values (price, cost) and foreign keys mapping to dimension tables.",
+    section: "Stars and Snowflakes: Schemas for Analytics"
+  },
+  {
+    type: "mc",
+    q: "How does a snowflake schema differ from a star schema?",
+    options: [
+      "A snowflake schema uses graph database vertices, whereas a star schema uses document collections.",
+      "A snowflake schema is fully denormalized, whereas a star schema is fully normalized.",
+      "A snowflake schema normalizes dimensions into subdimension tables, whereas a star schema denormalizes dimensions into a single table.",
+      "A snowflake schema does not contain a central fact table."
+    ],
+    correct: 2,
+    explanation: "In a snowflake schema, dimensions are broken down further into subdimensions (e.g., normalizing product categories into a category table rather than storing category strings directly in the product dimension table).",
+    section: "Stars and Snowflakes: Schemas for Analytics"
+  },
+  {
+    type: "write",
+    q: "Why do business analysts and BI tools generally prefer a star schema over a snowflake schema?",
+    hint: "Consider query simplicity, join complexity, and readability for non-technical users.",
+    modelAnswer: "Business analysts and BI tools prefer star schemas because they are simpler and easier to query. A star schema contains fewer tables and fewer relationships, meaning SQL queries require fewer joins. In contrast, snowflake schemas normalize dimensions further, resulting in complex, multi-level joins that can make queries harder to write and understand for non-technical users, and can degrade read performance.",
+    section: "Stars and Snowflakes: Schemas for Analytics"
+  },
+  {
+    type: "mc",
+    q: "What do dimension tables in dimensional modeling represent?",
+    options: [
+      "The numeric metrics, totals, and aggregates computed from transaction events.",
+      "The 'who, what, where, when, why, and how' context of events in the fact table.",
+      "The physical file offsets of column-oriented blocks on disk.",
+      "The list of users who have read-write access to the analytics reports."
+    ],
+    correct: 1,
+    explanation: "Dimension tables represent the entities participating in the events (e.g., who bought it, what product was sold, where it was bought, when it occurred).",
+    section: "Stars and Snowflakes: Schemas for Analytics"
+  },
+  {
+    type: "mc",
+    q: "What is the 'One Big Table' (OBT) design pattern in data warehousing?",
+    options: [
+      "Creating a single large relational table by pre-joining all facts and dimensions to eliminate joins during queries.",
+      "Putting all corporate spreadsheets into a single, global Excel file.",
+      "Hosting the entire data warehouse on a single CPU core to prevent resource contention.",
+      "A database migration strategy that merges multiple databases into a single database server."
+    ],
+    correct: 0,
+    explanation: "One Big Table (OBT) goes beyond star schemas by precomputing joins and storing all events and dimension metadata in a single, extremely wide table. While this trades disk space for query speed by eliminating joins, it has a significant maintenance downside: OBT schemas are extremely brittle when source schemas change. Since everything is flattened, a single column rename in a source table requires a full rewrite of the entire wide OBT.",
+    section: "Stars and Snowflakes: Schemas for Analytics"
+  },
+  {
+    type: "write",
+    q: "Explain why extreme denormalization (such as star schemas or One Big Table) is acceptable in analytical systems (OLAP) but problematic in operational systems (OLTP).",
+    hint: "Compare read-only history databases with real-time write-intensive transactions.",
+    modelAnswer: "Extreme denormalization is acceptable in OLAP systems because analytical data is generally write-once, read-many historical logs that rarely change. Thus, write overhead and consistency issues from duplication are not primary concerns. Additionally, OLAP data is typically loaded via batch ETL on a periodic schedule, so data staleness is a known, accepted trade-off. In contrast, OLTP systems have high-velocity write workloads with frequent updates. In OLTP, denormalization causes significant write overhead (updating data in multiple places), risks inconsistency if some copies fail to update, and requires complex transaction controls.",
+    section: "Stars and Snowflakes: Schemas for Analytics"
+  },
+  {
+    type: "mc",
+    q: "In a Property Graph database (like Neo4j), what does a vertex consist of?",
+    options: [
+      "A single subject-predicate-object triple represented in XML format.",
+      "A unique identifier, a set of outgoing edges, a set of incoming edges, and a collection of key-value properties.",
+      "Only a string name and a geographic coordinate reference.",
+      "An array of pointers pointing to the next vertex in a linear linked list."
+    ],
+    correct: 1,
+    explanation: "In a property graph, a vertex (node) consists of a unique ID, a set of incoming and outgoing edges, and a set of properties (key-value pairs) describing it.",
+    section: "Property Graphs"
+  },
+  {
+    type: "mc",
+    q: "How are relationships represented in a Cypher query?",
+    options: [
+      "Using SQL JOIN statements with foreign keys.",
+      "Using ASCII-art style arrows, such as (node1) -[:RELATION]-> (node2).",
+      "Using imperative for-loops that traverse list pointers.",
+      "Using XML tag nested elements, such as <relation>node2</relation>."
+    ],
+    correct: 1,
+    explanation: "Cypher uses a highly visual ASCII-art style arrow syntax to match patterns of vertices and edges (e.g., `(person) -[:BORN_IN]-> (location)`).",
+    section: "The Cypher Query Language"
+  },
+  {
+    type: "write",
+    q: "Explain why querying graph data (such as finding N-degree connections) in SQL is difficult compared to graph query languages like Cypher.",
+    hint: "Consider recursive traversals and the number of table joins.",
+    modelAnswer: "Querying graph data in SQL is difficult because traversals require joins across tables. If the number of hops (relationships) to traverse is variable or deep (such as searching for 3rd-degree connections), you must write complex recursive queries using `WITH RECURSIVE` that are hard to read, maintain, and optimize. Graph query languages like Cypher have native syntax for variable-length paths (e.g., `[:WITHIN*0..]`), hiding the join and traversal algorithms behind a declarative query planner.",
+    section: "Graph Queries in SQL"
+  },
+  {
+    type: "mc",
+    q: "In a Triple-Store database, what are the three components of a triple?",
+    options: [
+      "Table, Column, Value",
+      "Vertex, Edge, Property",
+      "Subject, Predicate, Object",
+      "Document, Key, Field"
+    ],
+    correct: 2,
+    explanation: "Triple-stores store all information in statements of three parts: Subject, Predicate, Object (e.g., `Lucy, born_in, Idaho`).",
+    section: "Triple Stores and SPARQL"
+  },
+  {
+    type: "mc",
+    q: "How is the Resource Description Framework (RDF) data model practically applied in modern web systems, given that the original vision of the Semantic Web did not succeed?",
+    options: [
+      "It is used for backend relational table partitioning inside SQL-LD database clusters.",
+      "It is the main format for encrypting high-performance client-side browser caches.",
+      "It is used to represent open-access knowledge graphs like Wikidata, Schema.org search markup, and Facebook's Open Graph metadata.",
+      "It serves as a core communication protocol for high-performance gRPC microservices."
+    ],
+    correct: 2,
+    explanation: "Although the global Semantic Web vision did not succeed, RDF triples are widely used today to represent knowledge graphs (like Wikidata), standardized web markup (Schema.org) for search engine optimization, and rich link preview metadata (Facebook's Open Graph protocol).",
+    section: "The Semantic Web"
+  },
+  {
+    type: "write",
+    q: "Compare the triple-store (RDF) model with the property graph model regarding how properties and attributes are represented.",
+    hint: "How do triple-stores store simple attributes compared to edges? Think about subjects and predicates.",
+    modelAnswer: "In a property graph, vertices and edges can have internal key-value properties. In a triple-store (RDF) model, everything is represented as a triple (subject, predicate, object). To represent an attribute of a vertex in a triple-store, you write a triple where the object is a literal value (e.g., `Lucy, name, 'Lucy'`). If you want to link two vertices, the object is another vertex URI (e.g., `Lucy, born_in, Idaho`). Thus, triple-stores represent attributes and relationships uniformly as triples.",
+    section: "Triple Stores and SPARQL"
+  },
+  {
+    type: "write",
+    q: "Explain how rules and facts are used in Datalog to write recursive queries.",
+    hint: "Think about how Datalog builds on the relational model using declarative rules.",
+    modelAnswer: "Datalog is a declarative query language that represents data as facts (similar to relational tuples). To query this data, you write rules that define new relations based on existing facts or other rules. A rule consists of a head (the result) and a body (the conditions). Datalog naturally supports recursion because a rule can refer to itself in its body, allowing the query engine to iteratively apply the rule until no new facts can be derived.",
+    section: "Datalog: Recursive Relational Queries"
+  },
+  {
+    type: "mc",
+    q: "Why is GraphQL intentionally designed to be more restrictive than query languages like SQL or Cypher?",
+    options: [
+      "To limit compile times when building client applications.",
+      "Because GraphQL queries come from untrusted client devices, so restricting recursive queries and search conditions prevents DoS attacks.",
+      "GraphQL is only designed for column-oriented databases that do not support index lookups.",
+      "To force developers to write business logic inside the database rather than on the application server."
+    ],
+    correct: 1,
+    explanation: "GraphQL queries come from untrusted clients (browsers, mobile apps). If it allowed recursive queries or arbitrary search conditions, a client could run expensive queries that exhaust server resources, causing a denial of service (DoS). Furthermore, because of GraphQL's nested resolver execution model, recursive or overly deep queries can easily trigger severe N+1 query amplification, producing thousands of underlying database calls (a problem commonly solved with DataLoader/batching patterns). Restricting these capabilities prevents resource exhaustion.",
+    section: "GraphQL"
+  },
+  {
+    type: "write",
+    q: "Explain the difference between GraphQL and a graph database like Neo4j.",
+    hint: "Consider what role GraphQL plays in client-server communication vs what a graph database does.",
+    modelAnswer: "GraphQL is an API query language and runtime for fetching data from a server to a client, letting the client request specific JSON structures to render the UI. It does not dictate how data is stored and can run on top of relational, document, or graph databases. In contrast, a graph database like Neo4j is a storage technology that represents data as nodes and edges, using query languages like Cypher to perform deep traversals and recursive queries.",
+    section: "GraphQL"
+  },
+  {
+    type: "mc",
+    q: "What is the core principle of Event Sourcing?",
+    options: [
+      "Converting all user queries into real-time pub/sub notifications.",
+      "Representing the state of an application as an append-only log of immutable events.",
+      "Running background cron jobs to delete old events from the database.",
+      "Ensuring that no database updates take more than 5 milliseconds."
+    ],
+    correct: 1,
+    explanation: "Event Sourcing stores all changes to application state as a sequence of immutable events appended to a log. This log acts as the system of record.",
+    section: "Event Sourcing and CQRS"
+  },
+  {
+    type: "mc",
+    q: "In CQRS (Command Query Responsibility Segregation), what is the relationship between the read model and the write model?",
+    options: [
+      "They must use the same relational schema to prevent data consistency issues.",
+      "The write model receives commands and appends to the log, while separate read-optimized materialized views are updated from that log.",
+      "The read model is only in memory and cannot be recomputed if lost.",
+      "The write model is automatically disabled when the read model experiences high load."
+    ],
+    correct: 1,
+    explanation: "CQRS separates writing (commands that append to the log) from reading (materialized views or projections optimized for specific queries, updated asynchronously from the log).",
+    section: "Event Sourcing and CQRS"
+  },
+  {
+    type: "write",
+    q: "Compare Event Sourcing logs with relational star schema fact tables. What are the key similarities and differences?",
+    hint: "Think about the nature of historical records, column structures, and event ordering.",
+    modelAnswer: "Both Event Sourcing logs and star schema fact tables store historical records of events that happened in the past. However, there are key differences: first, fact table rows are homogeneous (sharing the exact same columns), whereas Event Sourcing logs exhibit schema heterogeneity, containing diverse event types (like OrderPlaced, OrderShipped, and OrderCancelled) in the same stream with completely different payloads. Second, a fact table is typically queried as an unordered collection of records, whereas Event Sourcing requires strict chronological ordering to compute correct state transitions. Third, because of this schema heterogeneity and ordering requirement, Event Sourcing logs are significantly harder to query directly for analytics, which is why they usually require projecting into a read-optimized schema (CQRS) first.",
+    section: "Event Sourcing and CQRS"
+  },
+  {
+    type: "write",
+    q: "Explain why data scientists prefer using DataFrames (e.g. Pandas) and iterative data wrangling over standard declarative SQL.",
+    hint: "Think about data exploration, step-by-step transformations, and integration with scientific libraries.",
+    modelAnswer: "Data scientists prefer DataFrames because they support iterative data exploration and step-by-step transformations. Instead of writing a single, massive SQL query, a data scientist can inspect intermediate results, clean data, handle outliers, and pivot tables using a series of procedural commands. Furthermore, DataFrames integrate with scientific libraries (such as NumPy or scikit-learn) and support operations that go far beyond standard SQL, such as converting data into matrices for machine learning.",
+    section: "DataFrames, Matrices, and Arrays"
+  },
+  {
+    type: "mc",
+    q: "What is one-hot encoding in the context of data preparation for machine learning?",
+    options: [
+      "Compressing float variables into 8-bit integers to fit in GPU memory.",
+      "Converting a categorical variable into multiple columns of 0s and 1s, where each column represents a single category.",
+      "Encrypting user identity data using a disposable key before storing it in a matrix.",
+      "An optimization that moves the most active rows of a matrix to CPU cache."
+    ],
+    correct: 1,
+    explanation: "One-hot encoding represents categorical data as a vector of binary values (0 or 1), creating a column for each possible category value, which is the format expected by many ML algorithms.",
+    section: "DataFrames, Matrices, and Arrays"
+  },
+  {
+    type: "write",
+    q: "Why is a sparse matrix representing user-item ratings (such as user ratings for thousands of movies) difficult to represent in a traditional relational database, and how do array databases or DataFrames solve this?",
+    hint: "Consider table width, null columns, and linear algebra operations.",
+    modelAnswer: "A sparse matrix representing user-item ratings would require a table with thousands of columns (one for each movie), which relational databases do not support or handle inefficiently due to row width limits and overhead of storing mostly null values. If represented as a normalized long table (user_id, item_id, rating), it requires expensive joins and cannot easily undergo linear algebra operations. Array databases and DataFrames solve this by natively supporting sparse array data structures, which store only non-zero values efficiently and allow direct execution of mathematical matrix algorithms.",
+    section: "DataFrames, Matrices, and Arrays"
+  }
+];
+
+const FLASHCARDS = [
+  { front: "What is the impedance mismatch (object-relational mismatch)?", back: "The disconnect between object-oriented application code and flat relational tables/rows/columns." },
+  { front: "Schema-on-write vs. Schema-on-read: what is the key difference?", back: "Schema-on-write enforces structure on insertion (RDBMS). Schema-on-read accepts any data and interprets it on query (NoSQL/document)." },
+  { front: "What is data locality in document databases?", back: "Storing all nested elements of a record together in a single document on disk, making reads fast but updates potentially expensive." },
+  { front: "What are fact tables in a data warehouse star schema?", back: "Central tables storing discrete events (e.g., purchases) containing numeric metrics and foreign keys to dimension tables." },
+  { front: "What is a snowflake schema?", back: "A variation of a star schema where dimension tables are further normalized into subdimension tables." },
+  { front: "What is One Big Table (OBT) in analytics?", back: "A design that pre-joins fact and dimension tables into a single extremely wide table to avoid SQL joins." },
+  { front: "What is a Property Graph?", back: "A graph model where vertices (nodes) and edges (relationships) have unique IDs and arbitrary key-value properties." },
+  { front: "What is the Cypher query language?", back: "A declarative query language for property graphs (popularized by Neo4j) using visual ASCII-art style pattern matching." },
+  { front: "What is a Triple-Store database?", back: "A graph-like database that represents all facts in three-part statements: Subject, Predicate, Object (RDF)." },
+  { front: "What is Datalog?", back: "A declarative, recursive relational query language that uses rules and facts to evaluate complex relationships." },
+  { front: "Is GraphQL a graph database? What is it?", back: "No. It is a client-server API query language for requesting structured JSON data, and can run on top of any database." },
+  { front: "What is Event Sourcing?", back: "A model where the application's source of truth is an append-only log of immutable, chronological event facts." },
+  { front: "What is CQRS (Command Query Responsibility Segregation)?", back: "Separating the write pathway (commands appending to a log) from the read pathway (optimized materialized views/projections)." },
+  { front: "What is a DataFrame?", back: "A data structure (e.g., Pandas, R) that holds tabular data and supports relational-like operators and complex matrix transformations." },
+  { front: "What is one-hot encoding?", back: "Representing a categorical value as a vector of binary columns (0 or 1), enabling machine learning models to process categorical data." }
+];
+
+const CONFIDENCE_LABELS = [
+  "Relational vs. Document Models",
+  "Object-Relational Impedance Mismatch",
+  "Declarative vs. Imperative Query Languages",
+  "Graph-Like Data Models",
+  "Star and Snowflake Schemas",
+  "Schema-on-Read vs. Schema-on-Write",
+  "Event Sourcing and CQRS"
+];
+
+const SCHEDULE_ITEMS = [
+  { day: "Today", task: "Complete all pre-activity exercises", type: "due" },
+  { day: "Today", task: "Read Chapter 3", type: "due" },
+  { day: "Today", task: "Complete post-activity retrieval", type: "due" },
+  { day: "+1 Day", task: "Flashcard review (all 15 cards)", type: "upcoming" },
+  { day: "+3 Days", task: "Re-attempt Graph vs. Relational vs. Document table from memory", type: "upcoming" },
+  { day: "+1 Week", task: "Interleaved scenario challenge", type: "upcoming" },
+  { day: "+2 Weeks", task: "Full retrieval quiz retake", type: "upcoming" },
+  { day: "+1 Month", task: "Teach concepts to someone (Feynman technique)", type: "upcoming" }
+];
+
+const MISCONCEPTION_EXPLANATIONS = {
+  m1: {
+    false: "Correct! Document databases lack relational join features or have weaker join support (like lookup queries), meaning developers often have to execute multiple queries and join in application code. Relational databases excel at arbitrary joins.",
+    true: "Wait, look out! Joins are often still necessary. In a document database, if you need to join document records, you may have to implement joins manually in application code, which is more complex.",
+    unsure: "Good to reflect on this. The chapter discusses the trade-offs of joins in document vs relational databases."
+  },
+  m2: {
+    false: "Correct! NoSQL/document databases are 'schema-on-read'. The database engine doesn't enforce schema constraints, but the application code reading the data still expects a structured schema (otherwise, it couldn't display it).",
+    true: "No! The data still has an implicit structure that the client code relies on. It is simply not enforced by the database (hence 'schema-on-read').",
+    unsure: "Let's learn about schema-on-read vs schema-on-write in the chapter."
+  },
+  m3: {
+    false: "Correct! GraphQL is a client-server API query language for fetching JSON. It can run on top of any backend (SQL, document, or graph) and is not a database storage engine.",
+    true: "No, GraphQL is actually an API query language. It can query any database (like Postgres or MongoDB) and is not a database itself.",
+    unsure: "Look for the difference between GraphQL and actual graph storage in the chapter."
+  },
+  m4: {
+    false: "Correct! Cypher is a declarative query language, similar to SQL. The database query optimizer figures out the best way to traverse the graph to find your pattern, so you do not need to write manual loops.",
+    true: "Wait, that's not right. Cypher is declarative, not imperative. You describe the pattern of the graph you want (using ASCII-art style syntax), and the query planner decides the execution strategy, hiding procedural loops.",
+    unsure: "Think about SQL's declarative nature versus imperative loops. Cypher operates similarly for graph data."
+  },
+  m5: {
+    false: "Correct! Append-only event logs are extremely fast because they use sequential writes, avoiding expensive random writes (such as updating in-place rows or indexes) that slow down CRUD databases.",
+    true: "Actually, logging is append-only, which uses sequential writes. This is much faster than random CRUD updates on disk.",
+    unsure: "Look for Event Sourcing performance characteristics in the chapter."
+  }
+};
+
+// ── State Management ────────────────────────────────
+
+const STATE_KEY = 'ddia_ch3_learning';
+let _state = null;
+
+function loadState() {
+  if (!_state) {
+    try {
+      const raw = localStorage.getItem(STATE_KEY);
+      if (raw) _state = JSON.parse(raw);
+    } catch (e) {}
+
+    if (!_state) {
+      try {
+        if (window.parent && window.parent.__ddiaState && window.parent.__ddiaState[STATE_KEY]) {
+          _state = window.parent.__ddiaState[STATE_KEY];
+        }
+      } catch (e) {}
+    }
+
+    if (!_state) _state = {};
+  }
+  // Return a snapshot, not the live object
+  return JSON.parse(JSON.stringify(_state));
+}
+
+function saveState(data) {
+  if (!_state) loadState();
+  // Clone incoming data and merge to avoid reference aliasing
+  _state = { ..._state, ...JSON.parse(JSON.stringify(data)) };
+
+  try {
+    localStorage.setItem(STATE_KEY, JSON.stringify(_state));
+  } catch (e) {}
+
+  try {
+    window.parent.__ddiaState = window.parent.__ddiaState || {};
+    window.parent.__ddiaState[STATE_KEY] = _state;
+  } catch (e) {}
+}
+
+// ── Navigation ──────────────────────────────────────
+
+function switchPhase(phase) {
+  document.querySelectorAll('.phase-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`phase-${phase}`).classList.add('active');
+  document.getElementById(`nav-${phase}`).classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+document.querySelectorAll('.nav-btn').forEach(btn => {
+  btn.addEventListener('click', () => switchPhase(btn.dataset.phase));
+});
+
+// ── Pre-Activity: Diagnostic ────────────────────────
+
+document.getElementById('saveDiagnostic').addEventListener('click', () => {
+  const values = [];
+  for (let i = 1; i <= 7; i++) {
+    values.push(parseInt(document.getElementById(`conf-${i}`).value));
+  }
+  saveState({ diagnosticBaseline: values, diagnosticDate: new Date().toISOString() });
+  document.getElementById('diagnosticSaved').classList.remove('hidden');
+  renderConfidenceComparison();
+});
+
+// ── Pre-Activity: Puzzle ────────────────────────────
+
+document.getElementById('savePuzzle').addEventListener('click', () => {
+  const answers = {};
+  for (let i = 1; i <= 3; i++) {
+    answers[`q${i}`] = document.getElementById(`puzzle-a${i}`).value;
+  }
+  saveState({ puzzleAnswers: answers });
+  document.getElementById('puzzleSaved').classList.remove('hidden');
+  renderRevisitPredictions();
+});
+
+// ── Pre-Activity: Misconceptions ────────────────────
+
+document.querySelectorAll('.misconception-item').forEach(item => {
+  const btns = item.querySelectorAll('.mc-btn');
+  const feedbackEl = item.querySelector('.misconception-feedback');
+  const correct = item.dataset.correct;
+  const id = item.dataset.id;
+
+  btns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      btns.forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+
+      const value = btn.dataset.value;
+      const explanations = MISCONCEPTION_EXPLANATIONS[id];
+      feedbackEl.textContent = explanations[value];
+      feedbackEl.className = 'misconception-feedback';
+      if (value === correct || value === 'unsure') {
+        feedbackEl.classList.add(value === correct ? 'correct' : 'noted');
+      } else {
+        feedbackEl.classList.add('noted');
+      }
+      feedbackEl.classList.remove('hidden');
+    });
+  });
+});
+
+// ── Post-Activity: Timer ────────────────────────────
+
+let timerInterval = null;
+let timerRunning = false;
+
+document.getElementById('timerBtn').addEventListener('click', function() {
+  // Step 1: Immediately disable the button to block double-clicks
+  this.disabled = true;
+
+  if (timerRunning) {
+    clearInterval(timerInterval);
+    timerRunning = false;
+    this.textContent = 'Start 5-min Timer';
+    this.disabled = false; // Step 2: Re-enable after stopping
+    return;
+  }
+
+  timerRunning = true;
+  this.textContent = 'Pause';
+  this.disabled = false; // Step 3: Re-enable once state is set
+  let remaining = 300;
+  const total = 300;
+  const display = document.getElementById('timerDisplay');
+  const progress = document.getElementById('timerProgress');
+
+  timerInterval = setInterval(() => {
+    remaining--;
+    const mins = Math.floor(remaining / 60);
+    const secs = remaining % 60;
+    display.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+    progress.style.width = `${((total - remaining) / total) * 100}%`;
+
+    if (remaining <= 0) {
+      clearInterval(timerInterval);
+      timerRunning = false;
+      display.textContent = "0:00";
+      document.getElementById('timerBtn').textContent = 'Done!';
+      display.style.color = '#f43f5e';
+    }
+  }, 1000);
+});
+
+// ── Post-Activity: Brain Dump ───────────────────────
+
+document.getElementById('saveBrainDump').addEventListener('click', () => {
+  saveState({ brainDump: document.getElementById('brainDumpArea').value });
+  document.getElementById('brainDumpSaved').classList.remove('hidden');
+});
+
+// ── Post-Activity: Quiz ─────────────────────────────
+
+let currentFilter = 'all';
+
+function renderQuiz() {
+  const container = document.getElementById('quizContainer');
+  container.innerHTML = '';
+  
+  const state = loadState();
+  const selections = state.quizSelections || {};
+  const writeIns = state.writeInAnswers || {};
+  const graded = state.quizGraded || false;
+
+  let renderedCount = 0;
+
+  QUIZ_QUESTIONS.forEach((q, idx) => {
+    // Apply filters
+    const isMc = q.type === 'mc';
+    const hasSelection = selections[idx] !== undefined;
+    const hasWriteIn = writeIns[idx] && writeIns[idx].trim().length > 0;
+    const isAnswered = isMc ? hasSelection : hasWriteIn;
+
+    if (currentFilter === 'mc' && !isMc) return;
+    if (currentFilter === 'write' && isMc) return;
+    if (currentFilter === 'unanswered' && isAnswered) return;
+
+    renderedCount++;
+
+    const div = document.createElement('div');
+    div.className = `quiz-question ${isMc ? 'type-mc' : 'type-write'}`;
+    div.setAttribute('data-q-index', idx);
+    div.dataset.qIndex = idx;
+
+    if (isMc) {
+      // Multiple Choice Question
+      const selectedOptionIdx = selections[idx];
+      const isCorrect = selectedOptionIdx === q.correct;
+
+      div.innerHTML = `
+        <div class="quiz-q-text">
+          <span class="quiz-q-num">${idx + 1}</span>
+          <span>${q.q}</span>
+          <span class="badge-tag" style="margin-left:auto; font-size:0.65rem; color:var(--accent-indigo); border:1px solid rgba(99,102,241,0.2); padding:0.1rem 0.3rem; border-radius:3px;">${q.section}</span>
+        </div>
+        <div class="quiz-options">
+          ${q.options.map((opt, oi) => {
+            let extraClass = '';
+            let markerText = '';
+            
+            if (graded) {
+              if (oi === q.correct) {
+                extraClass = 'correct-answer';
+                markerText = '✓';
+              } else if (oi === selectedOptionIdx && !isCorrect) {
+                extraClass = 'wrong-answer';
+                markerText = '✗';
+              }
+            } else {
+              if (oi === selectedOptionIdx) {
+                extraClass = 'selected';
+              }
+            }
+
+            return `
+              <button class="quiz-option ${extraClass}" data-q="${idx}" data-o="${oi}" ${graded ? 'disabled' : ''}>
+                <span class="quiz-option-marker">${markerText}</span>
+                <span>${opt}</span>
+              </button>
+            `;
+          }).join('')}
+        </div>
+      `;
+
+      // If graded, append explanation
+      if (graded) {
+        div.classList.add(isCorrect ? 'answered-correct' : 'answered-wrong');
+        const explDiv = document.createElement('div');
+        explDiv.className = 'quiz-explanation';
+        explDiv.textContent = q.explanation;
+        div.appendChild(explDiv);
+      }
+    } else {
+      // Write-In Question
+      const savedText = writeIns[idx] || '';
+      div.innerHTML = `
+        <div class="quiz-q-text">
+          <span class="quiz-q-num">${idx + 1}</span>
+          <span>${q.q}</span>
+          <span class="badge-tag" style="margin-left:auto; font-size:0.65rem; color:var(--accent-cyan); border:1px solid rgba(6,182,212,0.2); padding:0.1rem 0.3rem; border-radius:3px;">${q.section}</span>
+        </div>
+        <div class="quiz-writein-container">
+          <div class="elab-hint">Hint: ${q.hint}</div>
+          <textarea class="quiz-writein-textarea" data-q="${idx}" placeholder="Write your conceptual answer here (saved automatically)..." ${graded ? 'disabled' : ''}>${savedText}</textarea>
+          ${graded ? `<div class="quiz-writein-feedback">✓ Response recorded & locked. Ready for LLM grading.</div>` : ''}
+        </div>
+      `;
+    }
+
+    container.appendChild(div);
+  });
+
+  if (renderedCount === 0) {
+    const emptyMsg = document.createElement('div');
+    emptyMsg.className = 'empty-filter-msg';
+    emptyMsg.style.textAlign = 'center';
+    emptyMsg.style.padding = '2rem';
+    emptyMsg.style.color = 'var(--text-muted)';
+    emptyMsg.style.fontSize = '0.9rem';
+    emptyMsg.textContent = 'No questions match the current filter.';
+    container.appendChild(emptyMsg);
+  }
+
+  // Update progress info
+  updateQuizProgress();
+
+  // Add click handlers for MC options
+  if (!graded) {
+    container.querySelectorAll('.quiz-option').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const qIndex = parseInt(this.dataset.q);
+        const oIndex = parseInt(this.dataset.o);
+        
+        // Remove selection from siblings
+        container.querySelectorAll(`.quiz-option[data-q="${qIndex}"]`).forEach(b => b.classList.remove('selected'));
+        this.classList.add('selected');
+
+        // Save selection to state
+        const state = loadState();
+        const selections = state.quizSelections || {};
+        selections[qIndex] = oIndex;
+        saveState({ quizSelections: selections });
+
+        updateQuizProgress();
+      });
+    });
+
+    // Add input handlers for write-in textareas
+    container.querySelectorAll('.quiz-writein-textarea').forEach(tx => {
+      tx.addEventListener('input', function() {
+        const qIndex = parseInt(this.dataset.q);
+        const val = this.value;
+
+        // Save write-in to state
+        const state = loadState();
+        const writeIns = state.writeInAnswers || {};
+        writeIns[qIndex] = val;
+        saveState({ writeInAnswers: writeIns });
+
+        updateQuizProgress();
+      });
+    });
+  }
+
+  // Show results or submit button
+  if (graded) {
+    showQuizResultsPanel(loadState());
+  } else {
+    // Render submit row
+    const submitRow = document.createElement('div');
+    submitRow.className = 'quiz-submit-row';
+    submitRow.innerHTML = `<button class="btn-primary" id="submitQuiz">Check Answers</button>`;
+    container.appendChild(submitRow);
+    document.getElementById('submitQuiz').addEventListener('click', gradeQuiz);
+  }
+}
+
+function updateQuizProgress() {
+  const state = loadState();
+  const selections = state.quizSelections || {};
+  const writeIns = state.writeInAnswers || {};
+
+  let answeredCount = 0;
+  QUIZ_QUESTIONS.forEach((q, idx) => {
+    if (q.type === 'mc') {
+      if (selections[idx] !== undefined) answeredCount++;
+    } else {
+      if (writeIns[idx] && writeIns[idx].trim().length > 0) answeredCount++;
+    }
+  });
+
+  const total = QUIZ_QUESTIONS.length;
+  document.getElementById('quizProgressText').textContent = `${answeredCount} of ${total} answered`;
+  document.getElementById('quizProgressFill').style.width = `${(answeredCount / total) * 100}%`;
+}
+
+function gradeQuiz() {
+  // Save that we have graded
+  saveState({ quizGraded: true });
+
+  // Re-render quiz in graded state
+  renderQuiz();
+}
+
+function showQuizResultsPanel(state) {
+  const selections = state.quizSelections || {};
+  const writeIns = state.writeInAnswers || {};
+
+  let mcCorrect = 0;
+  let mcTotal = 0;
+  let writeInAnswered = 0;
+
+  QUIZ_QUESTIONS.forEach((q, idx) => {
+    if (q.type === 'mc') {
+      mcTotal++;
+      if (selections[idx] === q.correct) mcCorrect++;
+    } else {
+      if (writeIns[idx] && writeIns[idx].trim().length > 0) writeInAnswered++;
+    }
+  });
+
+  // Update elements
+  document.getElementById('scoreNum').textContent = mcCorrect;
+  document.getElementById('scoreDenom').textContent = `/ ${mcTotal}`;
+  document.getElementById('writeinCount').textContent = writeInAnswered;
+
+  const breakdown = document.getElementById('resultsBreakdown');
+  const percent = Math.round((mcCorrect / mcTotal) * 100);
+
+  if (percent >= 85) {
+    breakdown.innerHTML = `<p style="color: var(--accent-emerald);">🎯 Excellent retrieval! You scored <strong>${percent}%</strong> (${mcCorrect}/${mcTotal}) on Multiple Choice. Focus your remaining review on write-in grading below.</p>`;
+  } else if (percent >= 60) {
+    breakdown.innerHTML = `<p style="color: var(--accent-amber);">👍 Good job! You scored <strong>${percent}%</strong> (${mcCorrect}/${mcTotal}) on Multiple Choice. Analyze the feedback on questions you missed, and evaluate your write-in answers.</p>`;
+  } else {
+    breakdown.innerHTML = `<p style="color: var(--accent-rose);">📖 Retrieval gaps detected: <strong>${percent}%</strong> (${mcCorrect}/${mcTotal}) on Multiple Choice. The struggle of recalling makes re-reading the text highly effective! Use LLM grading below to check your write-in responses.</p>`;
+  }
+
+  document.getElementById('quizResults').classList.remove('hidden');
+  
+  // Hide submit button just in case
+  const submitBtn = document.getElementById('submitQuiz');
+  if (submitBtn) submitBtn.style.display = 'none';
+}
+
+function setupQuizFilters() {
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      currentFilter = this.dataset.filter;
+      renderQuiz();
+    });
+  });
+}
+
+function setupLLMGrading() {
+  const modal = document.getElementById('llmModal');
+  const gradeBtn = document.getElementById('gradeWriteIns');
+  const closeBtn = document.getElementById('closeModal');
+  const copyBtn = document.getElementById('copyLlmPrompt');
+  const copyFeedback = document.getElementById('copyFeedback');
+  const promptArea = document.getElementById('llmPromptArea');
+
+  if (gradeBtn) {
+    gradeBtn.addEventListener('click', () => {
+      const state = loadState();
+      const writeIns = state.writeInAnswers || {};
+      
+      // Collect answered write-ins
+      const answeredList = QUIZ_QUESTIONS.filter((q, idx) => q.type === 'write' && writeIns[idx] && writeIns[idx].trim().length > 0);
+
+      if (answeredList.length === 0) {
+        alert('Please answer at least one write-in question before generating the LLM grading prompt!');
+        return;
+      }
+
+      // Compile prompt
+      let prompt = `You are grading a student's responses to Chapter 3 ("Data Models and Query Languages") of Designing Data-Intensive Applications.
+For each question, provide:
+1. A Score from 1 to 5 (1 = Incorrect/No attempt, 3 = Partially correct/Gaps present, 5 = Excellent/Nuanced understanding).
+2. Strengths: What did the student capture accurately?
+3. Gaps: What crucial elements, terms, or architectural trade-offs did they miss?
+4. Model Comparison: Explain why the model answer is complete and how they can bridge any gaps.
+
+--------------------------------------------------
+`;
+
+      QUIZ_QUESTIONS.forEach((q, idx) => {
+        if (q.type === 'write') {
+          const studentAns = writeIns[idx] || '';
+          if (studentAns.trim().length > 0) {
+            prompt += `
+QUESTION #${idx + 1}: ${q.q}
+RUBRIC/MODEL ANSWER: ${q.modelAnswer}
+STUDENT'S RESPONSE: "${studentAns}"
+--------------------------------------------------
+`;
+          }
+        }
+      });
+
+      prompt += `
+After grading all questions, provide:
+- Overall conceptual score (e.g., "82% - Solid Conceptual Foundation")
+- Top 2 strengths across their responses
+- Top 2 areas for conceptual improvement
+- A custom 1-2 sentence recommendation on which specific sub-sections of Chapter 3 (e.g. Relational vs. Document Models, Graph-Like Data Models, Event Sourcing and CQRS, DataFrames) they should review.`;
+
+      promptArea.value = prompt;
+      modal.classList.remove('hidden');
+    });
+  }
+
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => {
+      modal.classList.add('hidden');
+    });
+  }
+
+  // Close modal on outside click
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      modal.classList.add('hidden');
+    }
+  });
+
+  if (copyBtn) {
+    copyBtn.addEventListener('click', () => {
+      promptArea.select();
+      navigator.clipboard.writeText(promptArea.value)
+        .then(() => {
+          copyFeedback.classList.remove('hidden');
+          setTimeout(() => {
+            copyFeedback.classList.add('hidden');
+          }, 2000);
+        })
+        .catch(err => {
+          console.error('Failed to copy text: ', err);
+          alert('Could not auto-copy. Please select all text and copy manually.');
+        });
+    });
+  }
+}
+
+document.getElementById('retakeQuiz')?.addEventListener('click', () => {
+  const state = loadState();
+  saveState({ quizGraded: false, quizSelections: {}, writeInAnswers: {} });
+  document.getElementById('quizResults').classList.add('hidden');
+  renderQuiz();
+});
+
+// ── Post-Activity: Revisit ──────────────────────────
+
+function renderRevisitPredictions() {
+  const state = loadState();
+  if (state.puzzleAnswers && state.puzzleAnswers.q1) {
+    document.getElementById('revisit-puzzle-1').textContent = state.puzzleAnswers.q1 || '(No answer recorded)';
+  }
+}
+
+function renderConfidenceComparison() {
+  const state = loadState();
+  const container = document.getElementById('confidenceComparison');
+  if (!container) return;
+  container.innerHTML = '';
+
+  const baseline = state.diagnosticBaseline || [3,3,3,3,3,3,3];
+  const levelLabels = ['—', 'No clue', 'Vaguely', 'Somewhat', 'Well', 'Could teach'];
+
+  CONFIDENCE_LABELS.forEach((label, i) => {
+    const div = document.createElement('div');
+    div.className = 'conf-compare-item';
+    div.innerHTML = `
+      <span class="conf-compare-label">${label}</span>
+      <span class="conf-compare-before">Before: ${levelLabels[baseline[i]]}</span>
+      <div class="conf-compare-after">
+        <span>Now:</span>
+        <select data-conf-idx="${i}">
+          <option value="1">No clue</option>
+          <option value="2">Vaguely</option>
+          <option value="3" selected>Somewhat</option>
+          <option value="4">Well</option>
+          <option value="5">Could teach</option>
+        </select>
+      </div>
+    `;
+    container.appendChild(div);
+  });
+}
+
+document.getElementById('saveRevisit').addEventListener('click', () => {
+  saveState({
+    revisitAnswer: document.getElementById('revisit-a1').value,
+    revisitDate: new Date().toISOString()
+  });
+  document.getElementById('revisitSaved').classList.remove('hidden');
+});
+
+// ── Sustained: Schedule ─────────────────────────────
+
+function renderSchedule() {
+  const container = document.getElementById('scheduleGrid');
+  const state = loadState();
+  const completed = state.scheduleCompleted || {};
+
+  container.innerHTML = '';
+
+  SCHEDULE_ITEMS.forEach((item, idx) => {
+    const isCompleted = completed[idx];
+    const isToday = item.type === 'due';
+    const div = document.createElement('div');
+    div.className = `schedule-item ${isCompleted ? 'completed' : ''} ${isToday && !isCompleted ? 'today' : ''} ${!isToday && !isCompleted ? 'future' : ''}`;
+    div.innerHTML = `
+      <span class="schedule-day">${item.day}</span>
+      <span class="schedule-task">${item.task}</span>
+      <span class="schedule-status ${isCompleted ? 'done' : isToday ? 'due' : 'upcoming'}">
+        ${isCompleted ? '✓ Completed' : isToday ? '● Due now' : '○ Upcoming'}
+      </span>
+      ${!isCompleted ? `<span class="schedule-check" data-idx="${idx}">✓ Mark Complete</span>` : ''}
+    `;
+    container.appendChild(div);
+  });
+
+  container.querySelectorAll('.schedule-check').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const idx = btn.dataset.idx;
+      const state = loadState();
+      const completed = state.scheduleCompleted || {};
+      completed[idx] = true;
+      saveState({ scheduleCompleted: completed });
+      renderSchedule();
+    });
+  });
+}
+
+// ── Sustained: Flashcards ───────────────────────────
+
+let fcIndex = 0;
+let fcRatings = [];
+let fcDeck = [...FLASHCARDS];
+
+function shuffleArray(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function renderFlashcard() {
+  const card = fcDeck[fcIndex];
+  document.getElementById('fcFront').textContent = card.front;
+  document.getElementById('fcBack').textContent = card.back;
+  document.getElementById('fcProgress').textContent = `Card ${fcIndex + 1} of ${fcDeck.length}`;
+  document.getElementById('fcProgressFill').style.width = `${((fcIndex + 1) / fcDeck.length) * 100}%`;
+
+  // Reset flip
+  document.getElementById('flashcardInner').classList.remove('flipped');
+  document.getElementById('fcRating').classList.add('hidden');
+  document.getElementById('fcFlip').classList.remove('hidden');
+
+  // Show deck, hide completion
+  document.getElementById('flashcardDeck').classList.remove('hidden');
+  document.getElementById('fcComplete').classList.add('hidden');
+}
+
+document.getElementById('fcFlip').addEventListener('click', () => {
+  document.getElementById('flashcardInner').classList.toggle('flipped');
+  if (document.getElementById('flashcardInner').classList.contains('flipped')) {
+    document.getElementById('fcRating').classList.remove('hidden');
+    document.getElementById('fcFlip').classList.add('hidden');
+  }
+});
+
+document.getElementById('flashcard').addEventListener('click', () => {
+  if (!document.getElementById('flashcardInner').classList.contains('flipped')) {
+    document.getElementById('flashcardInner').classList.add('flipped');
+    document.getElementById('fcRating').classList.remove('hidden');
+    document.getElementById('fcFlip').classList.add('hidden');
+  }
+});
+
+document.querySelectorAll('.fc-rate-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const rating = parseInt(btn.dataset.rating);
+    fcRatings.push({ card: fcIndex, rating });
+
+    fcIndex++;
+    if (fcIndex >= fcDeck.length) {
+      showFcComplete();
+    } else {
+      renderFlashcard();
+    }
+  });
+});
+
+function showFcComplete() {
+  document.getElementById('flashcardDeck').classList.add('hidden');
+  document.getElementById('fcComplete').classList.remove('hidden');
+
+  const counts = { 1: 0, 2: 0, 3: 0, 4: 0 };
+  fcRatings.forEach(r => counts[r.rating]++);
+
+  document.getElementById('fcStats').innerHTML = `
+    <div>😤 Didn't know: <strong>${counts[1]}</strong></div>
+    <div>😓 Hard: <strong>${counts[2]}</strong></div>
+    <div>🙂 Good: <strong>${counts[3]}</strong></div>
+    <div>😎 Easy: <strong>${counts[4]}</strong></div>
+    <div style="margin-top:0.75rem; color: var(--text-muted); font-size: 0.82rem;">
+      Cards rated "Didn't know" or "Hard" should be reviewed again tomorrow.
+      Cards rated "Easy" can be pushed to next week.
+    </div>
+  `;
+
+  saveState({
+    fcSession: {
+      date: new Date().toISOString(),
+      ratings: fcRatings,
+      counts
+    }
+  });
+
+  // Step 1: Reset ratings immediately after saving to prevent double-counting on next session
+  fcRatings = [];
+}
+
+document.getElementById('fcRestart').addEventListener('click', () => {
+  fcIndex = 0;
+  fcRatings = [];
+  fcDeck = shuffleArray(FLASHCARDS);
+  renderFlashcard();
+});
+
+// ── Sustained: Scenarios ────────────────────────────
+
+let currentScenario = 0;
+const totalScenarios = 4;
+
+function renderScenarioDots() {
+  const dots = document.getElementById('scenarioDots');
+  dots.innerHTML = '';
+  for (let i = 0; i < totalScenarios; i++) {
+    const dot = document.createElement('span');
+    dot.className = `scenario-dot ${i === currentScenario ? 'active' : ''}`;
+    dot.addEventListener('click', () => goToScenario(i));
+    dots.appendChild(dot);
+  }
+}
+
+function goToScenario(idx) {
+  const card = document.querySelector(`.scenario-card[data-scenario="${idx}"]`);
+  if (!card) return;
+
+  currentScenario = idx;
+  document.querySelectorAll('.scenario-card').forEach(c => c.classList.remove('active'));
+  card.classList.add('active');
+  document.getElementById('scenarioPrev').disabled = idx === 0;
+  document.getElementById('scenarioNext').disabled = idx === (totalScenarios - 1);
+  renderScenarioDots();
+}
+
+document.getElementById('scenarioNext').addEventListener('click', () => {
+  if (currentScenario < totalScenarios - 1) goToScenario(currentScenario + 1);
+});
+document.getElementById('scenarioPrev').addEventListener('click', () => {
+  if (currentScenario > 0) goToScenario(currentScenario - 1);
+});
+
+document.getElementById('saveScenarios').addEventListener('click', () => {
+  const answers = {};
+  for (let s = 1; s <= 4; s++) {
+    for (let q = 1; q <= 3; q++) {
+      const el = document.getElementById(`sc-${s}-${q}`);
+      if (el) answers[`s${s}q${q}`] = el.value;
+    }
+  }
+  saveState({ scenarioAnswers: answers });
+  document.getElementById('scenariosSaved').classList.remove('hidden');
+});
+
+// ── Sustained: Forgetting Curve ─────────────────────
+
+function drawForgettingCurve() {
+  const canvas = document.getElementById('forgettingCurve');
+  if (!canvas) return;
+
+  // Step 1: Read logical size from CSS/layout, not from canvas attributes
+  const W = canvas.offsetWidth || 600;
+  const H = canvas.offsetHeight || 300;
+
+  const dpr = window.devicePixelRatio || 1;
+  // Step 2: Set physical pixel size once, without re-reading canvas.width
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  const padding = { top: 30, right: 20, bottom: 40, left: 50 };
+  const plotW = W - padding.left - padding.right;
+  const plotH = H - padding.top - padding.bottom;
+
+  ctx.clearRect(0, 0, W, H);
+
+  // Axes
+  ctx.strokeStyle = 'rgba(99, 102, 241, 0.15)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(padding.left, padding.top);
+  ctx.lineTo(padding.left, H - padding.bottom);
+  ctx.lineTo(W - padding.right, H - padding.bottom);
+  ctx.stroke();
+
+  // Labels
+  ctx.fillStyle = '#6b7280';
+  ctx.font = '11px Inter, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Time →', W / 2, H - 8);
+  ctx.save();
+  ctx.translate(14, H / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText('Memory Retention', 0, 0);
+  ctx.restore();
+
+  // Y-axis labels
+  ctx.textAlign = 'right';
+  ctx.fillText('100%', padding.left - 8, padding.top + 5);
+  ctx.fillText('50%', padding.left - 8, padding.top + plotH / 2 + 5);
+  ctx.fillText('0%', padding.left - 8, H - padding.bottom + 5);
+
+  // X-axis labels
+  ctx.textAlign = 'center';
+  const days = ['0', '1d', '3d', '1w', '2w', '1m'];
+  days.forEach((label, i) => {
+    const x = padding.left + (plotW / (days.length - 1)) * i;
+    ctx.fillText(label, x, H - padding.bottom + 18);
+  });
+
+  function toX(t) { return padding.left + (t / 30) * plotW; }
+  function toY(v) { return padding.top + (1 - v) * plotH; }
+
+  // Without review curve (exponential decay)
+  ctx.beginPath();
+  ctx.strokeStyle = '#ef4444';
+  ctx.lineWidth = 2.5;
+  ctx.setLineDash([6, 4]);
+  for (let t = 0; t <= 30; t += 0.5) {
+    const v = Math.exp(-t * 0.12);
+    const x = toX(t); const y = toY(v);
+    t === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // With spaced review curve
+  const reviewPoints = [0, 1, 3, 7, 14];
+  ctx.beginPath();
+  ctx.strokeStyle = '#22c55e';
+  ctx.lineWidth = 2.5;
+
+  let retention = 1;
+  let lastReview = 0;
+  const points = [];
+
+  for (let t = 0; t <= 30; t += 0.25) {
+    if (reviewPoints.includes(t) && t > 0) {
+      retention = Math.min(1, retention + 0.35);
+      lastReview = t;
+      points.push({ x: toX(t), y: toY(retention) });
+    }
+    const decay = Math.exp(-(t - lastReview) * 0.06);
+    const v = retention * decay;
+    const x = toX(t); const y = toY(v);
+    t === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  // Review point dots
+  points.forEach(p => {
+    ctx.beginPath();
+    ctx.fillStyle = '#6366f1';
+    ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#0a0a0f';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  });
+}
+
+// ── Initialization ──────────────────────────────────
+
+function init() {
+  // Bug 10: Save total questions count to state for dashboard accuracy
+  saveState({ totalQuestions: QUIZ_QUESTIONS.length });
+
+  // Restore saved data
+  const state = loadState();
+
+  // Restore diagnostic sliders
+  if (state.diagnosticBaseline) {
+    state.diagnosticBaseline.forEach((v, i) => {
+      const el = document.getElementById(`conf-${i + 1}`);
+      if (el) el.value = v;
+    });
+    document.getElementById('diagnosticSaved').classList.remove('hidden');
+  }
+
+  // Restore puzzle answers
+  if (state.puzzleAnswers) {
+    Object.keys(state.puzzleAnswers).forEach(key => {
+      const idx = key.replace('q', '');
+      const el = document.getElementById(`puzzle-a${idx}`);
+      if (el) el.value = state.puzzleAnswers[key];
+    });
+    document.getElementById('puzzleSaved').classList.remove('hidden');
+  }
+
+  // Restore brain dump
+  if (state.brainDump) {
+    document.getElementById('brainDumpArea').value = state.brainDump;
+  }
+
+  // Restore scenario answers
+  if (state.scenarioAnswers) {
+    Object.keys(state.scenarioAnswers).forEach(key => {
+      const match = key.match(/s(\d)q(\d)/);
+      if (match) {
+        const el = document.getElementById(`sc-${match[1]}-${match[2]}`);
+        if (el) el.value = state.scenarioAnswers[key];
+      }
+    });
+  }
+
+  // Render components
+  setupQuizFilters();
+  setupLLMGrading();
+  renderQuiz();
+  renderSchedule();
+  renderScenarioDots();
+  renderConfidenceComparison();
+  renderRevisitPredictions();
+
+  // Flashcards
+  fcDeck = shuffleArray(FLASHCARDS);
+  renderFlashcard();
+
+  // Draw forgetting curve
+  drawForgettingCurve();
+  window.addEventListener('resize', drawForgettingCurve);
+}
+
+// Start
+document.addEventListener('DOMContentLoaded', init);

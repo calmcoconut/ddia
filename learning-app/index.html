@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Designing Data-Intensive Applications — Applied Learning Platform</title>
+  <meta name="description" content="An interactive, evidence-based learning platform for Designing Data-Intensive Applications, applying cognitive science principles to master distributed systems.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Ambient background -->
+  <div class="ambient-bg">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <!-- Header -->
+  <header class="site-header">
+    <div class="header-content">
+      <div class="logo-area">
+        <div class="logo-icon">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+            <rect x="2" y="6" width="8" height="16" rx="2" fill="url(#grad1)" opacity="0.9"/>
+            <rect x="10" y="3" width="8" height="22" rx="2" fill="url(#grad2)" opacity="0.9"/>
+            <rect x="18" y="8" width="8" height="12" rx="2" fill="url(#grad3)" opacity="0.9"/>
+            <defs>
+              <linearGradient id="grad1" x1="2" y1="6" x2="10" y2="22"><stop stop-color="#6366f1"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient>
+              <linearGradient id="grad2" x1="10" y1="3" x2="18" y2="25"><stop stop-color="#8b5cf6"/><stop offset="1" stop-color="#a78bfa"/></linearGradient>
+              <linearGradient id="grad3" x1="18" y1="8" x2="26" y2="20"><stop stop-color="#a78bfa"/><stop offset="1" stop-color="#c4b5fd"/></linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <div class="logo-text">
+          <span class="logo-title">DDIA Hub</span>
+          <span class="logo-subtitle">Applied Learning Platform</span>
+        </div>
+      </div>
+      <div style="margin-left: auto; display: flex; gap: 1rem; align-items: center;">
+        <button id="exportStateBtn" class="nav-btn" style="padding: 0.5rem 1rem; font-size: 0.85rem; cursor: pointer;" title="Downloads your progress as 'ddia_progress.json' to run with the python grade_responses.py script for automated AI feedback.">
+          📥 Export Progress
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="hub-wrapper">
+    <!-- Hero Section -->
+    <section class="hub-hero">
+      <div class="hub-badge">Pedagogical Consensus 2026</div>
+      <h1 class="hub-title">Master Distributed Systems</h1>
+      <p class="hub-subtitle">
+        Deepen your engineering expertise through effortful cognitive processing. 
+        Each chapter features Pre-Activity priming, retrieval-based Post-Activity assessments, and Sustained spaced repetition.
+      </p>
+    </section>
+
+    <!-- Stats Dashboard -->
+    <section class="hub-stats">
+      <div class="hub-stat-card">
+        <div class="hub-stat-icon">📈</div>
+        <div class="hub-stat-info">
+          <span class="hub-stat-value" id="overall-progress-val">0%</span>
+          <span class="hub-stat-label">Overall Mastery</span>
+        </div>
+      </div>
+      <div class="hub-stat-card">
+        <div class="hub-stat-icon">❓</div>
+        <div class="hub-stat-info">
+          <span class="hub-stat-value" id="total-questions-val">0 / 420</span>
+          <span class="hub-stat-label">Questions Answered</span>
+        </div>
+      </div>
+      <div class="hub-stat-card">
+        <div class="hub-stat-icon">🎴</div>
+        <div class="hub-stat-info">
+          <span class="hub-stat-value" id="total-flashcards-val">0</span>
+          <span class="hub-stat-label">Cards Reviewed</span>
+        </div>
+      </div>
+      <div class="hub-stat-card">
+        <div class="hub-stat-icon">📚</div>
+        <div class="hub-stat-info">
+          <span class="hub-stat-value" id="chapters-started-val">0 / 14</span>
+          <span class="hub-stat-label">Chapters Active</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Cumulative Exams Section -->
+    <section class="exams-section" style="margin-top: 1.5rem; margin-bottom: 3.5rem;">
+      <h2 style="font-size: 1.75rem; font-weight: 800; margin-bottom: 1.5rem; background: var(--gradient-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Cumulative Assessments</h2>
+      <div class="hub-grid" id="examsGrid">
+        <!-- Midterm Card -->
+        <div class="hub-card" style="border-color: rgba(99, 102, 241, 0.25);">
+          <div class="hub-card-header">
+            <span class="hub-card-index" style="background: rgba(99, 102, 241, 0.1); border-color: rgba(99, 102, 241, 0.2); color: var(--accent-indigo);">Midterm Exam</span>
+            <span style="font-size: 1.2rem;">⏱️</span>
+          </div>
+          <h2 class="hub-card-title">Chapters 1 to 7 Cumulative</h2>
+          <div class="hub-card-topics">
+            <ul>
+              <li>40 randomized synthesis questions (25 MC, 15 Write-In)</li>
+              <li>60-minute countdown timer</li>
+              <li>Covers distributed systems foundations, data models, encoding, replication, and sharding</li>
+            </ul>
+          </div>
+          <div class="hub-card-progress-container">
+            <div class="hub-card-progress-label">
+              <span>Exam Status</span>
+              <span id="midtermScoreVal" style="color: var(--text-primary); font-weight: 600;">Not Attempted</span>
+            </div>
+          </div>
+          <a href="./exams/index.html?type=midterm" class="hub-card-btn" style="text-decoration: none;">Launch Midterm</a>
+        </div>
+
+        <!-- Final Card -->
+        <div class="hub-card" style="border-color: rgba(245, 158, 11, 0.25);">
+          <div class="hub-card-header">
+            <span class="hub-card-index" style="background: rgba(245, 158, 11, 0.1); border-color: rgba(245, 158, 11, 0.2); color: var(--accent-amber);">Final Exam</span>
+            <span style="font-size: 1.2rem;">🏆</span>
+          </div>
+          <h2 class="hub-card-title">Chapters 1 to 14 Cumulative</h2>
+          <div class="hub-card-topics">
+            <ul>
+              <li>60 randomized comprehensive questions (35 MC, 25 Write-In)</li>
+              <li>90-minute countdown timer</li>
+              <li>Full-book synthesis testing core databases, distributed algorithms, batch/stream processing, and ethics</li>
+            </ul>
+          </div>
+          <div class="hub-card-progress-container">
+            <div class="hub-card-progress-label">
+              <span>Exam Status</span>
+              <span id="finalScoreVal" style="color: var(--text-primary); font-weight: 600;">Not Attempted</span>
+            </div>
+          </div>
+          <a href="./exams/index.html?type=final" class="hub-card-btn" style="text-decoration: none;">Launch Final Exam</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Chapters Grid -->
+    <h2 style="font-size: 1.75rem; font-weight: 800; margin-bottom: 1.5rem; background: var(--gradient-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Chapter-by-Chapter Practice</h2>
+    <section class="hub-grid" id="chaptersGrid">
+      <!-- Chapter cards will be rendered dynamically by JavaScript -->
+    </section>
+  </main>
+
+  <script>
+    const CHAPTERS = [
+      {
+        num: 1,
+        dir: "ch01",
+        title: "Trade-Offs in Data Systems Architecture",
+        topics: ["OLTP vs OLAP workloads", "Systems of record vs derived data", "Cloud vs self-hosting trade-offs", "Microservices & law/society implications"]
+      },
+      {
+        num: 2,
+        dir: "ch02",
+        title: "Defining Nonfunctional Requirements",
+        topics: ["Reliability and hardware/software faults", "Scalability (load parameters, tail latency)", "Maintainability (simplicity, evolvability)", "SLA measurements & percentile metrics"]
+      },
+      {
+        num: 3,
+        dir: "ch03",
+        title: "Data Models and Query Languages",
+        topics: ["Relational vs document models", "Schema-on-write vs schema-on-read", "Graph data models (Triple-Store, Cypher)", "Declarative vs imperative query styles"]
+      },
+      {
+        num: 4,
+        dir: "ch04",
+        title: "Storage and Retrieval",
+        topics: ["Log-Structured storage (LSM-trees, SSTables)", "Update-in-place storage (B-trees)", "Column-oriented analytics storage", "Memory-efficient indexing strategies"]
+      },
+      {
+        num: 5,
+        dir: "ch05",
+        title: "Encoding and Evolution",
+        topics: ["Binary encoding (Protocol Buffers, Thrift, Avro)", "Forward & backward compatibility rules", "Dataflows via DBs, REST/RPC, and Actors", "Schema evolution mechanisms"]
+      },
+      {
+        num: 6,
+        dir: "ch06",
+        title: "Replication",
+        topics: ["Leaders and followers (Single/Multi/Leaderless)", "Replication lag and read-after-write consistency", "Handling node outages & write conflicts", "Quorums and Sloppy Quorums"]
+      },
+      {
+        num: 7,
+        dir: "ch07",
+        title: "Sharding",
+        topics: ["Partitioning by key range or hash of key", "Secondary indexes (local vs global)", "Rebalancing partitions (fixed vs dynamic)", "Routing request patterns (service discovery)"]
+      },
+      {
+        num: 8,
+        dir: "ch08",
+        title: "Transactions",
+        topics: ["ACID semantics in practice", "Weak isolation anomalies (dirty reads, write skew)", "Snapshot isolation and MVCC", "Serializable isolation (2PL, SSI)"]
+      },
+      {
+        num: 9,
+        dir: "ch09",
+        title: "The Trouble with Distributed Systems",
+        topics: ["Unreliable networks and split-brain", "Unreliable clocks & clock skew pitfalls", "Knowledge, truth, and consensus baselines", "Byzantine faults and fail-stop models"]
+      },
+      {
+        num: 10,
+        dir: "ch10",
+        title: "Consistency and Consensus",
+        topics: ["Linearizability vs eventual consistency", "Ordering guarantees and logical clocks", "Atomic commit and Two-Phase Commit (2PC)", "Consensus protocols (Paxos, Raft)"]
+      },
+      {
+        num: 11,
+        dir: "ch11",
+        title: "Batch Processing",
+        topics: ["MapReduce execution and fault tolerance", "Distributed filesystems (HDFS, S3)", "Map-side and Reduce-side joins", "Dataflow engines (Spark, Tez)"]
+      },
+      {
+        num: 12,
+        dir: "ch12",
+        title: "Stream Processing",
+        topics: ["Event streaming vs batch processing", "Message brokers (JMS/AMQP vs Partitioned Logs)", "Change Data Capture (CDC)", "Dual-writes vs event sourcing"]
+      },
+      {
+        num: 13,
+        dir: "ch13",
+        title: "A Philosophy of Streaming Systems",
+        topics: ["Event time vs processing time", "Windows (tumbling, hopping, session)", "Stream-stream and stream-table joins", "Fault tolerance & exactly-once semantics"]
+      },
+      {
+        num: 14,
+        dir: "ch14",
+        title: "Doing the Right Thing",
+        topics: ["Ethical architecture considerations", "Predictive analytics and feedback loops", "Surveillance capitalism & user data tracking", "Data ownership and decentralized futures"]
+      }
+    ];
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const grid = document.getElementById("chaptersGrid");
+      
+      let totalQuestionsAnswered = 0;
+      let totalFlashcardsReviewed = 0;
+      let chaptersActiveCount = 0;
+      let totalQuestionsTarget = 0;
+      let overallProgressSum = 0;
+
+      // Initialize global state if not already present
+      window.__ddiaState = window.__ddiaState || {};
+
+      CHAPTERS.forEach(ch => {
+        // Load state from localStorage or window.__ddiaState (Bug 9)
+        const stateKey = `ddia_${ch.dir}_learning`;
+        let state = {};
+        
+        // Try localStorage first
+        try {
+          const raw = localStorage.getItem(stateKey);
+          if (raw) state = JSON.parse(raw);
+        } catch (e) {
+          // If localStorage is blocked (sandbox), fall back to window global
+          state = window.__ddiaState[stateKey] || {};
+        }
+
+        // Calculate chapter stats
+        const mcCount = state.quizSelections ? Object.keys(state.quizSelections).length : 0;
+        const writeCount = state.writeInAnswers ? Object.keys(state.writeInAnswers).length : 0;
+        const answeredCount = mcCount + writeCount;
+        
+        const fcCount = (state.fcSession && state.fcSession.ratings) ? state.fcSession.ratings.length : 0;
+        
+        totalQuestionsAnswered += answeredCount;
+        totalFlashcardsReviewed += fcCount;
+        
+        const isStarted = answeredCount > 0 || fcCount > 0 || (state.puzzleAnswers && Object.keys(state.puzzleAnswers).length > 0);
+        if (isStarted) {
+          chaptersActiveCount++;
+        }
+
+        // Bug 10: Use dynamic question count from state, fallback to 30
+        const chapterTotal = state.totalQuestions || 30;
+        const progressPercent = Math.min(Math.round((answeredCount / chapterTotal) * 100), 100);
+        overallProgressSum += progressPercent;
+        totalQuestionsTarget += chapterTotal;
+
+        // Render card
+        const card = document.createElement("a");
+        card.className = "hub-card";
+        card.href = `./${ch.dir}/index.html`;
+
+        card.innerHTML = `
+          <div class="hub-card-header">
+            <span class="hub-card-index">Chapter ${ch.num}</span>
+            <span style="font-size: 1.2rem;">⚡</span>
+          </div>
+          <h2 class="hub-card-title">${ch.title}</h2>
+          <div class="hub-card-topics">
+            <ul>
+              ${ch.topics.map(t => `<li>${t}</li>`).join("")}
+            </ul>
+          </div>
+          <div class="hub-card-progress-container">
+            <div class="hub-card-progress-label">
+              <span>Progress</span>
+              <span>${answeredCount} / ${chapterTotal} Questions (${progressPercent}%)</span>
+            </div>
+            <div class="hub-card-progress-bar-bg">
+              <div class="hub-card-progress-bar-fg" style="width: ${progressPercent}%"></div>
+            </div>
+          </div>
+          <button class="hub-card-btn">Launch Activity</button>
+        `;
+        grid.appendChild(card);
+      });
+
+      // Update aggregate stats
+      const overallAvgProgress = Math.round(overallProgressSum / CHAPTERS.length);
+      document.getElementById("overall-progress-val").textContent = `${overallAvgProgress}%`;
+      document.getElementById("total-questions-val").textContent = `${totalQuestionsAnswered} / ${totalQuestionsTarget}`;
+      document.getElementById("total-flashcards-val").textContent = totalFlashcardsReviewed;
+      document.getElementById("chapters-started-val").textContent = `${chaptersActiveCount} / ${CHAPTERS.length}`;
+
+      // Load midterm and final states to update dashboard labels
+      try {
+        const exams = ['midterm', 'final'];
+        exams.forEach(type => {
+          const key = `ddia_exam_${type}`;
+          let eState = null;
+          try {
+            const raw = localStorage.getItem(key);
+            if (raw) eState = JSON.parse(raw);
+          } catch (e) {
+            eState = window.__ddiaState[key];
+          }
+
+          if (eState) {
+            const displayId = `${type}ScoreVal`;
+            if (eState.isSubmitted) {
+              document.getElementById(displayId).textContent = `High Score: ${eState.mcScore}% (MC)`;
+            } else {
+              document.getElementById(displayId).textContent = `In Progress (${Math.round(eState.timeRemaining / 60)} min left)`;
+            }
+          }
+        });
+      } catch (e) {
+        console.error("Failed to load exam scores", e);
+      }
+
+      // Export Progress button handler (Bug 9: Use window.__ddiaState)
+      document.getElementById('exportStateBtn').addEventListener('click', () => {
+        // Gather from both localStorage (if available) and window.__ddiaState
+        const exportData = { ...window.__ddiaState };
+        
+        try {
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key.startsWith('ddia_')) {
+              try {
+                exportData[key] = JSON.parse(localStorage.getItem(key));
+              } catch (err) {
+                exportData[key] = localStorage.getItem(key);
+              }
+            }
+          }
+        } catch (e) {
+          // If localStorage fails, we already have window.__ddiaState
+        }
+        
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2));
+        const downloadAnchor = document.createElement('a');
+        downloadAnchor.setAttribute("href",     dataStr);
+        downloadAnchor.setAttribute("download", "ddia_progress.json");
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+      });
+    });
+  </script>
+</body>
+</html>

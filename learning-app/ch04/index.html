@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DDIA Chapter 4 — Learning Activities</title>
+  <meta name="description" content="Evidence-based learning activities for Designing Data-Intensive Applications Chapter 4: Storage and Retrieval">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+  <!-- Ambient background -->
+  <div class="ambient-bg">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <!-- Header -->
+  <header class="site-header">
+    <div class="header-content">
+      <div class="logo-area">
+        <div class="logo-icon">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+            <rect x="2" y="6" width="8" height="16" rx="2" fill="url(#grad1)" opacity="0.9"/>
+            <rect x="10" y="3" width="8" height="22" rx="2" fill="url(#grad2)" opacity="0.9"/>
+            <rect x="18" y="8" width="8" height="12" rx="2" fill="url(#grad3)" opacity="0.9"/>
+            <defs>
+              <linearGradient id="grad1" x1="2" y1="6" x2="10" y2="22"><stop stop-color="#6366f1"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient>
+              <linearGradient id="grad2" x1="10" y1="3" x2="18" y2="25"><stop stop-color="#8b5cf6"/><stop offset="1" stop-color="#a78bfa"/></linearGradient>
+              <linearGradient id="grad3" x1="18" y1="8" x2="26" y2="20"><stop stop-color="#a78bfa"/><stop offset="1" stop-color="#c4b5fd"/></linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <div class="logo-text">
+          <span class="logo-title">DDIA · Chapter 4</span>
+          <span class="logo-subtitle">Storage and Retrieval</span>
+        </div>
+      </div>
+      <nav class="main-nav" id="mainNav">
+        <button class="nav-btn active" data-phase="pre" id="nav-pre">
+          <span class="nav-icon">⚡</span>
+          <span class="nav-label">Pre-Activity</span>
+          <span class="nav-tag">Prime</span>
+        </button>
+        <button class="nav-btn" data-phase="post" id="nav-post">
+          <span class="nav-icon">🧠</span>
+          <span class="nav-label">Post-Activity</span>
+          <span class="nav-tag">Retrieve</span>
+        </button>
+        <button class="nav-btn" data-phase="sustained" id="nav-sustained">
+          <span class="nav-icon">🔄</span>
+          <span class="nav-label">Sustained Practice</span>
+          <span class="nav-tag">Retain</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="main-content">
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- PRE-ACTIVITY PHASE                         -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section class="phase-section active" id="phase-pre">
+      <div class="phase-hero">
+        <div class="phase-badge">Phase 1 · Before Reading</div>
+        <h1 class="phase-title">Pre-Activity: Prime Your Brain</h1>
+        <p class="phase-description">
+          Research shows that <strong>struggling with a problem before learning the answer</strong> creates 
+          "conceptual folders" in your mind, making subsequent reading far more meaningful. 
+          You are <em>not</em> expected to know these answers yet.
+        </p>
+        <div class="science-note">
+          <span class="science-icon">🔬</span>
+          <span><strong>ABC Pedagogy</strong> — Activity Before Content primes retrieval pathways and activates prior knowledge</span>
+        </div>
+      </div>
+
+      <!-- Pre-Activity 1: Diagnostic -->
+      <div class="activity-card" id="pre-diagnostic">
+        <div class="card-header">
+          <div class="card-number">01</div>
+          <div class="card-meta">
+            <h2 class="card-title">Diagnostic: What Do You Already Know?</h2>
+            <p class="card-purpose">Activates prior knowledge · Identifies gaps · ~5 min</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <p class="card-instruction">Rate your confidence on each concept. Be honest — <strong>low confidence is perfectly fine</strong> and helps you focus your reading.</p>
+          
+          <div class="confidence-grid" id="diagnosticGrid">
+            <div class="confidence-item" data-topic="lsm-vs-btree">
+              <span class="confidence-label">I can compare the read/write performance and trade-offs of LSM-Trees and B-Trees</span>
+              <div class="confidence-slider">
+                <input type="range" min="1" max="5" value="3" class="slider" id="conf-1">
+                <div class="slider-labels">
+                  <span>No clue</span><span>Vaguely</span><span>Somewhat</span><span>Well</span><span>Could teach it</span>
+                </div>
+              </div>
+            </div>
+            <div class="confidence-item" data-topic="indexing-mechanics">
+              <span class="confidence-label">I understand heap files, clustered indexes, covering indexes, and secondary indexes</span>
+              <div class="confidence-slider">
+                <input type="range" min="1" max="5" value="3" class="slider" id="conf-2">
+                <div class="slider-labels">
+                  <span>No clue</span><span>Vaguely</span><span>Somewhat</span><span>Well</span><span>Could teach it</span>
+                </div>
+              </div>
+            </div>
+            <div class="confidence-item" data-topic="oltp-vs-olap">
+              <span class="confidence-label">I can explain why OLTP and OLAP workloads require different database architectures</span>
+              <div class="confidence-slider">
+                <input type="range" min="1" max="5" value="3" class="slider" id="conf-3">
+                <div class="slider-labels">
+                  <span>No clue</span><span>Vaguely</span><span>Somewhat</span><span>Well</span><span>Could teach it</span>
+                </div>
+              </div>
+            </div>
+            <div class="confidence-item" data-topic="columnar-storage">
+              <span class="confidence-label">I understand how column-oriented storage and bitmap compression work</span>
+              <div class="confidence-slider">
+                <input type="range" min="1" max="5" value="3" class="slider" id="conf-4">
+                <div class="slider-labels">
+                  <span>No clue</span><span>Vaguely</span><span>Somewhat</span><span>Well</span><span>Could teach it</span>
+                </div>
+              </div>
+            </div>
+            <div class="confidence-item" data-topic="multidimensional">
+              <span class="confidence-label">I understand multidimensional/spatial indexes (e.g., R-trees) and full-text search</span>
+              <div class="confidence-slider">
+                <input type="range" min="1" max="5" value="3" class="slider" id="conf-5">
+                <div class="slider-labels">
+                  <span>No clue</span><span>Vaguely</span><span>Somewhat</span><span>Well</span><span>Could teach it</span>
+                </div>
+              </div>
+            </div>
+            <div class="confidence-item" data-topic="in-memory">
+              <span class="confidence-label">I know how in-memory databases achieve high performance while ensuring durability</span>
+              <div class="confidence-slider">
+                <input type="range" min="1" max="5" value="3" class="slider" id="conf-6">
+                <div class="slider-labels">
+                  <span>No clue</span><span>Vaguely</span><span>Somewhat</span><span>Well</span><span>Could teach it</span>
+                </div>
+              </div>
+            </div>
+            <div class="confidence-item" data-topic="materialized-views">
+              <span class="confidence-label">I understand data cubes, materialized views, and pre-computed aggregation</span>
+              <div class="confidence-slider">
+                <input type="range" min="1" max="5" value="3" class="slider" id="conf-7">
+                <div class="slider-labels">
+                  <span>No clue</span><span>Vaguely</span><span>Somewhat</span><span>Well</span><span>Could teach it</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <button class="btn-primary" id="saveDiagnostic">Save My Baseline</button>
+          <div class="save-confirmation hidden" id="diagnosticSaved">
+            <span>✓</span> Baseline saved! You'll retake this after reading to see your growth.
+          </div>
+        </div>
+      </div>
+
+      <!-- Pre-Activity 2: Architecture Puzzle -->
+      <div class="activity-card" id="pre-puzzle">
+        <div class="card-header">
+          <div class="card-number">02</div>
+          <div class="card-meta">
+            <h2 class="card-title">Architecture Puzzle: Design Before You Know</h2>
+            <p class="card-purpose">Creates conceptual folders · Generates curiosity · ~10 min</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="puzzle-scenario">
+            <div class="scenario-header">
+              <span class="scenario-icon">🏗️</span>
+              <h3>The Scenario</h3>
+            </div>
+            <p>You are designing the storage backend for a high-frequency sensor telemetry system. The system must process:</p>
+            <ul class="scenario-list">
+              <li>100,000 writes per second of timestamped sensor data (sensor ID, timestamp, status code, 5 metrics)</li>
+              <li>Real-time alert queries checking for anomaly statuses (status != 200) in the last 1 minute</li>
+              <li>An hourly analytics dashboard that calculates moving averages of metrics grouped by sensor over the last 24 hours</li>
+            </ul>
+          </div>
+
+          <div class="puzzle-questions">
+            <div class="puzzle-q" id="puzzle-q1">
+              <label class="puzzle-label">
+                <span class="q-num">Q1</span>
+                Would you choose an LSM-tree based storage engine (like RocksDB) or a B-tree based engine (like Postgres/MySQL)? Why?
+              </label>
+              <textarea class="puzzle-textarea" placeholder="Think out loud here... there's no wrong answer yet" id="puzzle-a1"></textarea>
+            </div>
+            <div class="puzzle-q" id="puzzle-q2">
+              <label class="puzzle-label">
+                <span class="q-num">Q2</span>
+                How would you index this data to support both the real-time anomaly queries and the hourly moving average dashboard without bottlenecking writes?
+              </label>
+              <textarea class="puzzle-textarea" placeholder="What's the worst that could happen?" id="puzzle-a2"></textarea>
+            </div>
+            <div class="puzzle-q" id="puzzle-q3">
+              <label class="puzzle-label">
+                <span class="q-num">Q3</span>
+                If you decide to use a column-oriented storage format (like Parquet or ClickHouse) for the historical analysis, how would you handle the incoming real-time writes?
+              </label>
+              <textarea class="puzzle-textarea" placeholder="What would you need to know first?" id="puzzle-a3"></textarea>
+            </div>
+          </div>
+          <button class="btn-primary" id="savePuzzle">Save My Predictions</button>
+          <div class="save-confirmation hidden" id="puzzleSaved">
+            <span>✓</span> Predictions saved! After reading Ch. 4, you'll revisit these with fresh eyes.
+          </div>
+        </div>
+      </div>
+
+      <!-- Pre-Activity 3: Misconception Detector -->
+      <div class="activity-card" id="pre-misconceptions">
+        <div class="card-header">
+          <div class="card-number">03</div>
+          <div class="card-meta">
+            <h2 class="card-title">Misconception Detector</h2>
+            <p class="card-purpose">Surfaces faulty mental models · Prepares for correction · ~3 min</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <p class="card-instruction">For each statement, decide: <strong>True, False, or I'm Not Sure.</strong> Don't guess — "Not Sure" is the best answer if you genuinely don't know.</p>
+          
+          <div class="misconception-list" id="misconceptionList">
+            <div class="misconception-item" data-correct="false" data-id="m1">
+              <p class="misconception-text">"B-trees are obsolete because LSM-trees are faster for writes and Bloom filters make LSM reads just as fast as B-trees."</p>
+              <div class="misconception-btns">
+                <button class="mc-btn" data-value="true">True</button>
+                <button class="mc-btn" data-value="false">False</button>
+                <button class="mc-btn" data-value="unsure">Not Sure</button>
+              </div>
+              <div class="misconception-feedback hidden"></div>
+            </div>
+            <div class="misconception-item" data-correct="false" data-id="m2">
+              <p class="misconception-text">"A Covering Index is just another name for a Clustered Index."</p>
+              <div class="misconception-btns">
+                <button class="mc-btn" data-value="true">True</button>
+                <button class="mc-btn" data-value="false">False</button>
+                <button class="mc-btn" data-value="unsure">Not Sure</button>
+              </div>
+              <div class="misconception-feedback hidden"></div>
+            </div>
+            <div class="misconception-item" data-correct="false" data-id="m3">
+              <p class="misconception-text">"In-memory databases don't write to disk and will lose all data if the power goes out."</p>
+              <div class="misconception-btns">
+                <button class="mc-btn" data-value="true">True</button>
+                <button class="mc-btn" data-value="false">False</button>
+                <button class="mc-btn" data-value="unsure">Not Sure</button>
+              </div>
+              <div class="misconception-feedback hidden"></div>
+            </div>
+            <div class="misconception-item" data-correct="false" data-id="m4">
+              <p class="misconception-text">"Column-oriented databases are faster for OLAP because they store data in compression formats like zip files that the CPU decompresses all at once."</p>
+              <div class="misconception-btns">
+                <button class="mc-btn" data-value="true">True</button>
+                <button class="mc-btn" data-value="false">False</button>
+                <button class="mc-btn" data-value="unsure">Not Sure</button>
+              </div>
+              <div class="misconception-feedback hidden"></div>
+            </div>
+            <div class="misconception-item" data-correct="false" data-id="m5">
+              <p class="misconception-text">"Creating more indexes will speed up all queries, including insert and update operations."</p>
+              <div class="misconception-btns">
+                <button class="mc-btn" data-value="true">True</button>
+                <button class="mc-btn" data-value="false">False</button>
+                <button class="mc-btn" data-value="unsure">Not Sure</button>
+              </div>
+              <div class="misconception-feedback hidden"></div>
+            </div>
+          </div>
+
+          <div class="misconception-summary hidden" id="misconceptionSummary">
+            <h3>Your Pre-Reading Profile</h3>
+            <p id="misconceptionResult"></p>
+            <p class="summary-note">These will make much more sense after reading Chapter 4. Look for the answers as you read!</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pre-Activity CTA -->
+      <div class="phase-cta">
+        <div class="cta-icon">📖</div>
+        <h2>Now Read Chapter 4</h2>
+        <p>Your brain is primed. As you read, pay special attention to the concepts you rated low-confidence, and look for answers to the architecture puzzle. Come back for the Post-Activity when you're done.</p>
+        <button class="btn-secondary" onclick="switchPhase('post')">I've finished reading → Go to Post-Activity</button>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- POST-ACTIVITY PHASE                        -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section class="phase-section" id="phase-post">
+      <div class="phase-hero">
+        <div class="phase-badge">Phase 2 · After Reading</div>
+        <h1 class="phase-title">Post-Activity: Retrieve & Consolidate</h1>
+        <p class="phase-description">
+          You've read the chapter. Now the real learning begins. <strong>Retrieval practice</strong> — actively 
+          pulling information from memory — strengthens recall 80% more than re-reading. 
+          Struggle is the signal that learning is happening.
+        </p>
+        <div class="science-note">
+          <span class="science-icon">🔬</span>
+          <span><strong>Testing Effect</strong> — Roediger & Karpicke (2006): retrieval practice produced 80% better retention than re-study after one week</span>
+        </div>
+      </div>
+
+      <!-- Post-Activity 1: Brain Dump -->
+      <div class="activity-card" id="post-braindump">
+        <div class="card-header">
+          <div class="card-number">01</div>
+          <div class="card-meta">
+            <h2 class="card-title">Brain Dump: Free Recall</h2>
+            <p class="card-purpose">Maximum retrieval effort · Exposes real gaps · ~5 min</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <p class="card-instruction">Close the book. Set a timer. Write <strong>everything you remember</strong> from Chapter 4. Don't worry about organization — just dump it all out.</p>
+          <div class="timer-bar">
+            <button class="timer-btn" id="timerBtn">Start 5-min Timer</button>
+            <div class="timer-display" id="timerDisplay">5:00</div>
+            <div class="timer-progress" id="timerProgress"></div>
+          </div>
+          <textarea class="brain-dump-area" id="brainDumpArea" placeholder="Everything I remember from Chapter 4...&#10;&#10;• LSM-trees vs B-trees...&#10;• Column-oriented storage compression...&#10;• Heap files and secondary indexes...&#10;• OLTP vs OLAP workloads..."></textarea>
+          <button class="btn-primary" id="saveBrainDump">Save Brain Dump</button>
+          <div class="save-confirmation hidden" id="brainDumpSaved">
+            <span>✓</span> Saved! Don't peek at the chapter yet — try the retrieval quiz next.
+          </div>
+        </div>
+      </div>
+
+      <!-- Post-Activity 2: Chapter Assessment (31 Questions) -->
+      <div class="activity-card" id="post-retrieval">
+        <div class="card-header">
+          <div class="card-number">02</div>
+          <div class="card-meta">
+            <h2 class="card-title">Chapter 4 Assessment</h2>
+            <p class="card-purpose">31 questions · Multiple choice + write-in · ~25 min</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="quiz-toolbar">
+            <div class="quiz-progress-info">
+              <span id="quizProgressText">0 of 31 answered</span>
+              <div class="quiz-progress-bar"><div class="quiz-progress-fill" id="quizProgressFill"></div></div>
+            </div>
+            <div class="quiz-filter-btns">
+              <button class="filter-btn active" data-filter="all">All</button>
+              <button class="filter-btn" data-filter="mc">Multiple Choice</button>
+              <button class="filter-btn" data-filter="write">Write-In</button>
+              <button class="filter-btn" data-filter="unanswered">Unanswered</button>
+            </div>
+          </div>
+          <div class="quiz-container" id="quizContainer">
+            <!-- Quiz questions rendered by JS -->
+          </div>
+          <div class="quiz-results hidden" id="quizResults">
+            <div class="results-header">
+              <div class="results-score">
+                <div class="score-circle" id="scoreCircle">
+                  <span class="score-num" id="scoreNum">0</span>
+                  <span class="score-denom" id="scoreDenom">/ 18</span>
+                </div>
+                <span class="score-label">Multiple Choice Score</span>
+              </div>
+              <div class="results-writein-badge">
+                <span class="writein-count" id="writeinCount">0</span>
+                <span class="writein-label">Write-in responses saved</span>
+              </div>
+            </div>
+            <div class="results-breakdown" id="resultsBreakdown"></div>
+            <div class="results-actions">
+              <button class="btn-primary" id="gradeWriteIns">📋 Grade Write-Ins with LLM</button>
+              <button class="btn-secondary" id="retakeQuiz">Retake Quiz</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LLM Grading Modal -->
+      <div class="modal-overlay hidden" id="llmModal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2>📋 LLM Grading Prompt</h2>
+            <button class="modal-close" id="closeModal">✕</button>
+          </div>
+          <div class="modal-body">
+            <p class="modal-instruction">Copy the prompt below and paste it into your preferred LLM (ChatGPT, Claude, Gemini, etc.) to receive detailed grading and feedback on your write-in responses.</p>
+            <textarea class="llm-prompt-area" id="llmPromptArea" readonly></textarea>
+            <div class="modal-actions">
+              <button class="btn-primary" id="copyLlmPrompt">📋 Copy to Clipboard</button>
+              <span class="copy-feedback hidden" id="copyFeedback">✓ Copied!</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Post-Activity 4: Revisit Predictions -->
+      <div class="activity-card" id="post-revisit">
+        <div class="card-header">
+          <div class="card-number">04</div>
+          <div class="card-meta">
+            <h2 class="card-title">Revisit Your Pre-Activity Predictions</h2>
+            <p class="card-purpose">Closes the loop · Measures growth · ~5 min</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="revisit-container">
+            <div class="revisit-item">
+              <h3>Your Architecture Puzzle Answers</h3>
+              <p class="revisit-instruction">Look at what you wrote before reading. What would you change now?</p>
+              <div class="revisit-comparison">
+                <div class="revisit-before">
+                  <span class="revisit-tag">Before Reading</span>
+                  <p class="revisit-saved" id="revisit-puzzle-1">Complete the pre-activity first to see your predictions here.</p>
+                </div>
+                <div class="revisit-after">
+                  <span class="revisit-tag revisit-tag-after">After Reading</span>
+                  <textarea class="revisit-textarea" id="revisit-a1" placeholder="Now I would say..."></textarea>
+                </div>
+              </div>
+            </div>
+            <div class="revisit-item">
+              <h3>Confidence Re-Assessment</h3>
+              <p class="revisit-instruction">Rate the same concepts again. Compare with your baseline.</p>
+              <div class="confidence-comparison" id="confidenceComparison">
+                <!-- Rendered by JS -->
+              </div>
+            </div>
+          </div>
+          <button class="btn-primary" id="saveRevisit">Save Post-Reading Reflection</button>
+          <div class="save-confirmation hidden" id="revisitSaved">
+            <span>✓</span> Growth captured! Head to Sustained Practice to lock this knowledge in long-term.
+          </div>
+        </div>
+      </div>
+
+      <div class="phase-cta">
+        <div class="cta-icon">🔄</div>
+        <h2>Ready for Long-Term Retention?</h2>
+        <p>You've learned it once. Now let's make sure you remember it in a week, a month, and beyond.</p>
+        <button class="btn-secondary" onclick="switchPhase('sustained')">Go to Sustained Practice →</button>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- SUSTAINED PRACTICE PHASE                   -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section class="phase-section" id="phase-sustained">
+      <div class="phase-hero">
+        <div class="phase-badge">Phase 3 · Ongoing</div>
+        <h1 class="phase-title">Sustained Practice: Space & Interleave</h1>
+        <p class="phase-description">
+          Without review, you'll forget <strong>~70% within 24 hours</strong>. Spaced repetition and 
+          interleaved practice are the two most reliable techniques in cognitive psychology 
+          for building durable, flexible knowledge.
+        </p>
+        <div class="science-note">
+          <span class="science-icon">🔬</span>
+          <span><strong>Spacing Effect</strong> (d = 0.42–0.60) — one of the most replicated findings in all of cognitive science</span>
+        </div>
+      </div>
+
+      <!-- Spaced Repetition Schedule -->
+      <div class="activity-card" id="sustained-schedule">
+        <div class="card-header">
+          <div class="card-number">01</div>
+          <div class="card-meta">
+            <h2 class="card-title">Your Review Schedule</h2>
+            <p class="card-purpose">Expanding intervals · Fights the forgetting curve · Tracks progress</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="schedule-grid" id="scheduleGrid">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Flashcard Deck -->
+      <div class="activity-card" id="sustained-flashcards">
+        <div class="card-header">
+          <div class="card-number">02</div>
+          <div class="card-meta">
+            <h2 class="card-title">Spaced Repetition Flashcards</h2>
+            <p class="card-purpose">Active recall · Self-graded difficulty · ~10 min per session</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="flashcard-deck" id="flashcardDeck">
+            <div class="flashcard-progress">
+              <span id="fcProgress">Card 1 of 12</span>
+              <div class="fc-progress-bar"><div class="fc-progress-fill" id="fcProgressFill"></div></div>
+            </div>
+            <div class="flashcard" id="flashcard">
+              <div class="flashcard-inner" id="flashcardInner">
+                <div class="flashcard-front">
+                  <span class="fc-side-label">Question</span>
+                  <p class="fc-text" id="fcFront"></p>
+                </div>
+                <div class="flashcard-back">
+                  <span class="fc-side-label">Answer</span>
+                  <p class="fc-text" id="fcBack"></p>
+                </div>
+              </div>
+            </div>
+            <div class="fc-controls">
+              <button class="fc-flip-btn" id="fcFlip">Flip Card</button>
+            </div>
+            <div class="fc-rating hidden" id="fcRating">
+              <p class="fc-rating-prompt">How well did you know this?</p>
+              <div class="fc-rating-btns">
+                <button class="fc-rate-btn fc-rate-again" data-rating="1">
+                  <span class="rate-emoji">😤</span>
+                  <span>Didn't know</span>
+                </button>
+                <button class="fc-rate-btn fc-rate-hard" data-rating="2">
+                  <span class="rate-emoji">😓</span>
+                  <span>Hard</span>
+                </button>
+                <button class="fc-rate-btn fc-rate-good" data-rating="3">
+                  <span class="rate-emoji">🙂</span>
+                  <span>Good</span>
+                </button>
+                <button class="fc-rate-btn fc-rate-easy" data-rating="4">
+                  <span class="rate-emoji">😎</span>
+                  <span>Easy</span>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="fc-session-complete hidden" id="fcComplete">
+            <div class="fc-complete-icon">🎉</div>
+            <h3>Session Complete!</h3>
+            <div class="fc-stats" id="fcStats"></div>
+            <button class="btn-primary" id="fcRestart">Practice Again</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Interleaved Challenge -->
+      <div class="activity-card" id="sustained-interleave">
+        <div class="card-header">
+          <div class="card-number">03</div>
+          <div class="card-meta">
+            <h2 class="card-title">Interleaved Scenario Challenge</h2>
+            <p class="card-purpose">Mixes all topics · Builds discrimination · Forces transfer · ~10 min</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <p class="card-instruction">Each scenario requires you to <strong>combine knowledge from multiple sections</strong> of Chapter 4. This deliberate mixing forces your brain to select the right framework — the hallmark of expert-level understanding.</p>
+          
+          <div class="scenario-deck" id="scenarioDeck">
+            <div class="scenario-card active" data-scenario="0">
+              <div class="scenario-badge">Scenario 1 of 4</div>
+              <div class="scenario-content">
+                <h3>🚕 Ride-Hailing Matchmaker</h3>
+                <p>You are designing the data layer for a real-time ride-hailing app. The system must:</p>
+                <ul>
+                  <li>Process 20,000 updates/sec of driver GPS coordinates.</li>
+                  <li>Handle matching queries looking for active drivers within 2km of a customer.</li>
+                  <li>Store historical trip data for fraud analysis and pricing models (billions of trips).</li>
+                </ul>
+              </div>
+              <div class="scenario-prompts">
+                <div class="scenario-prompt">
+                  <label>What indexing structure would you use to handle the real-time driver coordinates and spatial queries?</label>
+                  <textarea class="scenario-textarea" id="sc-1-1" placeholder="For this spatial query..."></textarea>
+                </div>
+                <div class="scenario-prompt">
+                  <label>Would you store the real-time driver location updates in the same database as the historical trip data? Why?</label>
+                  <textarea class="scenario-textarea" id="sc-1-2" placeholder="I would separate or bundle them because..."></textarea>
+                </div>
+                <div class="scenario-prompt">
+                  <label>If you use an LSM-tree for the coordinates to handle the high write rate, what issues will you face, and how can they be mitigated?</label>
+                  <textarea class="scenario-textarea" id="sc-1-3" placeholder="Using an LSM-tree would introduce..."></textarea>
+                </div>
+              </div>
+            </div>
+
+            <div class="scenario-card" data-scenario="1">
+              <div class="scenario-badge">Scenario 2 of 4</div>
+              <div class="scenario-content">
+                <h3>🏦 High-Volume Financial Ledger</h3>
+                <p>A retail bank is building a ledger system. Every transaction must be appended immediately. The system must support:</p>
+                <ul>
+                  <li>High-frequency write-only transactions (appends).</li>
+                  <li>Strict requirements for crash recovery and audit trails (no data lost, ever).</li>
+                  <li>Account balance lookups (fast queries by account ID).</li>
+                </ul>
+              </div>
+              <div class="scenario-prompts">
+                <div class="scenario-prompt">
+                  <label>Would an LSM-tree or a B-tree be more appropriate as the primary storage engine for the transaction log? Why?</label>
+                  <textarea class="scenario-textarea" id="sc-2-1" placeholder="An LSM-tree / B-tree makes sense because..."></textarea>
+                </div>
+                <div class="scenario-prompt">
+                  <label>How does each engine ensure that a transaction is not lost if the database crashes immediately after the write is acknowledged?</label>
+                  <textarea class="scenario-textarea" id="sc-2-2" placeholder="Crash durability is achieved by..."></textarea>
+                </div>
+                <div class="scenario-prompt">
+                  <label>How would you design the system to make account balance lookups (which sum all historical transactions for an account) fast?</label>
+                  <textarea class="scenario-textarea" id="sc-2-3" placeholder="To make balance lookups fast, I would..."></textarea>
+                </div>
+              </div>
+            </div>
+
+            <div class="scenario-card" data-scenario="2">
+              <div class="scenario-badge">Scenario 3 of 4</div>
+              <div class="scenario-content">
+                <h3>🛒 E-Commerce Analytics Pipeline</h3>
+                <p>You are the data architect at an online retailer. The marketing department wants to run ad-hoc queries analyzing sales trends (e.g., "What was the total revenue for blue shirts sold to customers aged 25-35 in Ohio?"). The transaction database is a MySQL (InnoDB) database.</p>
+                <ul>
+                  <li>InnoDB stores data row-oriented (B-tree).</li>
+                  <li>Marketing queries need to scan millions of records.</li>
+                  <li>We need to isolate these reports from production customers.</li>
+                </ul>
+              </div>
+              <div class="scenario-prompts">
+                <div class="scenario-prompt">
+                  <label>Why is InnoDB (B-tree, row-oriented) unsuitable for running these analytical queries directly in production?</label>
+                  <textarea class="scenario-textarea" id="sc-3-1" placeholder="Running this on InnoDB causes..."></textarea>
+                </div>
+                <div class="scenario-prompt">
+                  <label>You decide to set up a data warehouse. Describe how the ETL process will move and restructure the sales data.</label>
+                  <textarea class="scenario-textarea" id="sc-3-2" placeholder="The ETL process will..."></textarea>
+                </div>
+                <div class="scenario-prompt">
+                  <label>How does column-oriented storage speed up this specific query?</label>
+                  <textarea class="scenario-textarea" id="sc-3-3" placeholder="Column-oriented storage will..."></textarea>
+                </div>
+              </div>
+            </div>
+
+            <div class="scenario-card" data-scenario="3">
+              <div class="scenario-badge">Scenario 4 of 4</div>
+              <div class="scenario-content">
+                <h3>🔀 Trade-Off Tribunal</h3>
+                <p>You must make a ruling on each trade-off. There is no "right answer" — only well-reasoned arguments.</p>
+              </div>
+              <div class="scenario-prompts">
+                <div class="scenario-prompt">
+                  <label>Team A wants to use a covering index to optimize all read queries. Team B objects due to write performance. Argue both sides.</label>
+                  <textarea class="scenario-textarea" id="sc-4-1" placeholder="Team A is right because... Team B is right because..."></textarea>
+                </div>
+                <div class="scenario-prompt">
+                  <label>Team A wants to pre-compute all analytical reports using a Data Cube. Team B wants to query raw columnar data directly. Argue both sides.</label>
+                  <textarea class="scenario-textarea" id="sc-4-2" placeholder="For Data Cubes: ... Against: ..."></textarea>
+                </div>
+                <div class="scenario-prompt">
+                  <label>Team A wants an in-memory database (Redis) for speed. Team B wants a disk-structured engine (RocksDB) to handle data sizes larger than RAM. Argue both sides.</label>
+                  <textarea class="scenario-textarea" id="sc-4-3" placeholder="For in-memory: ... For disk-based: ..."></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="scenario-nav">
+            <button class="btn-scenario-nav" id="scenarioPrev" disabled>← Previous</button>
+            <div class="scenario-dots" id="scenarioDots"></div>
+            <button class="btn-scenario-nav" id="scenarioNext">Next →</button>
+          </div>
+          <button class="btn-primary" id="saveScenarios" style="margin-top:1.5rem">Save All Scenarios</button>
+          <div class="save-confirmation hidden" id="scenariosSaved">
+            <span>✓</span> Scenarios saved! These exercises build the transfer skills that distinguish novices from experts.
+          </div>
+        </div>
+      </div>
+
+      <!-- Forgetting Curve Visualization -->
+      <div class="activity-card" id="sustained-curve">
+        <div class="card-header">
+          <div class="card-number">04</div>
+          <div class="card-meta">
+            <h2 class="card-title">Your Forgetting Curve</h2>
+            <p class="card-purpose">Visual motivation · Shows the science behind spacing</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="curve-container">
+            <canvas id="forgettingCurve" width="700" height="300"></canvas>
+            <div class="curve-legend">
+              <div class="legend-item"><span class="legend-dot" style="background:#ef4444"></span> Without review</div>
+              <div class="legend-item"><span class="legend-dot" style="background:#22c55e"></span> With spaced review</div>
+              <div class="legend-item"><span class="legend-dot" style="background:#6366f1"></span> Review points</div>
+            </div>
+          </div>
+          <p class="curve-caption">Each review session <strong>resets and flattens</strong> the forgetting curve. After 4–5 well-spaced reviews, the memory becomes nearly permanent.</p>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="footer-content">
+      <p class="footer-text">Built on the <strong>2026 Pedagogical Consensus</strong> · Spaced Practice · Retrieval Practice · Interleaving · Elaborative Interrogation · Concrete Examples · Dual Coding</p>
+      <p class="footer-sub">Progress is saved locally in your browser</p>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
