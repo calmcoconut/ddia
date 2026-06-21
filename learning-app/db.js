@@ -55,23 +55,18 @@ window.addEventListener('beforeunload', () => {
 
 // Initialize SQLite Database
 async function initDb() {
-    console.log("[SQLite DB] initDb called");
     if (_db) return _db;
     
     try {
-        console.log("[SQLite DB] Loading sql-wasm from cdnjs...");
         const SQL = await initSqlJs({
             locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/${file}`
         });
-        console.log("[SQLite DB] sql-wasm loaded successfully");
 
         const savedDb = localStorage.getItem("ddia_sqlite_db");
         if (savedDb) {
-            console.log("[SQLite DB] Restoring saved database from localStorage...");
             const arrayBuf = base64ToArrayBuffer(savedDb);
             _db = new SQL.Database(new Uint8Array(arrayBuf));
         } else {
-            console.log("[SQLite DB] Creating fresh in-memory database...");
             _db = new SQL.Database();
         }
 
@@ -140,7 +135,6 @@ function getOrCreateUser(username) {
 
 // Load state JSON from progress table
 function loadState(stateKey) {
-    console.log(`[SQLite DB] loadState called for key: ${stateKey}`);
     if (!_db) {
         console.warn("[SQLite DB] loadState returned empty object because _db is null");
         return {};
@@ -151,19 +145,16 @@ function loadState(stateKey) {
         if (res && res[0] && res[0].values && res[0].values[0]) {
             const parsed = JSON.parse(res[0].values[0][0]);
             const finalState = (parsed && typeof parsed === 'object') ? parsed : {};
-            console.log(`[SQLite DB] loadState found state for ${stateKey}:`, finalState);
             return finalState;
         }
     } catch (e) {
         console.error("[SQLite DB] Failed to load state", e);
     }
-    console.log(`[SQLite DB] loadState: no record found for key: ${stateKey}`);
     return {};
 }
 
 // Save state JSON merging updates into progress table
 function saveState(data, stateKey) {
-    console.log(`[SQLite DB] saveState called for key: ${stateKey}`, data);
     if (!_db) {
         console.warn("[SQLite DB] saveState aborted because _db is null");
         return;
@@ -179,7 +170,6 @@ function saveState(data, stateKey) {
             [username, stateKey, stateStr]
         );
         persistDb();
-        console.log(`[SQLite DB] saveState successfully stored and persisted merged state for ${stateKey}`);
     } catch (e) {
         console.error("[SQLite DB] Failed to save state", e);
     }
