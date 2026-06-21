@@ -178,6 +178,10 @@ body {
   position: relative;
 }
 
+.nav-btn:focus-visible {
+  outline: 2px solid var(--accent-indigo);
+  outline-offset: 2px;
+}
 .nav-btn:hover {
   background: var(--bg-elevated);
   color: var(--text-primary);
@@ -420,6 +424,10 @@ body {
   transition: all var(--transition-base);
   box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
 }
+.btn-primary:focus-visible {
+  outline: 2px solid var(--accent-indigo);
+  outline-offset: 2px;
+}
 .btn-primary:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 25px rgba(99, 102, 241, 0.4);
@@ -440,6 +448,10 @@ body {
   font-weight: 600;
   cursor: pointer;
   transition: all var(--transition-base);
+}
+.btn-secondary:focus-visible {
+  outline: 2px solid var(--accent-indigo);
+  outline-offset: 2px;
 }
 .btn-secondary:hover {
   background: rgba(99, 102, 241, 0.1);
@@ -1184,6 +1196,10 @@ body {
   cursor: pointer;
   transition: all var(--transition-fast);
 }
+.fc-flip-btn:focus-visible {
+  outline: 2px solid var(--accent-indigo);
+  outline-offset: 2px;
+}
 .fc-flip-btn:hover {
   background: rgba(99, 102, 241, 0.1);
   border-color: var(--accent-indigo);
@@ -1217,6 +1233,10 @@ body {
   font-size: 0.75rem;
   cursor: pointer;
   transition: all var(--transition-fast);
+}
+.fc-rate-btn:focus-visible {
+  outline: 2px solid var(--accent-indigo);
+  outline-offset: 2px;
 }
 .fc-rate-btn:hover {
   border-color: var(--border-medium);
@@ -1555,6 +1575,10 @@ body {
   cursor: pointer;
   padding: 0.25rem;
   transition: color var(--transition-fast);
+}
+.modal-close:focus-visible {
+  outline: 2px solid var(--accent-indigo);
+  outline-offset: 2px;
 }
 .modal-close:hover {
   color: var(--accent-rose);
@@ -2112,6 +2136,10 @@ body {
   transition: all 0.2s ease;
 }
 
+.login-card .btn-primary:focus-visible {
+  outline: 2px solid var(--accent-indigo);
+  outline-offset: 2px;
+}
 .login-card .btn-primary:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);

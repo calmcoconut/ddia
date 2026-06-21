@@ -389,7 +389,7 @@
         <div class="modal-content">
           <div class="modal-header">
             <h2>📋 LLM Grading Prompt</h2>
-            <button class="modal-close" id="closeModal">✕</button>
+            <button class="modal-close" id="closeModal" aria-label="Close modal">✕</button>
           </div>
           <div class="modal-body">
             <p class="modal-instruction">Copy the prompt below and paste it into your preferred LLM (ChatGPT, Claude, Gemini, etc.) to receive detailed grading and feedback on your write-in responses.</p>
@@ -513,24 +513,24 @@
               </div>
             </div>
             <div class="fc-controls">
-              <button class="fc-flip-btn" id="fcFlip">Flip Card</button>
+              <button class="fc-flip-btn" id="fcFlip" aria-label="Flip flashcard">Flip Card</button>
             </div>
             <div class="fc-rating hidden" id="fcRating">
               <p class="fc-rating-prompt">How well did you know this?</p>
               <div class="fc-rating-btns">
-                <button class="fc-rate-btn fc-rate-again" data-rating="1">
+                <button class="fc-rate-btn fc-rate-again" data-rating="1" aria-label="Rate flashcard as didn't know">
                   <span class="rate-emoji">😤</span>
                   <span>Didn't know</span>
                 </button>
-                <button class="fc-rate-btn fc-rate-hard" data-rating="2">
+                <button class="fc-rate-btn fc-rate-hard" data-rating="2" aria-label="Rate flashcard as hard">
                   <span class="rate-emoji">😓</span>
                   <span>Hard</span>
                 </button>
-                <button class="fc-rate-btn fc-rate-good" data-rating="3">
+                <button class="fc-rate-btn fc-rate-good" data-rating="3" aria-label="Rate flashcard as good">
                   <span class="rate-emoji">🙂</span>
                   <span>Good</span>
                 </button>
-                <button class="fc-rate-btn fc-rate-easy" data-rating="4">
+                <button class="fc-rate-btn fc-rate-easy" data-rating="4" aria-label="Rate flashcard as easy">
                   <span class="rate-emoji">😎</span>
                   <span>Easy</span>
                 </button>
