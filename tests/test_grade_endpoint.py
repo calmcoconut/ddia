@@ -12,6 +12,7 @@ import json
 import logging
 import os
 import pytest
+import sqlite3
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
@@ -342,8 +343,6 @@ def test_book_context_extraction_integration():
 def test_grade_responses_sqlite_loading_support(tmp_path):
     """Verify that grade_responses can detect and load progress from an exported SQLite database."""
     print("\n--> Starting test_grade_responses_sqlite_loading_support", flush=True)
-    import sqlite3
-    import json
     
     # Create temp SQLite database file
     db_path = tmp_path / "temp_progress.db"
