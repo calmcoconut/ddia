@@ -299,9 +299,16 @@
         const stateKey = `ddia_${ch.dir}_learning`;
         const state = loadState(stateKey);
 
-        // Calculate chapter stats
-        const mcCount = state.quizSelections ? Object.keys(state.quizSelections).length : 0;
-        const writeCount = state.writeInAnswers ? Object.keys(state.writeInAnswers).length : 0;
+        let mcCount = 0;
+        if (state.quizSelections) {
+          mcCount = Object.keys(state.quizSelections).filter(k => state.quizSelections[k] !== undefined && state.quizSelections[k] !== null).length;
+        }
+        
+        let writeCount = 0;
+        if (state.writeInAnswers) {
+          writeCount = Object.keys(state.writeInAnswers).filter(k => state.writeInAnswers[k] !== undefined && state.writeInAnswers[k] !== null && state.writeInAnswers[k].trim().length > 0).length;
+        }
+        
         const answeredCount = mcCount + writeCount;
         
         const fcCount = (state.fcSession && state.fcSession.ratings) ? state.fcSession.ratings.length : 0;
