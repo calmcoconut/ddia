@@ -136,6 +136,25 @@ class TestEndpointContract:
         assert b"<!DOCTYPE html>" in res.data or b"<html" in res.data
         print("--> Finished test_static_files_still_served", flush=True)
 
+    def test_serve_static_existing_file(self, client):
+        """Test that serve_static correctly serves an existing static file like styles.css."""
+        print("\n--> Starting test_serve_static_existing_file", flush=True)
+        print("--> Requesting /styles.css...", flush=True)
+        res = client.get("/styles.css")
+        print(f"--> Received response status {res.status_code}", flush=True)
+        assert res.status_code == 200
+        assert b"body {" in res.data or b"font-family:" in res.data
+        print("--> Finished test_serve_static_existing_file", flush=True)
+
+    def test_serve_static_nonexistent_file(self, client):
+        """Test that serve_static correctly returns 404 for a missing file."""
+        print("\n--> Starting test_serve_static_nonexistent_file", flush=True)
+        print("--> Requesting /nonexistent_file.css...", flush=True)
+        res = client.get("/nonexistent_file.css")
+        print(f"--> Received response status {res.status_code}", flush=True)
+        assert res.status_code == 404
+        print("--> Finished test_serve_static_nonexistent_file", flush=True)
+
 
 # ── Live Integration Test (opt-in, skipped without real key) ────────────────
 
