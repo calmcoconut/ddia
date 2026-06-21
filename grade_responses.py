@@ -166,8 +166,8 @@ def parse_args():
     )
     parser.add_argument(
         "--state",
-        default="ddia_progress.json",
-        help="Path to the exported ddia_progress.json progress file (default: ddia_progress.json)",
+        default="ddia_progress.db",
+        help="Path to the exported ddia_progress.db progress file (default: ddia_progress.db)",
     )
     parser.add_argument(
         "--output",
