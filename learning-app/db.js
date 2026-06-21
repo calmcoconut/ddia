@@ -26,8 +26,8 @@ function base64ToArrayBuffer(base64) {
     return bytes.buffer;
 }
 
-// Persist SQLite DB array buffer to localStorage
-function persistDb() {
+// Persist SQLite DB array buffer to localStorage synchronously
+function _persistDbNow() {
     if (!_db) return;
     try {
         const exported = _db.export();
@@ -37,6 +37,21 @@ function persistDb() {
         console.error("Failed to persist SQLite DB to localStorage", e);
     }
 }
+
+// Debounced wrapper to prevent massive I/O spikes on every keystroke
+let _persistTimeout = null;
+function persistDb() {
+    if (_persistTimeout) clearTimeout(_persistTimeout);
+    _persistTimeout = setTimeout(_persistDbNow, 1000);
+}
+
+// Ensure pending saves are flushed if the user closes the tab
+window.addEventListener('beforeunload', () => {
+    if (_persistTimeout) {
+        clearTimeout(_persistTimeout);
+        _persistDbNow();
+    }
+});
 
 // Initialize SQLite Database
 async function initDb() {
