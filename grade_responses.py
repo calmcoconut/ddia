@@ -255,12 +255,60 @@ def main():
         print(f"and save it in this directory as '{args.state}'.")
         sys.exit(1)
         
+    state = {}
+    is_sqlite = False
     try:
-        with open(args.state, "r") as f:
-            state = json.load(f)
-    except Exception as e:
-        print(f"Error reading state file: {e}")
-        sys.exit(1)
+        # Check if the file is a SQLite database by reading the first 15 bytes
+        with open(args.state, "rb") as f:
+            header = f.read(15)
+            if header.startswith(b"SQLite format 3"):
+                is_sqlite = True
+    except Exception:
+        pass
+
+    if is_sqlite:
+        try:
+            import sqlite3
+            print(f"Detected SQLite database format for progress file: {args.state}")
+            conn = sqlite3.connect(args.state)
+            cursor = conn.cursor()
+            
+            # Find distinct usernames in progress
+            cursor.execute("SELECT DISTINCT username FROM progress")
+            db_users = [r[0] for r in cursor.fetchall()]
+            
+            if not db_users:
+                print("Error: No progress records found in the SQLite database.")
+                sys.exit(1)
+                
+            # Determine username to grade
+            selected_user = db_users[0]
+            if len(db_users) > 1:
+                # If there's a non-anonymous user, prioritize it
+                non_anon = [u for u in db_users if u != "anonymous"]
+                if non_anon:
+                    selected_user = non_anon[0]
+                print(f"Database contains multiple users {db_users}. Selecting user '{selected_user}' for grading.")
+            else:
+                print(f"Loading progress for user '{selected_user}' from SQLite.")
+                
+            cursor.execute("SELECT state_key, state_data FROM progress WHERE username = ?", [selected_user])
+            for key, data_str in cursor.fetchall():
+                try:
+                    state[key] = json.loads(data_str)
+                except Exception:
+                    pass
+            conn.close()
+        except Exception as e:
+            print(f"Error reading SQLite state database: {e}")
+            sys.exit(1)
+    else:
+        try:
+            with open(args.state, "r") as f:
+                state = json.load(f)
+        except Exception as e:
+            print(f"Error reading state file as JSON: {e}")
+            sys.exit(1)
         
     print(f"Successfully loaded progress from {args.state}.")
     print("Connecting to Gemini API for evaluation...\n")

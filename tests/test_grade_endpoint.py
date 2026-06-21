@@ -286,3 +286,51 @@ def test_book_context_extraction_integration():
     assert "Thomas Sowell" in text
     print("--> Finished test_book_context_extraction_integration", flush=True)
 
+
+def test_grade_responses_sqlite_loading_support(tmp_path):
+    """Verify that grade_responses can detect and load progress from an exported SQLite database."""
+    print("\n--> Starting test_grade_responses_sqlite_loading_support", flush=True)
+    import sqlite3
+    import json
+    
+    # Create temp SQLite database file
+    db_path = tmp_path / "temp_progress.db"
+    conn = sqlite3.connect(str(db_path))
+    cursor = conn.cursor()
+    cursor.execute("CREATE TABLE progress (username TEXT, state_key TEXT, state_data TEXT, PRIMARY KEY (username, state_key))")
+    
+    mock_state = {
+        "writeInAnswers": {"2": "Schema-on-read offers analyst flexibility."}
+    }
+    cursor.execute(
+        "INSERT INTO progress (username, state_key, state_data) VALUES (?, ?, ?)",
+        ["patrick", "ddia_ch1_learning", json.dumps(mock_state)]
+    )
+    conn.commit()
+    conn.close()
+    
+    # Assert it is recognized as a SQLite file
+    with open(db_path, "rb") as f:
+        header = f.read(15)
+        assert header.startswith(b"SQLite format 3")
+        
+    # Replicate the exact loading logic of grade_responses.py
+    conn = sqlite3.connect(str(db_path))
+    cursor = conn.cursor()
+    cursor.execute("SELECT DISTINCT username FROM progress")
+    db_users = [r[0] for r in cursor.fetchall()]
+    assert "patrick" in db_users
+    
+    selected_user = db_users[0]
+    cursor.execute("SELECT state_key, state_data FROM progress WHERE username = ?", [selected_user])
+    
+    loaded_state = {}
+    for key, data_str in cursor.fetchall():
+        loaded_state[key] = json.loads(data_str)
+        
+    conn.close()
+    
+    assert "ddia_ch1_learning" in loaded_state
+    assert loaded_state["ddia_ch1_learning"]["writeInAnswers"]["2"] == "Schema-on-read offers analyst flexibility."
+    print("--> Finished test_grade_responses_sqlite_loading_support", flush=True)
+

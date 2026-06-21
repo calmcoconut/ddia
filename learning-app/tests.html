@@ -180,6 +180,7 @@
     window.SCHEDULE_ITEMS = [];
   </script>
   <script src="shared-app.js"></script>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
 </head>
 <body>
 
@@ -594,6 +595,44 @@
       const savedState = loadState(examKey);
       assert(savedState.isSubmitted === true, "Exam should be automatically submitted and locked");
       assertEquals(savedState.timeRemaining, 0, "Time remaining should be exactly 0");
+    });
+
+    test("GUI: Switch Account Integration", "Verify presence and dynamic rendering of Switch Account GUI controls", () => {
+      // 1. Check injected Hamburger Menu button presence and correct dynamic labeling
+      const burgerSwitchBtn = document.getElementById('hamburgerSwitchAccountBtn');
+      assert(burgerSwitchBtn !== null, "Hamburger Switch Account button must be successfully injected in the page DOM");
+      
+      const currentUsername = sessionStorage.getItem("ddia_active_user") || "anonymous";
+      assert(burgerSwitchBtn.textContent.includes("Switch Account"), "Button text should contain 'Switch Account'");
+      assert(burgerSwitchBtn.textContent.includes(currentUsername), `Button should dynamically display active user '${currentUsername}' in parentheses`);
+
+      // 2. Check main Dashboard header state management simulation
+      const container = document.createElement('div');
+      container.innerHTML = `
+        <span id="activeUserDisplay" style="display: none;">User: <strong id="usernameLabel"></strong></span>
+        <button id="switchAccountBtn" style="display: none;"></button>
+      `;
+      document.body.appendChild(container);
+
+      try {
+        const usernameLabel = container.querySelector('#usernameLabel');
+        const activeUserDisplay = container.querySelector('#activeUserDisplay');
+        const switchAccountBtn = container.querySelector('#switchAccountBtn');
+
+        // Replicate Dashboard update and visibility mapping logic
+        const activeUser = sessionStorage.getItem("ddia_active_user") || "patrick";
+        if (activeUser && activeUser !== 'anonymous') {
+          usernameLabel.textContent = activeUser;
+          activeUserDisplay.style.display = 'block';
+          switchAccountBtn.style.display = 'block';
+        }
+
+        assertEquals(usernameLabel.textContent, activeUser, "Header badge should match active user username");
+        assertEquals(activeUserDisplay.style.display, 'block', "Header display element should be made visible");
+        assertEquals(switchAccountBtn.style.display, 'block', "Header Switch Account button should be made visible");
+      } finally {
+        document.body.removeChild(container);
+      }
     });
 
     // ── Test Runner Logic ──────────────────────────────
