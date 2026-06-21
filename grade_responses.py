@@ -7,6 +7,7 @@ import argparse
 import subprocess
 import glob
 import sqlite3
+from functools import lru_cache
 
 # Verify imports
 try:
@@ -189,10 +190,12 @@ def parse_args():
     )
     return parser.parse_args()
 
+@lru_cache(maxsize=None)
 def load_questions_from_app_js(dir_name):
     """
     Invokes Node.js to evaluate the QUIZ_QUESTIONS array in the chapter's app.js.
     This guarantees 100% accurate parsing matching the browser's behavior.
+    The result is cached to avoid spawning a node subprocess on every call.
     """
     js_path = os.path.join("learning-app", dir_name, "app.js")
     if not os.path.exists(js_path):
