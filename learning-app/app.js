@@ -746,13 +746,28 @@ function showQuizResultsPanel(state) {
   const breakdown = document.getElementById('resultsBreakdown');
   const percent = Math.round((mcCorrect / mcTotal) * 100);
 
+  breakdown.innerHTML = '';
+  const p = document.createElement('p');
+  const strong = document.createElement('strong');
+  strong.textContent = `${percent}%`;
+
   if (percent >= 85) {
-    breakdown.innerHTML = `<p style="color: var(--accent-emerald);">🎯 Excellent retrieval! You scored <strong>${percent}%</strong> (${mcCorrect}/${mcTotal}) on Multiple Choice. Focus your remaining review on write-in grading below.</p>`;
+    p.style.color = 'var(--accent-emerald)';
+    p.appendChild(document.createTextNode('🎯 Excellent retrieval! You scored '));
+    p.appendChild(strong);
+    p.appendChild(document.createTextNode(` (${mcCorrect}/${mcTotal}) on Multiple Choice. Focus your remaining review on write-in grading below.`));
   } else if (percent >= 60) {
-    breakdown.innerHTML = `<p style="color: var(--accent-amber);">👍 Good job! You scored <strong>${percent}%</strong> (${mcCorrect}/${mcTotal}) on Multiple Choice. Analyze the feedback on questions you missed, and evaluate your write-in answers.</p>`;
+    p.style.color = 'var(--accent-amber)';
+    p.appendChild(document.createTextNode('👍 Good job! You scored '));
+    p.appendChild(strong);
+    p.appendChild(document.createTextNode(` (${mcCorrect}/${mcTotal}) on Multiple Choice. Analyze the feedback on questions you missed, and evaluate your write-in answers.`));
   } else {
-    breakdown.innerHTML = `<p style="color: var(--accent-rose);">📖 Retrieval gaps detected: <strong>${percent}%</strong> (${mcCorrect}/${mcTotal}) on Multiple Choice. The struggle of recalling makes re-reading the text highly effective! Use LLM grading below to check your write-in explanations.</p>`;
+    p.style.color = 'var(--accent-rose)';
+    p.appendChild(document.createTextNode('📖 Retrieval gaps detected: '));
+    p.appendChild(strong);
+    p.appendChild(document.createTextNode(` (${mcCorrect}/${mcTotal}) on Multiple Choice. The struggle of recalling makes re-reading the text highly effective! Use LLM grading below to check your write-in explanations.`));
   }
+  breakdown.appendChild(p);
 
   document.getElementById('quizResults').classList.remove('hidden');
   
