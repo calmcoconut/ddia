@@ -9,10 +9,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is the primary ethical distinction between using predictive analytics for predicting weather versus predicting parole recidivism?",
     options: [
-      "Weather prediction requires significantly more CPU cycles and complex physics simulations.",
-      "Weather systems operate deterministically, whereas human decisions are completely random.",
+      "Weather prediction requires significantly more CPU cycles and complex simulations.",
+      "Weather systems are deterministic, whereas human systems are completely random.",
       "Recidivism prediction directly gatekeeps individual human freedom and societal participation.",
-      "Parole systems are run on distributed database clusters, making transaction audits harder."
+      "Parole systems run on distributed databases, which are harder to audit."
     ],
     correct: 2,
     explanation: "While both use probabilistic models, predictive analytics in the social sphere (parole, credit, employment) has direct, systemic consequences on human dignity, freedom, and rights.",
@@ -22,10 +22,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What does Maciej Cegłowski mean by the phrase 'machine learning is like money laundering for bias'?",
     options: [
-      "It conceals fraudulent transaction and financial records inside massive training sets to evade regulatory tax audits.",
+      "It hides illegal financial records inside huge training datasets to avoid tax audits.",
       "It processes biased historical data through opaque algorithms to output results that appear neutral and objective.",
-      "It accelerates algorithm execution by automatically identifying and deleting input data records with protected attributes.",
-      "It dynamically encrypts discriminatory variables in database tables so compliance audit processes cannot access them."
+      "It speeds up model execution by automatically deleting records containing sensitive terms.",
+      "It encrypts discriminatory variables so they cannot be accessed by compliance auditors."
     ],
     correct: 1,
     explanation: "Opaque algorithms learn from historically biased human choices. By wrapping the output in a mathematical model, the resulting discrimination appears to be objective, data-driven truth.",
@@ -42,10 +42,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is the 'algorithmic prison' as defined by Bill Davidow?",
     options: [
-      "A database transaction deadlock state that completely prevents tables from being updated due to corrupted log segments.",
+      "A database system that cannot be updated due to corrupted transaction logs.",
       "The systematic, automated exclusion of a person from key societal services without proof of guilt or chance of appeal.",
-      "A security architecture where clients are locked into solving complex cryptographic puzzles to maintain access control.",
-      "A permanent partition state where worker nodes are isolated and blocked from communicating with the cluster coordinator."
+      "A strict security architecture where users must solve continuous CAPTCHAs.",
+      "A network partition where nodes are permanently isolated from the cluster coordinator."
     ],
     correct: 1,
     explanation: "As automated decision-making spreads, individuals flagged as 'risky' face systemic exclusions (housing, travel, jobs) without a human authority or appeal mechanism, constraining their freedom.",
@@ -55,10 +55,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Which of the following is a classic example of a self-reinforcing feedback loop in predictive analytics?",
     options: [
-      "A database index that expands past memory limits, triggering garbage collection cycles that cause the storage node to crash.",
+      "An index that grows too large, causing the storage engine to crash.",
       "A job applicant being denied a job due to a poor credit score, which worsens their poverty and further lowers their credit score.",
-      "A routing load balancer directing all incoming web traffic to a single node because its response latency is temporarily low.",
-      "A real-time stream processor consuming events from an input topic and publishing them back to the same topic in a loop."
+      "A load balancer directing all requests to a single node because its latency is temporarily low.",
+      "A stream processor reading from a topic and writing to the same topic in an infinite loop."
     ],
     correct: 1,
     explanation: "This downward spiral occurs when a system's output (denying employment due to a bad credit score) directly causes the input condition to worsen (poverty causing worse credit scores), reinforcing the initial prediction.",
@@ -75,10 +75,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is 'systems thinking' as defined in the context of evaluating data systems?",
     options: [
-      "Writing optimizer software that dynamically selects and compiles query execution plans for database engines.",
+      "Writing software that automatically selects the fastest database engine based on queries.",
       "Analyzing how a computerized system interacts with and responds to the people and structures around it as a whole.",
-      "Ensuring that a database cluster replicates data to multiple hot standby instances to prevent hardware failures.",
-      "Designing decoupled microservices such that every domain model retains exclusive ownership of its own data store."
+      "Ensuring that your database cluster has multiple standby replicas in case of hardware failure.",
+      "Designing microservices so that each service has its own independent storage engine."
     ],
     correct: 1,
     explanation: "Systems thinking involves looking at the entire loop, including human reactions and institutional feedback, to predict the broader consequences and side effects of an automated system.",
@@ -102,10 +102,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Under the GDPR, which of the following is required for consent to be considered 'freely given'?",
     options: [
-      "The user must actively scroll through the entire terms of service document before the accept button is active.",
-      "The user must be able to refuse or withdraw consent at any time without detriment or loss of core service quality.",
-      "The consent confirmation checkbox must be configured as checked by default to minimize user interaction time.",
-      "The consent description request must be formulated using precise legal jargon to guarantee compliance audits."
+      "The user must scroll through the entire terms of service document before clicking accept.",
+      "The user must be able to refuse or withdraw consent without detriment or loss of service quality.",
+      "The consent checkbox must be pre-checked by default to save the user time.",
+      "The consent request must be written in complex legal terms to ensure complete accuracy."
     ],
     correct: 1,
     explanation: "Under the GDPR, consent is not considered freely given if there is a detriment to the user for refusing it, or if it is bundled as a non-negotiable condition for using the service.",
@@ -129,10 +129,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "When a data-collecting company goes bankrupt, what typically happens to the personal data of its users?",
     options: [
-      "It is automatically deleted and purged from all storage media by regulatory mandates.",
-      "It is cryptographically locked with a master key and archived indefinitely on server tapes.",
-      "It is sold as one of the company's financial property assets to the highest bidding buyer.",
-      "It is transferred to and managed by a neutral public trust run directly by government agencies."
+      "It is automatically purged from the databases by regulatory mandates.",
+      "It is encrypted with a master key and locked permanently.",
+      "It is sold as one of the company's financial assets to the highest bidder.",
+      "It is transferred to a public trust run by the government."
     ],
     correct: 2,
     explanation: "Under bankruptcy proceedings, user data is treated as a property asset and can be sold to other corporations, potentially with different values and policies.",
@@ -142,10 +142,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Why does Bruce Schneier compare personal data to a 'toxic asset' or 'hazardous material'?",
     options: [
-      "It degrades physical silicon state and hard drive sectors significantly faster than non-personal binary files.",
-      "It contains high entropy structures that cannot be compressed, wasting network bandwidth during replication.",
+      "It degrades physical storage drives faster than regular files.",
+      "It cannot be easily compressed and wastes network bandwidth.",
       "Its presence creates immense security liabilities, risk of leaks, and exposure to government compulsion.",
-      "It is legally classified as a biological or physical hazard under international environmental safety treaties."
+      "It is legally classified as a biological hazard under international treaties."
     ],
     correct: 2,
     explanation: "Storing data creates liabilities. If a system is breached, data is leaked, or the company is compelled by a future hostile government to hand it over, the data itself becomes the source of harm.",
@@ -162,10 +162,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is the principle of 'data minimization' (Datensparsamkeit) under the GDPR?",
     options: [
-      "Converting all schema columns in database tables to the smallest possible integer or character types.",
-      "Reducing the overall storage size of backup archives by regularly purging index and schema metadata.",
+      "Converting all database columns to the smallest possible integer types.",
+      "Reducing the size of backup archives by deleting index metadata.",
       "Limiting data collection to what is strictly necessary and adequate for specified, explicit purposes.",
-      "Restricting data access permissions to a small, certified team of engineers executing SQL commands."
+      "Allowing only a small, selected team of developers to write SQL queries."
     ],
     correct: 2,
     explanation: "Data minimization requires that personal data must be adequate, relevant, and limited to what is necessary for the explicit purposes for which they are processed.",
@@ -175,10 +175,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "How does the principle of data minimization conflict with the core philosophy of 'big data'?",
     options: [
-      "Data minimization requires high-performance CPU architectures to run validation algorithms, whereas big data runs on cheap commodity hardware arrays.",
+      "Data minimization requires faster CPUs, whereas big data runs on cheap hardware.",
       "Data minimization restricts collection to specified purposes, whereas big data aims to store everything speculatively to discover unforeseen insights.",
-      "Data minimization is structurally constrained to relational schemas, whereas big data processing is optimized for unstructured NoSQL document databases.",
-      "Data minimization is exclusively applicable to corporate entities inside Europe, whereas big data infrastructure is only deployed across Asian markets."
+      "Data minimization requires relational tables, whereas big data requires NoSQL document stores.",
+      "Data minimization is only applicable in Europe, whereas big data is only used in Asia."
     ],
     correct: 1,
     explanation: "Big data relies on collecting and cross-referencing massive amounts of data for exploratory analysis. This directly contradicts the requirement to collect data only for a narrow, predetermined purpose.",
@@ -195,10 +195,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Which of the following did economists observe when German gas stations introduced algorithmic pricing?",
     options: [
-      "Pricing competition aggressively increased, driving down gasoline retail costs for consumers.",
-      "The pricing algorithms learned to tacitly collude, reducing competition and raising consumer prices.",
-      "The retail pricing database engines suffered deadlock errors due to high concurrent write volumes.",
-      "Operators reverted to manual pricing workflows due to competitor API response network latency."
+      "Competition increased, driving down gasoline prices for consumers.",
+      "The algorithms learned to collude, reducing competition and raising consumer prices.",
+      "The pricing databases suffered frequent deadlocks due to rapid write operations.",
+      "Gas stations reverted to manual pricing due to API network latency."
     ],
     correct: 1,
     explanation: "The pricing algorithms analyzed competitor prices in real-time and learned that mutual cooperation (price matching/raising) maximized profit, leading to tacit collusion.",
@@ -215,10 +215,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What term does Shoshana Zuboff use to describe the economic model that exploits human experience as free raw material for translation into behavioral data?",
     options: [
-      "Digital Socialism, which advocates for collective public ownership of storage platforms",
-      "Surveillance Capitalism, which extracts and processes human experience for behavioral data",
-      "Data Exhaust Recycling, which cleans and aggregates unused logs for system optimizations",
-      "Behavioral Futures Markets, where companies trade predictive models of consumer purchases"
+      "Digital Socialism",
+      "Surveillance Capitalism",
+      "Data Exhaust Recycling",
+      "Behavioral Futures Markets"
     ],
     correct: 1,
     explanation: "Zuboff coined 'Surveillance Capitalism' to describe how corporate entities claim private human experience as raw material for behavioral analysis and prediction. The predictions generated from this data are then traded in 'Behavioral Futures Markets.'",
@@ -235,10 +235,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "According to the chapter, why is it dangerous to have a 'blind belief in the supremacy of data' for making societal decisions?",
     options: [
-      "Historical training data is statistically too small to represent or generalize major sociological trends.",
+      "Data is statistically too small to represent major trends.",
       "It treats statistical averages as absolute truths and ignores the inevitability of errors in individual cases.",
-      "Standard relational database systems cannot guarantee or maintain data integrity under high write concurrency.",
-      "It forces public and private organizations to allocate excessive budgets to recruit certified data scientists."
+      "Relational databases cannot maintain integrity under high concurrency.",
+      "It forces organizations to hire too many data scientists."
     ],
     correct: 1,
     explanation: "While a statistical distribution might hold true on average, applying it to make decisions about individual lives inevitably results in incorrect categorizations and unfair denials.",
@@ -248,10 +248,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What comparison does the chapter draw to illustrate the need for tech-industry regulation and environmental challenges?",
     options: [
-      "The creation of international space agencies to coordinate orbits and prevent debris collisions.",
-      "The historical rise of the printing press and the subsequent development of copyright laws.",
+      "The creation of national space agencies.",
+      "The rise of the printing press and copyright laws.",
       "The Industrial Revolution's air/water pollution and the eventual safety/labor regulations.",
-      "The adoption and eventual collapse of the gold standard in international monetary policy."
+      "The implementation of the gold standard in monetary policy."
     ],
     correct: 2,
     explanation: "Just as early industrialists ignored pollution and child labor until society demanded regulations (which raised business costs but benefited everyone), the tech industry must confront and regulate 'privacy pollution.'",
@@ -268,10 +268,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is the first practical step the chapter recommends for engineers to reduce data vulnerability and prevent leakage?",
     options: [
-      "Implement active multi-master replication setups across all database nodes.",
-      "Encrypt all historical offline database backups using AES-256 cipher keys.",
+      "Implement multi-master replication in all database clusters.",
+      "Encrypt all offline backups with AES-256.",
       "Purge data as soon as it is no longer needed and minimize what is collected.",
-      "Deploy GraphQL query boundaries instead of standard RESTful API endpoints."
+      "Use GraphQL instead of REST APIs."
     ],
     correct: 2,
     explanation: "The most effective way to secure data is not to have it. 'Data you don't have is data that can't be leaked, stolen, or compelled by governments.'",
@@ -281,10 +281,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "According to the chapter, what is the status of professional guidelines like the ACM Code of Ethics in the software industry?",
     options: [
-      "They are legally binding regulations that are strictly audited and enforced by government tech agencies.",
+      "They are legally binding and strictly enforced by government agencies.",
       "They are rarely discussed, applied, or enforced in practice, leading to a cavalier attitude toward privacy.",
-      "They are automatically parsed and integrated into modern compiler libraries as static code analysis warnings.",
-      "They have been completely replaced and superseded by international data protection treaties like the GDPR."
+      "They are automatically integrated into modern compiler warnings.",
+      "They have been replaced entirely by international treaties like the GDPR."
     ],
     correct: 1,
     explanation: "While guidelines like the ACM Code of Ethics exist, they are rarely enforced or integrated into daily practice, which often leads to engineers taking a cavalier attitude toward privacy and unintended consequences.",
@@ -301,10 +301,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Why does the GDPR's 'right to be forgotten' pose a severe technical challenge to modern event-sourced and append-only database architectures?",
     options: [
-      "Append-only database systems are designed in such a way that they cannot support read queries for individual user IDs.",
-      "Deleting a user's events requires rewriting or compacting immutable log files, which is operationally complex and costly.",
-      "It requires the distributed cluster coordinator to transition its voting mechanisms from Paxos to Raft consensus protocols.",
-      "The regulation mandates that all system logs must be stored in plain text CSV format instead of binary files on disks."
+      "Append-only systems do not support read operations for specific users.",
+      "Deleting a user's historical events requires rewriting or compacting immutable log files, which is operationally complex and expensive.",
+      "It forces the database coordinator to switch from Paxos to Raft consensus.",
+      "GDPR mandates that all logs must be stored in plain text CSV files."
     ],
     correct: 1,
     explanation: "Since event logs are architected to be immutable, editing or removing individual events (to comply with a deletion request) violates the immutability assumption and requires rewriting logs or employing cryptographic shredding.",
@@ -321,10 +321,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "In the context of the modern information economy, how do data brokers operate?",
     options: [
-      "They publish user datasets openly on public registries to promote collaborative open-source data science research.",
-      "They operate in secrecy, aggregating, analyzing, and reselling personal data, primarily for marketing target profiles.",
-      "They function as government-audited security repositories where individual users pay to lock and secure their private files.",
-      "They host public validation endpoints that enable clients to check if specific phone numbers or email addresses are active."
+      "They publish user databases openly to promote open-source data science.",
+      "They operate in secrecy, purchasing, aggregating, analyzing, and reselling people's personal data, mostly for marketing purposes.",
+      "They act as government-audited repositories that users can pay to secure their files.",
+      "They run public validation services to check if an email address is valid."
     ],
     correct: 1,
     explanation: "Data brokers aggregate huge amounts of credit, behavioral, and public data on individuals from various sources and sell this information to marketing firms and other companies without the individuals' awareness.",

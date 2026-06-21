@@ -10,10 +10,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is the defining characteristic of a 'partial failure' in a distributed system?",
     options: [
-      "The entire cluster crashes simultaneously and requires a manual hardware reboot",
+      "The entire cluster crashes and requires a manual hardware reboot",
       "Some parts of the system are broken in an unpredictable way, while others work fine",
-      "A database table loses several partition columns but remains partially queryable",
-      "A single processing thread terminates abruptly with an out-of-memory exception"
+      "A database table loses some columns but remains queryable",
+      "A single thread terminates with an out-of-memory exception"
     ],
     correct: 1,
     explanation: "A partial failure is nondeterministic: some components fail while others continue working, which is the primary source of complexity in distributed systems.",
@@ -23,10 +23,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "If a TCP connection is aborted with an error, what can the sending application conclude about the data it wrote to the socket?",
     options: [
-      "The transmitted data was definitely not received or processed by the remote operating system",
-      "The data was successfully received, parsed, and processed by the destination application layer",
+      "The data was definitely not received by the remote operating system",
+      "The data was successfully processed by the remote application",
       "It is impossible to know how much of the data was received or processed by the remote node",
-      "The destination hardware server node has suffered a fatal crash and will never be recovered"
+      "The remote node has crashed and will never recover"
     ],
     correct: 2,
     explanation: "TCP acknowledgments only confirm receipt by the remote OS kernel, not by the application itself. If the connection drops, you cannot distinguish between lost requests, remote node crashes, or lost responses.",
@@ -43,10 +43,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is the main reason why internet and datacenter networks experience unbounded delays?",
     options: [
-      "The speed of light in fiber varies significantly based on current network traffic load",
-      "Routers queue packets when outbound links are congested, potentially dropping them",
-      "Operating systems inject deliberate delays to optimize local CPU cache usage",
-      "TCP checksum validation overhead scales non-linearly with payload size"
+      "The speed of light in copper or fiber is variable depending on traffic",
+      "Routers queue packets when outbound links are congested, and may drop them",
+      "Operating systems deliberately hold packets to optimize CPU caches",
+      "TCP checksum verification delays packets in proportion to their size"
     ],
     correct: 1,
     explanation: "Queueing in network switches and routers is the primary cause of variable packet delay. Under load, packets wait in queue until capacity is available; if the queue fills up, packets are dropped.",
@@ -56,10 +56,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Why don't standard packet networks (like Ethernet) offer the same timing guarantees as a telephone network (circuit-switching)?",
     options: [
-      "Telephone networks transmit analog voice signals which physically travel through copper wires much faster than digitized packetized data payloads",
+      "Telephone networks use analog signals which travel faster than digital packets",
       "Ethernet is designed for variable, bursty traffic and shares bandwidth dynamically, while telephone networks reserve fixed bandwidth for each call",
-      "Relational database engines are structurally incompatible with synchronous circuit-switched networks and must run on asynchronous packet routing",
-      "Ethernet standard implementations completely lack TCP-like congestion control algorithms, which telephone networks implement directly in hardware"
+      "Relational databases cannot run over circuit-switched networks",
+      "Ethernet lacks TCP congestion control, which telephone lines implement in hardware"
     ],
     correct: 1,
     explanation: "Telephone networks use circuit switching to reserve a fixed band (time slot) for each call, guaranteeing bounded delay. Ethernet dynamically shares bandwidth using packet switching, optimizing for bursty data at the expense of variable delays.",
@@ -76,10 +76,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Which of the following functions or APIs returns a value from a monotonic clock?",
     options: [
-      "The System.currentTimeMillis() method in Java",
-      "The clock_gettime(CLOCK_REALTIME) call in Linux",
-      "The System.nanoTime() method call in Java",
-      "The new Date().getTime() method in JavaScript"
+      "System.currentTimeMillis() in Java",
+      "clock_gettime(CLOCK_REALTIME) in Linux",
+      "System.nanoTime() in Java",
+      "new Date().getTime() in JavaScript"
     ],
     correct: 2,
     explanation: "System.nanoTime() in Java returns a monotonic clock value. In contrast, System.currentTimeMillis() in Java, clock_gettime(CLOCK_REALTIME) in Linux (its monotonic counterpart is CLOCK_MONOTONIC), and JavaScript's new Date().getTime() all return time-of-day (wall-clock) time, which is subject to NTP adjustments.",
@@ -89,10 +89,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "How does clock drift typically manifest in standard computer systems?",
     options: [
-      "The system clock automatically jumps backward or forward by exactly one hour twice a year due to daylight saving time",
-      "The quartz crystal oscillator runs slightly faster or slower depending on temperature, accumulating drift over time",
-      "A persistent memory leak in the kernel causes the system timer process to drop cycles under heavy CPU scheduling",
-      "Congested network routers strip time synchronization flags and timestamp headers from standard TCP/IP packet headers"
+      "The clock jumps backward by exactly one hour twice a year",
+      "The quartz crystal oscillator runs slightly faster or slower depending on temperature, accumulating drift",
+      "Memory leakage causes the clock thread to lose CPU cycles",
+      "Routers strip clock bits from TCP headers during congestion"
     ],
     correct: 1,
     explanation: "Hardware clocks rely on quartz crystal oscillators, which drift due to temperature fluctuations. A typical server can drift by milliseconds per day, limiting time synchronization accuracy.",
@@ -109,10 +109,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is a 'logical clock' and how does it differ from a 'physical clock'?",
     options: [
-      "A logical clock measures elapsed execution time in CPU cycles and hardware instruction execution rates rather than seconds",
-      "A logical clock is a software-emulated synchronization protocol that simulates a localized hardware atomic clock cluster",
+      "A logical clock measures time in CPU cycles rather than seconds",
+      "A logical clock is a software simulation of an atomic clock",
       "A logical clock uses incrementing counters to track the relative order of events, rather than measuring elapsed physical time",
-      "A logical clock runs within virtualized environments to prevent process preemption and garbage collection-related pauses"
+      "A logical clock runs inside virtual machines to prevent GC pauses"
     ],
     correct: 2,
     explanation: "Logical clocks (e.g. Lamport timestamps) rely on incrementing counters to establish a relative causal ordering of events. They do not measure physical seconds or time-of-day, unlike physical clocks.",
@@ -123,9 +123,9 @@ const QUIZ_QUESTIONS = [
     q: "How does Google Spanner's TrueTime API represent the current time?",
     options: [
       "A single 64-bit integer representing nanoseconds since the Unix epoch",
-      "A high-precision floating-point value with a guaranteed drift of zero",
+      "A floating-point value with a guaranteed drift of zero",
       "An interval [earliest, latest] that bounds the actual current time",
-      "A cryptographic hash value generated by a distributed atomic clock quorum"
+      "A hash value generated by an atomic clock quorum"
     ],
     correct: 2,
     explanation: "TrueTime explicitly returns a time interval [earliest, latest]. The width of this interval represents the clock synchronization uncertainty, allowing Spanner to make safe causal ordering decisions.",
@@ -142,10 +142,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "If a database node uses a time-of-day lease to maintain its leader status, why is a long JVM GC pause dangerous?",
     options: [
-      "The long execution pause triggers the underlying host operating system kernel to issue a SIGKILL signal, immediately terminating the node process",
+      "The pause causes the operating system to send a SIGKILL signal",
       "The node may check that the lease is valid, pause, have the lease expire during the pause, and then perform unsafe writes when it resumes",
-      "The memory reclaiming process of the garbage collector directly corrupts the active database transaction log records stored in the RAM buffers",
-      "Local NTP synchronization daemons will time out and fail because all networking ports including port 123 are completely closed during JVM pauses"
+      "Garbage collection corrupts the database transaction log",
+      "NTP sync will fail because port 123 is closed during the pause"
     ],
     correct: 1,
     explanation: "If a node checks lease validity, then pauses for longer than the remaining lease time, another node will take over as leader. When the paused node resumes, it continues executing its write path, unaware that its leadership has expired, leading to split-brain corruption.",
@@ -155,10 +155,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Under what circumstances is Byzantine Fault Tolerance (BFT) typically considered necessary?",
     options: [
-      "When corporate datacenters are connected over public, unencrypted fiber links across regions",
+      "When datacenters are connected via public fiber links",
       "In systems where nodes are untrusted and may send false, contradictory, or malicious messages",
-      "When the database application code is written in a garbage-collected programming language like Java",
-      "To completely eliminate single points of failure within standard multi-leader database setups"
+      "When the system is written in a garbage-collected language like Java",
+      "To prevent single points of failure in standard multi-leader databases"
     ],
     correct: 1,
     explanation: "BFT is designed for environments where participants do not trust each other (e.g., public blockchains or aerospace systems exposed to radiation). It protects against nodes that actively lie or violate protocols.",
@@ -175,10 +175,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "How do fencing tokens prevent data corruption caused by zombie nodes?",
     options: [
-      "They notify the hypervisor layer to immediately shut down and power off the virtual machine of any node whose lock lease has expired",
-      "They dynamically encrypt all database transaction log files to ensure that only the current designated leader can decrypt and read them",
+      "They immediately shut down the VM of any node whose lease expires",
+      "They encrypt all database files so that only the leader can decrypt them",
       "They are incrementing numbers sent with writes; the storage service rejects writes with a token lower than the highest it has processed",
-      "They act as specialized high-resolution timestamps that synchronize physical server clocks to under one microsecond of uncertainty"
+      "They synchronize physical clocks to under 1 microsecond"
     ],
     correct: 2,
     explanation: "A fencing token is a monotonically increasing number. The storage server keeps track of the largest token it has accepted. If a zombie node sends a write with an older (smaller) token, the storage server rejects it.",
@@ -188,10 +188,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Why are Byzantine fault-tolerant protocols generally not used in standard corporate datacenters?",
     options: [
-      "Standard datacenter network switches and routers do not support the low-overhead packet headers required by the Byzantine protocol",
+      "Standard switches do not support the Byzantine protocol headers",
       "Datacenter nodes are controlled by a single organization and can be trusted, making the extreme performance cost of BFT unjustifiable",
-      "The BFT mathematical formulation is only compatible with transactional SQL databases, whereas corporate networks run NoSQL document stores",
-      "BFT implementations require highly synchronized GPS-linked atomic clocks on every node, which remain too expensive for standard datacenters"
+      "BFT is only compatible with SQL databases, whereas datacenters use NoSQL",
+      "BFT requires atomic clocks, which are too expensive for datacenters"
     ],
     correct: 1,
     explanation: "BFT protocols are complex and have high CPU/network overhead. Since datacenter nodes are owned by a single organization and run in a trusted network, traditional security (access control, encryption) is used instead.",
@@ -208,10 +208,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Which node failure model assumes that a node can fail by crashing, but once it crashes, it never recovers or comes back?",
     options: [
-      "The crash-recovery model",
-      "The crash-stop model",
-      "The Byzantine fail-slow model",
-      "The transient amnesia model"
+      "Crash-recovery model",
+      "Crash-stop model",
+      "Byzantine fail-slow model",
+      "Amnesia model"
     ],
     correct: 1,
     explanation: "The crash-stop (or fail-stop) model assumes that a node that halts is gone forever. It is mathematically simpler to reason about, but does not reflect real-world server reboots.",
@@ -221,10 +221,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "In the crash-recovery model, what is assumed to survive a node's crash?",
     options: [
-      "The volatile contents of the operating system's RAM page cache",
-      "The immediate state of CPU registers and active executing threads",
-      "The persistent data written to stable, nonvolatile storage (disk)",
-      "The active socket bindings and TCP connections to other nodes"
+      "The contents of the operating system's RAM page cache",
+      "The values of CPU registers and active threads",
+      "Data written to stable, nonvolatile storage (such as disk)",
+      "The network connections to other nodes"
     ],
     correct: 2,
     explanation: "The crash-recovery model assumes that nodes can recover after a crash. Crucially, they lose their volatile in-memory state but retain their stable, nonvolatile storage (disks), which is used to restore consistency on reboot.",
@@ -241,10 +241,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Eventual consistency is which type of property?",
     options: [
-      "A safety property",
-      "A liveness property",
-      "A Byzantine property",
-      "A deterministic property"
+      "Safety property",
+      "Liveness property",
+      "Byzantine property",
+      "Deterministic property"
     ],
     correct: 1,
     explanation: "Eventual consistency is a liveness property because it includes 'eventually'. It guarantees that if no updates occur, all replicas will eventually agree on the value. If they disagree now, it is not a safety violation, since they might sync later.",
@@ -254,10 +254,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is a key limitation of using model checkers (like TLA+) to verify distributed algorithms?",
     options: [
-      "They can only verify algorithms that are written in specific, low-level systems languages like C++ or Assembly",
+      "They can only check algorithms written in C++",
       "They test the abstract mathematical model of the protocol, not the actual production code implementation",
-      "They require physical access to synchronized atomic clocks or high-precision hardware timers to verify states",
-      "They are purely static analysis tools that cannot simulate complex network partitions or concurrent node crashes"
+      "They require atomic clocks to verify state execution",
+      "They cannot simulate network partitions or node crashes"
     ],
     correct: 1,
     explanation: "Model checkers verify a simplified, abstract model of the algorithm, which helps find design flaws. However, they do not run the actual production code, meaning implementation bugs can still exist.",
@@ -274,10 +274,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Which of the following tools was popularized by Netflix for injecting random server crashes in production to test fault tolerance?",
     options: [
-      "The Jepsen testing framework",
-      "The Chaos Monkey tool",
-      "The Antithesis platform",
-      "The TLA+ specifications"
+      "Jepsen",
+      "Chaos Monkey",
+      "Antithesis",
+      "TLA+"
     ],
     correct: 1,
     explanation: "Netflix developed Chaos Monkey to randomly terminate instances in production, forcing engineers to build systems that automatically survive node failures (Chaos Engineering).",
@@ -287,10 +287,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "If a distributed algorithm guarantees safety under all conditions, but liveness only when the network behaves, what does this mean?",
     options: [
-      "If the network partitions or packets are dropped, the database will immediately return corrupted data or violate schema constraints to the application",
+      "If the network partitions, the database will return corrupt data",
       "Even if the network fails indefinitely, the system will never return an incorrect result, but it may stop responding until the network recovers",
-      "The distributed system is completely Byzantine fault-tolerant and can survive malicious nodes sending false or contradictory messages over the network",
-      "The database does not guarantee linearizability and will allow concurrent readers to see stale snapshots of the data indefinitely after a split"
+      "The system is Byzantine fault-tolerant",
+      "The database is not linearizable"
     ],
     correct: 1,
     explanation: "A safety guarantee is absolute and must never be violated, even during partitions. Liveness (making progress) can be suspended during partitions, resuming only when the network is restored.",
@@ -307,10 +307,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "How can virtual memory paging (swapping to disk) cause process pauses?",
     options: [
-      "The physical disk controllers completely block all CPU cores when internal hardware write buffers become full",
-      "A page fault forces the running thread to block while the operating system reads the required memory pages from disk",
-      "Paging operations permanently delete the critical JVM garbage collection metadata and tracking tables from memory",
-      "Disk swapping processes trigger the local NTP synchronization daemon to execute aggressive, immediate clock jumps"
+      "Disk controllers block the CPU when write buffers are full",
+      "A page fault forces a thread to block while the operating system reads memory pages from disk into RAM",
+      "Paging deletes the JVM garbage collection metadata",
+      "Swapping triggers NTP synchronization resets"
     ],
     correct: 1,
     explanation: "When memory pressure is high, the OS may swap memory pages to disk. Accessing swapped memory causes a page fault, forcing the thread to wait for disk I/O, which can pause a process for milliseconds to seconds.",
@@ -320,10 +320,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What does the term 'clock slewing' mean?",
     options: [
-      "Forcibly resetting the physical clock backward or forward in a single jump to match the NTP server's reference time",
+      "Forcibly resetting the clock backward to match the NTP server",
       "Adjusting the frequency of the clock oscillator slightly to speed it up or slow it down gradually without jumps",
-      "Disabling the hardware clock entirely during long JVM garbage collection pauses to prevent lease timeout violations",
-      "Transitioning a system to use logical Lamport counters instead of relying on local physical quartz oscillators"
+      "Disabling the clock completely during a garbage collection pause",
+      "Using logical counters instead of physical quartz oscillators"
     ],
     correct: 1,
     explanation: "Clock slewing is NTP's default way of adjusting clocks by up to 0.05% to gradually align with the NTP server without causing sudden time jumps, which would break application timing logic.",

@@ -9,10 +9,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is the primary role of a 'leader' (or primary/master) in leader-based replication?",
     options: [
-      "It routes and executes all client read queries across the database replicas to load-balance operations",
+      "It handles all read queries for the system",
       "It accepts all write requests, writes them to local storage, and sends change streams to followers",
-      "It monitors the operational health of follower nodes and triggers automatic failover in a partition",
-      "It is the only dedicated cluster node that is authorized to run snapshot-based backup operations"
+      "It monitors the health of followers and triggers failovers",
+      "It is the only node allowed to run backup operations"
     ],
     correct: 1,
     explanation: "In leader-based replication, all writes must go through the leader. The leader writes the data locally and replicates the changes to all followers. Reads can go to the leader or any follower.",
@@ -22,10 +22,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "In synchronous replication, what is the main benefit and the main drawback?",
     options: [
-      "Benefit: Provides extremely low write latency for client connections; Drawback: Introduces a high risk of serving stale or inconsistent read data to users",
+      "Benefit: Extremely low write latency; Drawback: Risk of serving stale data",
       "Benefit: The follower is guaranteed to have an up-to-date copy; Drawback: If the synchronous follower blocks/fails, the leader cannot process any writes",
-      "Benefit: Maximizes total write throughput across nodes; Drawback: Results in a lack of strong durability guarantees if the primary node suffers a power loss",
-      "Benefit: Simplifies execution of rolling schema migrations; Drawback: Increases sensitivity to minor network latency jitter and packet drop partitions"
+      "Benefit: High write throughput; Drawback: Lack of durability",
+      "Benefit: Easier schema migrations; Drawback: Network partition sensitivity"
     ],
     correct: 1,
     explanation: "Synchronous replication guarantees that the follower has an identical copy of the leader's data before acknowledging the write. However, if that follower is slow or down, the write is blocked, sacrificing write availability.",
@@ -42,10 +42,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is a 'semi-synchronous' replication configuration?",
     options: [
-      "The primary leader node replicates synchronously during peak business hours and asynchronously overnight",
+      "The leader replicates synchronously during the day and asynchronously at night",
       "Only one follower is synchronous, while others are asynchronous, ensuring at least two nodes have the data",
-      "Writes are committed to node memory synchronously and flushed to persistent disk storage asynchronously",
-      "The primary leader node waits for a strict majority of followers to acknowledge writes before committing"
+      "Writes are written to memory synchronously and to disk asynchronously",
+      "The leader waits for half of the followers to acknowledge a write before committing"
     ],
     correct: 1,
     explanation: "In semi-synchronous systems, one follower is synchronous and the rest are asynchronous. If the synchronous follower becomes slow or fails, one of the asynchronous followers is promoted to be synchronous, maintaining durability without blocking writes indefinitely.",
@@ -55,10 +55,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is the purpose of taking a database snapshot when setting up a new follower?",
     options: [
-      "To build a point-in-time cold backup copy of the database schema that can be immediately restored if the primary leader node crashes",
+      "To backup the database in case the leader fails",
       "To get a consistent copy of the data at a point in time without locking the database, which can then be copied to the follower",
-      "To execute checksum validation on the storage engine block files to verify that the primary leader's disk has not suffered corruption",
-      "To run a vacuum operation that clears out old transaction log history and reclaims fragmented physical disk space on the leader"
+      "To verify that the leader's disk is not corrupted",
+      "To clear out transaction history and reclaim disk space"
     ],
     correct: 1,
     explanation: "Setting up a new follower requires copying the leader's dataset. To avoid locking the active database, we take a consistent snapshot, copy it to the follower, and then use the replication log to catch up on changes since the snapshot.",
@@ -75,10 +75,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is 'failover' in a single-leader replication system?",
     options: [
-      "When an offline follower node boots back up and initiates log-based catch-up recovery to sync with the primary leader",
-      "When the active leader node crashes and one of the synchronized followers is promoted to be the new primary leader",
-      "When a network partition occurs and both the old leader and the remaining followers continue to accept write updates",
-      "When a client transaction is aborted and rolled back due to concurrent database lock conflicts on the primary node"
+      "When a follower shuts down and catch-up recovery is initiated",
+      "When the leader crashes and one of the followers is promoted to be the new leader",
+      "When the network splits and both leader and followers continue to accept writes",
+      "When a transaction is aborted because of a lock conflict"
     ],
     correct: 1,
     explanation: "Failover is the process of detecting a leader's failure, electing one of the followers as the new leader, and reconfiguring the clients and remaining followers to send their operations to the new leader.",
@@ -88,10 +88,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is a 'split-brain' scenario in single-leader replication?",
     options: [
-      "When a distributed database engine physically splits its compute and storage resources across independent network nodes",
-      "When two nodes in a cluster both believe they are the active leader, leading to conflicting writes and potential data loss",
-      "When a database is configured to use entirely different consensus algorithms for handling read queries and write operations",
-      "When the primary leader's volatile CPU cache gets out of synchronization with the main RAM memory on a hardware failure"
+      "When a database engine splits its compute and storage nodes",
+      "When two nodes both believe they are the leader, leading to conflicting writes and potential data loss",
+      "When a database uses different algorithms for reads and writes",
+      "When the leader's CPU cache gets out of sync with RAM"
     ],
     correct: 1,
     explanation: "If two nodes in a cluster think they are the leader, both accept write operations, and there is no simple way to merge their divergent histories. This typically happens due to network partitions where the old leader is cut off but still active, while followers elect a new leader.",
@@ -108,10 +108,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Why is statement-based replication generally avoided in modern databases?",
     options: [
-      "It consumes significantly more disk space and write I/O bandwidth than row-based logical logs for transaction histories",
+      "It takes up too much disk space compared to row-based logs",
       "Nondeterministic functions (like NOW() or RAND()) can evaluate to different values on followers, causing data divergence",
-      "It lacks native support for rolling back aborted transactions, requiring database administrators to run manual corrections",
-      "It requires application clients to write all their SQL queries in database-specific, non-standard dialect statements"
+      "It does not support transaction rollbacks",
+      "It requires clients to write their queries in specialized dialects"
     ],
     correct: 1,
     explanation: "Statement-based replication logs the SQL statements themselves. Any nondeterministic function (like NOW(), RAND(), or auto-increment columns) will produce different results on the follower than on the leader, causing replicas to drift.",
@@ -142,9 +142,9 @@ const QUIZ_QUESTIONS = [
     q: "What is the 'read-after-write consistency' (or read-your-own-writes consistency) guarantee?",
     options: [
       "It ensures that once a user writes a value, they are guaranteed to see that value if they reload the page, even if replication lag is active",
-      "It ensures that no database client can view or read intermediate, uncommitted transaction updates performed by another concurrent connection",
-      "It guarantees that all users querying the database cluster will see the exact same data values at the exact same physical instant in time",
-      "It prevents concurrent, overlapping client write operations from overwriting each other by enforcing strict lock ordering on database rows"
+      "It ensures that no user can read another user's uncommitted writes",
+      "It guarantees that all users see the exact same data at the exact same physical time",
+      "It prevents concurrent writes from overwriting each other"
     ],
     correct: 0,
     explanation: "Read-after-write consistency guarantees that if a user makes an update, they will always see that update when they query the database. It does not promise that other users will see it immediately, but it prevents the confusing experience of a user saving a change and then seeing it disappear on refresh.",
@@ -154,10 +154,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Under read-after-write consistency, how can an application safely serve a user's own profile updates from an asynchronous follower?",
     options: [
-      "It cannot under any circumstances; a user's own profile modifications must always be read directly from the primary leader node of the cluster",
+      "It cannot; a user's own profile must always be read from the leader",
       "It can redirect the read to the follower, but only if the user hasn't made a write in the last few minutes (e.g., checking a write timestamp)",
-      "It can read directly from any asynchronous follower node but must first acquire a shared read lock on the database row to prevent dirty reads",
-      "It must coordinate a distributed two-phase commit transaction to block and synchronize the follower node prior to executing the read request"
+      "It can read from the follower but must lock the row first",
+      "It must use a distributed transaction to sync the follower before the read"
     ],
     correct: 1,
     explanation: "If a user has recently updated their profile, you can track the time of the write and route profile reads to the leader for a short duration (e.g., 1 minute). Other reads can go to followers, or you can check if the follower has caught up to the timestamp of the user's last write.",
@@ -174,10 +174,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What does 'monotonic reads' guarantee?",
     options: [
-      "It guarantees that all database replicas will apply and process data write statements in the exact same chronological sequence across the cluster",
+      "Replicas always process writes in the exact same chronological order",
       "If a user makes a sequence of reads, they will never see data go 'backward' in time (i.e., reading from a lagged replica after reading from an updated one)",
-      "It ensures that read queries are executed sequentially, one at a time, to prevent concurrent lock contention or deadlocks on the database indexes",
-      "It guarantees that any numeric primary key or timestamp value returned by the database is guaranteed to strictly increase monotonically over time"
+      "Reads are executed sequentially, one at a time, to prevent concurrent lock contention",
+      "The system returns values that increase monotonically over time"
     ],
     correct: 1,
     explanation: "Monotonic reads ensures that if a user sees a piece of data (e.g., a post), they won't subsequently refresh and see it disappear because their second request landed on a follower with higher replication lag than the first one.",
@@ -187,10 +187,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What anomaly does 'consistent prefix reads' prevent?",
     options: [
-      "A user reading their own modifications from a lagged follower node before replication catches up",
+      "A user reading their own writes from a lagged follower",
       "A follower receiving updates out of causal order, such as seeing an answer before the question",
-      "A concurrent write conflict occurring when two clients attempt to update the same row at once",
-      "A database transaction failing midway and committing only a partial prefix of its modification set"
+      "A write conflict occurring when two users update the same record concurrently",
+      "A database transaction committing only a prefix of its modifications"
     ],
     correct: 1,
     explanation: "Consistent prefix reads guarantees that if a sequence of writes happens in a certain order, anyone reading those writes will see them in the same order. This is a common issue in partitioned (sharded) databases where different partitions replicate independently.",
@@ -207,10 +207,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "In which scenario is multi-leader replication highly recommended over single-leader replication?",
     options: [
-      "An application deployed within a single datacenter that handles extremely high volumes of concurrent data write throughput",
+      "An application with a single datacenter and high write throughput",
       "A multi-datacenter operation where you want to tolerate datacenter outages and keep write latency low by writing to local leaders",
-      "A read-heavy application that must scale its read capacity horizontally by provisioning multiple asynchronous follower nodes",
-      "A system that requires strict serializability guarantees and must prevent any concurrent transaction conflict anomalies"
+      "A read-heavy application that can scale out with asynchronous followers",
+      "A system that requires strict serializable transactions"
     ],
     correct: 1,
     explanation: "In multi-leader replication, a leader is placed in each datacenter. This keeps write latency low because writes are processed locally before being asynchronously replicated to other datacenters, and it allows the system to continue operating even if one datacenter goes offline.",
@@ -227,10 +227,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is a 'circular topology' in multi-leader replication?",
     options: [
-      "Each replica node transmits its local database updates directly to all other nodes in the cluster, forming a mesh network",
+      "Each node sends its writes to all other nodes in a mesh network",
       "Each node receives writes from one node and forwards them to another node, forming a ring",
-      "The designated cluster leader node periodically polls the status of its followers in a sequential, round-robin cycle",
-      "A database client program dynamically rotates its write operations among all available regional leaders in a round-robin"
+      "The leader periodically polls followers in a round-robin cycle",
+      "A database client rotates its writes among all leaders in a round-robin fashion"
     ],
     correct: 1,
     explanation: "In circular topologies, writes are passed from node to node in a circle. A major drawback is that if a single node fails, it breaks the replication flow for the remaining nodes in the loop.",
@@ -247,10 +247,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Why is conflict avoidance considered the most common strategy for dealing with multi-leader write conflicts?",
     options: [
-      "It resolves write discrepancies automatically across datacenters by executing sophisticated mathematical consensus algorithms like Paxos or Raft on every write",
+      "It resolves conflicts automatically using sophisticated mathematical consensus",
       "It ensures that all writes for a specific record are routed to the same leader (e.g., based on user location), preventing concurrent writes to different leaders",
-      "It prevents conflict issues by acquiring a global lock on the entire distributed database cluster for the complete duration of every write transaction",
-      "It handles concurrent updates by silently discarding all incoming database modifications except for the very first write that registers in physical time"
+      "It locks the entire database during a write operation",
+      "It discards all updates except the first one"
     ],
     correct: 1,
     explanation: "Conflict avoidance ensures conflicts never happen by routing all writes for a particular record (like a user's data) to the same datacenter (leader). For example, a user in Europe always writes to the European datacenter, which handles all updates for that user, turning it into a single-leader system for that specific user.",
@@ -267,10 +267,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "How does the Conflict-free Replicated Datatype (CRDT) approach to conflict resolution compare with the Last-Write-Wins (LWW) strategy in leaderless or multi-leader databases?",
     options: [
-      "CRDTs are computationally simple to implement in production environments but discard concurrent writes on conflict, whereas the LWW protocol guarantees that all historical data updates are preserved across the cluster.",
-      "LWW is mathematically order-independent and does not experience data loss, whereas CRDTs require a strict global physical clock synchronization service to correctly sequence and merge concurrent database records.",
+      "CRDTs are simpler to implement but discard concurrent write data, whereas LWW preserves all historical writes.",
+      "LWW is mathematically order-independent, while CRDTs require a strict global time sync to function.",
       "LWW is computationally simple but silently discards concurrent updates (leading to data loss); CRDTs preserve concurrent contributions by merging them deterministically, at the cost of more complex data structures.",
-      "There is no architectural difference between these two replication strategies; CRDT is simply the formal academic naming convention for the exact same Last-Write-Wins conflict resolution algorithm used in systems."
+      "There is no difference; CRDT is just the academic name for LWW."
     ],
     correct: 2,
     explanation: "Last-Write-Wins (LWW) is easy to implement but relies on physical clocks that drift, causing it to discard concurrent writes and risk data loss. CRDTs avoid this by using conflict-free data structures (like maps, counters, or sets) that can be merged concurrently and deterministically, though this requires more complex merge logic and application semantics.",
@@ -287,10 +287,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "In a leaderless replication system (such as Dynamo, Cassandra, or Riak), how are writes propagated to replicas?",
     options: [
-      "The client writes to a centralized coordinator node, which then synchronously replicates the data to all followers",
-      "The client (or a coordinator node) sends the write command directly to several replica nodes in parallel in the cluster",
-      "The database replica nodes poll client-side memory buffers periodically for new data updates and write statements",
-      "The client only writes to a single database node, which then uses gossip protocols to asynchronously distribute the data"
+      "The client writes directly to a coordinator node, which synchronous-writes to all followers",
+      "The client (or a coordinator node) sends the write directly to several replica nodes in parallel",
+      "Replicas poll the client periodically for new write statements",
+      "The client only writes to a single node, which uses gossip protocols to distribute the data"
     ],
     correct: 1,
     explanation: "In leaderless systems, the client or a proxy node sends writes to all n replicas in parallel. The write is successful if it is acknowledged by a quorum of replicas (w).",
@@ -307,10 +307,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is the difference between 'read repair' and 'anti-entropy' in leaderless replication?",
     options: [
-      "Read repair is a manual administrative intervention triggered via console tools to sync specific data tables, whereas anti-entropy is a fully automated system daemon running on each node",
+      "Read repair is manual, while anti-entropy is automatic",
       "Read repair fixes stale replicas when a client reads data and detects a version mismatch; anti-entropy is a background process that constantly looks for differences between replicas",
-      "Read repair is a synchronous operation that blocks the client until all replication writes are fully acknowledged, while anti-entropy is a continuous background asynchronous log-shipping service",
-      "Read repair is executed locally within single isolated database nodes to restore corrupted index paths, whereas anti-entropy relies on distributed consensus protocols to sync the entire cluster"
+      "Read repair is synchronous, while anti-entropy is asynchronous log shipping",
+      "Read repair works on single nodes, while anti-entropy is distributed consensus"
     ],
     correct: 1,
     explanation: "Read repair checks and updates stale nodes on the fly when a read query returns multiple versions of data. Anti-entropy is a background daemon that periodically compares checksums (Merkle trees) between replicas to find and sync missing data.",

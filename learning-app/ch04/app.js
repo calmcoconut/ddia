@@ -9,10 +9,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Why is a Sorted String Table (SSTable) file format superior to a simple append-only CSV log for looking up keys?",
     options: [
-      "It enables random key lookups using a sparse in-memory index to locate segments, avoiding a scan of the entire disk file.",
-      "It eliminates the need for in-memory indexing entirely by enabling direct binary search on the raw blocks of the disk file.",
-      "It compresses record data payloads so they are guaranteed to fit entirely within the operating system's page memory cache.",
-      "It supports fast in-place data updates by modifying a key's corresponding value directly at its original physical byte offset."
+      "It allows keys to be accessed randomly using an in-memory index that only contains a subset (sparse) of the keys, avoiding scanning the entire file.",
+      "It completely eliminates the need for any in-memory index by using binary search directly on the disk file.",
+      "It compresses the data so that it can always fit entirely in the system's memory cache.",
+      "It allows updates in-place, meaning a key's value is modified directly at its original byte offset."
     ],
     correct: 0,
     explanation: "Since SSTables are sorted by key, a sparse index can map a subset of keys to their byte offsets. The database only needs to seek to the closest preceding key in the index and scan a short block of sorted records. Furthermore, this sorted order is critical for background compaction: it allows segments to be merged efficiently using a mergesort-like algorithm (streaming sequential reads/writes) rather than random I/O.",
@@ -22,10 +22,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is the primary purpose of the Write-Ahead Log (WAL) or append-only log in an LSM-tree storage engine like RocksDB?",
     options: [
-      "To serve read queries for database keys that are currently missing from the active memtable.",
-      "To reconstruct and restore the state of the in-memory memtable immediately after a system crash.",
-      "To persist the sparse index of on-disk SSTables so it does not need to be rebuilt upon startup.",
-      "To buffer discarded historical records and tombstone markers from the background compaction process."
+      "To serve read queries for keys that are not present in the in-memory memtable.",
+      "To restore the state of the in-memory memtable after a database crash.",
+      "To store the sparse index of the SSTables so it doesn't have to be rebuilt on startup.",
+      "To hold data that has been discarded by the background compaction process."
     ],
     correct: 1,
     explanation: "Writes are first added to an in-memory memtable (like a red-black tree or skip list). If the database crashes, the contents of the memtable are lost. The append-only log on disk acts as a durable record of writes to rebuild the memtable.",
@@ -42,10 +42,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "In an LSM-tree storage engine, what problem do Bloom filters solve?",
     options: [
-      "They speed up incoming writes by pre-sorting keys in heap memory before flushing them to the database's memtable.",
-      "They apply block-level compression to SSTables on disk in order to minimize query-time physical disk read and write I/O.",
-      "They prevent the storage engine from having to search every single on-disk SSTable segment for keys that do not exist.",
-      "They resolve hash collisions within the sparse memory index when keys map to the same physical disk block addresses."
+      "They speed up writes by pre-sorting keys in memory before they are written to the memtable.",
+      "They compress the SSTable blocks on disk to reduce disk I/O.",
+      "They prevent the database from having to search every on-disk segment file for keys that do not exist in the database.",
+      "They handle key collisions in the sparse index of the SSTable."
     ],
     correct: 2,
     explanation: "If a key does not exist in the database, the LSM-tree must check the memtable and all segment files from newest to oldest before concluding it is absent. A Bloom filter is a memory-efficient probabilistic data structure that can immediately tell you if a key is definitely not in a segment, saving costly disk reads.",
@@ -55,10 +55,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Which compaction strategy in LSM-trees is characterized by merging smaller, newer SSTables into larger, older SSTables of progressively larger levels, reducing read amplification?",
     options: [
-      "Size-tiered compaction strategy",
-      "Leveled compaction strategy",
-      "Time-window compaction strategy",
-      "In-place compaction strategy"
+      "Size-tiered compaction",
+      "Leveled compaction",
+      "Time-window compaction",
+      "In-place compaction"
     ],
     correct: 1,
     explanation: "In leveled compaction, the disk space is divided into levels (e.g., L1, L2, L3), where each level contains SSTables that are sorted and have non-overlapping key ranges. Leveled compaction reduces read amplification by guaranteeing a key is only in one SSTable per level. Size-tiered compaction, by contrast, merges SSTables of similar sizes into a single larger one. This is faster for writes but can cause higher read amplification since a key may exist in multiple SSTables of the same size/level, requiring multiple files to be searched.",
@@ -75,10 +75,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is the purpose of 'abbreviating keys' in B-tree page design?",
     options: [
-      "To encrypt sensitive field keys and payload properties before committing them to public cloud block storage volumes.",
-      "To fit more keys into each page, increasing the branching factor (fan-out) and reducing the total depth of the B-tree.",
-      "To accelerate string comparison routines within CPU registers by reducing variable-length keys to fixed byte lengths.",
-      "To prevent hash key collision problems when nesting a B-tree index structure inside an in-memory database hash index."
+      "To encrypt sensitive key data before writing it to disk.",
+      "To fit more keys inside a page, thereby increasing the branching factor (fan-out) and reducing the depth of the tree.",
+      "To allow faster string comparisons in the CPU's memory registers.",
+      "To prevent hash collisions when using a B-tree inside an in-memory hash index."
     ],
     correct: 1,
     explanation: "By storing only a truncated version of the keys (sufficient to identify the boundaries between page ranges) instead of the full keys, B-trees can pack more keys into each fixed-size page. This increases the fan-out (branching factor), meaning the tree requires fewer levels to index the same amount of data, speeding up reads.",
@@ -88,10 +88,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What does the term 'write amplification' refer to in database storage engines?",
     options: [
-      "The non-linear expansion of database files on disk resulting from the use of block-level compression algorithms.",
-      "The ratio of total bytes written to the physical storage media relative to the logical bytes written by application code.",
-      "The network transmission overhead associated with writing data records to multiple secondary nodes in a cluster.",
-      "The growth in write request latency that occurs as the primary indexing structures scale in size and depth over time."
+      "The expansion of data size on disk due to the use of compression algorithms.",
+      "The ratio of total bytes written to disk relative to the logical bytes written by the application.",
+      "The overhead of writing to multiple replicas in a distributed database system.",
+      "The increase in write latency as the database grows in size."
     ],
     correct: 1,
     explanation: "Write amplification is defined as the ratio of total bytes written to storage relative to the logical bytes written by the application. For example, a ratio of 10 means 10 bytes are written to disk for every 1 byte written by the application. In a B-tree, writing a single byte requires rewriting an entire 4KB page, leading to write amplification. In an LSM-tree, background compaction continuously rewrites data segments, multiplying disk writes.",
@@ -108,10 +108,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is the difference between a 'clustered index' and a 'non-clustered index' in a relational database?",
     options: [
-      "A clustered index stores the actual data rows directly inside the index structure, whereas a non-clustered index stores only references pointing to rows stored elsewhere.",
-      "A clustered index strictly organizes data records using B-tree structures, whereas a non-clustered index is forced to rely on in-memory hash tables for key-value lookups.",
-      "A clustered index can only be created on numeric columns like integer primary keys, whereas non-clustered indexes are built for string columns and character attributes.",
-      "A clustered index partitions data across multiple physical disk files, whereas a non-clustered index resides entirely in volatile memory to ensure low-latency lookups."
+      "A clustered index stores the actual row data directly within the index, whereas a non-clustered index stores only references (pointers) to the data rows stored elsewhere.",
+      "A clustered index uses a B-tree structure, while a non-clustered index always uses a hash table.",
+      "A clustered index can only be created on numeric columns, whereas non-clustered indexes are for strings.",
+      "A clustered index requires multiple disk files, while a non-clustered index is stored in memory."
     ],
     correct: 0,
     explanation: "In a clustered index, the indexed rows are stored directly inside the index pages. In a non-clustered index, the index stores a reference (like a RID/pointer or primary key) to a heap file where the actual data rows are stored.",
@@ -121,10 +121,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is a 'covering index' (or index with included columns)?",
     options: [
-      "An index that automatically indexes every single column within a database table, guaranteeing that all application queries can be resolved using index lookups.",
-      "An index that stores specific extra column values inside the index itself, letting the engine answer queries entirely from the index without reading the raw data row.",
-      "An index optimization that monitors foreign keys and dynamically indexes target columns to prevent latency spikes during multi-table relational join operations.",
-      "A clustered index layout that duplicates data blocks across multiple physical hard drives in a RAID cluster to safeguard the system against hard drive failures."
+      "An index that covers every single column in the table, guaranteeing that all queries are indexed.",
+      "An index that stores some column values within the index itself, allowing the database to answer certain queries using only the index without fetching the actual row.",
+      "An index that automatically indexes all foreign key columns to prevent slow join queries.",
+      "An index structure that stores copies of data across multiple physical disk drives to cover disk failures."
     ],
     correct: 1,
     explanation: "A covering index is a type of secondary index that contains the values of additional columns. If a query only requests columns that are present in the index, the query can be satisfied entirely from the index (an index-only scan), bypassing the hop to the heap file.",
@@ -141,10 +141,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "In full-text search engines like Apache Lucene, how are spelling corrections or fuzzy search queries typically implemented efficiently?",
     options: [
-      "By sequentially scanning the full index text and computing the Levenshtein distance for each word record in the database.",
-      "By utilizing a pre-computed hash map that stores the calculated edit distances for all possible alphanumeric word pairs.",
-      "By building a Levenshtein automaton (a finite state transducer) over a trie representing terms present in the dictionary.",
-      "By translating all query terms into phonetic soundex codes and executing range searches inside a balanced binary tree."
+      "By scanning the entire index sequentially and calculating the edit distance for every word.",
+      "By using a hash map that pre-calculates the Levenshtein distance for all possible word combinations.",
+      "By building a Levenshtein automaton (a finite state transducer) over a trie of terms in the index.",
+      "By converting all text into soundex codes and storing them in a binary tree."
     ],
     correct: 2,
     explanation: "Lucene uses a term dictionary stored as a finite state transducer (FST). For fuzzy search or spelling correction, it builds a Levenshtein automaton that represents all strings within a certain edit distance of the query word, allowing it to traverse the FST and find matching terms in a highly efficient manner.",
@@ -154,10 +154,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "If an in-memory database like Redis or VoltDB stores all its data in RAM, how does it ensure durability in the event of a power outage or crash?",
     options: [
-      "It configures the operating system's virtual memory swap partition to automatically mirror all active RAM contents to disk.",
-      "It relies on specialized hardware-level battery-backed RAM (NVDIMMs) that makes physical database disk writes unnecessary.",
-      "It writes an append-only transaction log (WAL) and snapshots to disk, or replicates state to other nodes in the cluster.",
-      "It declines to guarantee durability, operating under the assumption that in-memory systems are only used for transient caches."
+      "It relies on the operating system's virtual memory swap files to automatically write RAM contents to disk.",
+      "It uses battery-backed RAM (NVDIMMs) exclusively, making disk writes unnecessary.",
+      "It can write an append-only log (WAL) and periodic snapshots to disk, or replicate its state to other nodes.",
+      "It does not ensure durability; in-memory databases are strictly for transient caching."
     ],
     correct: 2,
     explanation: "To ensure durability, in-memory databases write an append-only write log and/or periodic snapshots to disk. On reboot, the log is replayed to reconstruct the database state. Replicating data to other nodes in the network is another way to survive individual node failures.",
@@ -174,10 +174,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Which of the following best describes the typical access pattern and query complexity of an OLAP (Online Analytical Processing) system?",
     options: [
-      "Thousands of concurrent clients executing simple queries that read or update a small number of records identified by key lookups.",
-      "A small number of analytical queries that scan millions of rows while reading and aggregating only a few columns of each record.",
-      "Continuous transactional updates that modify isolated fields inside deeply nested document collections in a NoSQL database.",
-      "Highly concurrent, write-only operations that append event log messages to disk without executing any query lookup operations."
+      "A large number of users making small queries that read or write a few records based on key lookups.",
+      "A small number of users running complex queries that aggregate or scan millions of rows, reading only a few columns per row.",
+      "Real-time updates that modify single fields in deep nested document structures.",
+      "Highly concurrent write-only operations that append logs without any read queries."
     ],
     correct: 1,
     explanation: "OLAP systems are optimized for business intelligence and analytics. They typically serve a small number of internal analysts running queries that scan and aggregate huge volumes of historical data. They read a small subset of columns across millions of rows, rather than looking up whole rows by ID.",
@@ -187,10 +187,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "How does the modern ELT (Extract-Load-Transform) pattern differ from the traditional ETL pattern in cloud data warehousing, and what is reverse ETL?",
     options: [
-      "ELT runs all data transformations directly within source operational OLTP databases before data extraction occurs, whereas reverse ETL is a recovery procedure that exports analytics data back into raw, localized CSV files.",
-      "ELT loads raw data directly into the cloud warehouse and runs transformations using the warehouse's compute resources, while reverse ETL syncs processed analytical insights back to operational databases and business systems.",
-      "ELT relies exclusively on NoSQL document databases to process raw log data payloads prior to ingestion, whereas reverse ETL represents a specialized replication protocol designed to sync B-tree index files across regions.",
-      "ELT functions as a real-time message streaming protocol that completely bypasses persistent storage systems, whereas reverse ETL is an offline archive utility utilized to back up historical records to magnetic tape drives."
+      "ELT runs transformations entirely in the source OLTP database before extraction, whereas reverse ETL moves analytics data into local CSV files.",
+      "ELT loads raw data directly into the cloud data warehouse and performs transformations using the warehouse's own compute resources, while reverse ETL syncs analysis results back to operational databases and business systems.",
+      "ELT requires NoSQL document databases for loading, while reverse ETL only works with B-tree indexes.",
+      "ELT is a real-time streaming protocol that completely bypasses storage, whereas reverse ETL is used exclusively for tape backup."
     ],
     correct: 1,
     explanation: "In modern cloud data warehousing (e.g., Snowflake, BigQuery), ELT is preferred: raw data is extracted and loaded immediately, leveraging the warehouse's massive parallel compute power to run transformations (e.g. using SQL/dbt) inside the warehouse. Reverse ETL is the practice of copying that processed data from the warehouse back into operational business systems (like CRMs or marketing engines) to drive day-to-day actions.",
@@ -207,10 +207,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "In a column-oriented storage engine, how is a table physically stored on disk?",
     options: [
-      "All values of an individual database row are kept together in contiguous segments, and new rows are appended sequentially to the end of the data file.",
-      "Each column is written to an independent file on disk, where values belonging to the same database row are aligned at identical offsets in each file.",
-      "Column attributes are hashed and stored in a multi-dimensional matrix of fixed-size pages that are dynamically managed by a central index controller.",
-      "Related columns are grouped into logical families and written sequentially to append-only XML schemas to support flexible schema-on-read parsing."
+      "All values of a single row are stored together, and rows are appended sequentially.",
+      "Each column is stored in a separate file, where values for the same row are located at the same index (offset) within their respective files.",
+      "Column values are hashed and stored in a multi-dimensional grid of pages.",
+      "Columns are grouped into families and written to an append-only XML file."
     ],
     correct: 1,
     explanation: "Column-oriented storage stores all values of column A together on disk, then all values of column B, and so on. The relationship between columns is maintained by their position (index) within the column file: the 500th value in column A belongs to the same row as the 500th value in column B.",
@@ -220,10 +220,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "How does bitmap encoding help compress data and speed up queries in column-oriented databases?",
     options: [
-      "It transforms alphanumeric columns into standardized graphics metadata files that can be compressed efficiently using lossless PNG compression algorithms.",
-      "It maps low-cardinality values to bitmaps where each bit represents a row index, enabling the query engine to run filters via fast bitwise operations.",
-      "It indexes column files by constructing multi-level B-tree paths where every intermediate node holds a bitmap representation of page addresses on disk.",
-      "It hashes individual column records into a centralized Bloom filter, allowing the query optimizer to check for duplicate keys without reading files."
+      "It converts text columns into pixelated images that can be compressed using PNG compression.",
+      "It replaces repeating column values with a bitmap where each bit represents a row index, allowing queries to perform fast bitwise operations (AND/OR).",
+      "It structures column files into B-trees where each node is a bitmap of offsets.",
+      "It hashes each column value into a Bloom filter to check for duplicates."
     ],
     correct: 1,
     explanation: "When a column has a low cardinality (few distinct values), the database can create a bitmap for each distinct value, where each bit corresponds to a row index (1 if the row has that value, 0 otherwise). This is highly compressible (e.g., using run-length encoding) and allows the database to resolve query filters using CPU-efficient bitwise operations.",
@@ -240,10 +240,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is an OLAP data cube, and what are its trade-offs compared to querying raw columnar data?",
     options: [
-      "A specialized 3D storage drive that records transaction values holographically to eliminate disk read latency for analytical query pipelines.",
-      "A grid of pre-computed aggregates across multiple dimensions, providing sub-millisecond query performance at the expense of query flexibility.",
-      "A relational warehouse design that strictly enforces exactly three normalized foreign keys on the central fact table to simplify SQL joins.",
-      "A distributed partition cache that automatically replicates analytical queries and aggregates to exactly six adjacent servers in the cluster."
+      "A physical 3D storage device that stores data holographically to speed up reads.",
+      "A grid of pre-computed aggregates (like SUM or COUNT) along various dimensions, offering ultra-fast queries at the cost of flexibility.",
+      "A relational database schema that enforces exactly three foreign keys per fact table.",
+      "A distributed cache that replicates aggregate queries to exactly six neighboring nodes."
     ],
     correct: 1,
     explanation: "A data cube is a multi-dimensional aggregate table. It pre-computes values like total sales grouped by date, product, and region. Queries are extremely fast because the aggregation has already been done, but it is less flexible because you cannot run arbitrary ad-hoc queries on attributes that were not pre-aggregated (e.g., grouping by a new dimension).",
@@ -274,10 +274,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Why are standard B-trees unsuitable for querying 2D spatial data, such as finding all restaurants within a bounding box of latitude and longitude?",
     options: [
-      "B-trees are mathematically incapable of sorting floating-point values, which prevents them from indexing decimal coordinates like latitude and longitude.",
-      "B-trees index a one-dimensional key space, meaning they can only filter on one coordinate field efficiently while executing a slow scan on the second.",
-      "B-trees are restricted to sorting alphanumeric string attributes and cannot be used to index any form of numeric values or geographic coordinate keys.",
-      "B-trees cannot process the extremely high write workloads generated by active mobile clients updating their GPS coordinates in real-time database apps."
+      "B-trees cannot store floating-point numbers like coordinates.",
+      "B-trees index a one-dimensional range of keys, so they can only filter efficiently on one dimension at a time, requiring a slow scan for the second dimension.",
+      "B-trees are restricted to storing alphanumeric string keys.",
+      "B-trees cannot handle the high write throughput of mobile GPS coordinates."
     ],
     correct: 1,
     explanation: "A B-tree is a 1D index; it sorts keys along a single dimension. If you index on '(latitude, longitude)', a query for a region can scan a range of latitude, but it must then filter longitude sequentially, or vice versa, resulting in poor performance. Specialized multidimensional indexes like R-trees index spatial coordinates natively.",
@@ -287,10 +287,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "In B-tree terminology, what is a 'latch' used for?",
     options: [
-      "To lock individual database rows to ensure transaction isolation and prevent concurrent transactions from executing dirty reads.",
-      "To protect the tree's internal structures from concurrent thread access, avoiding race conditions during page splits or updates.",
-      "To guarantee that updated data pages are committed and flushed to physical disk files in a single atomic filesystem operation.",
-      "To link index pages across separate database instances in a distributed cluster to maintain eventual consistency of schemas."
+      "To lock data rows for transaction isolation (preventing dirty reads).",
+      "To protect the tree's internal data structures from concurrent access by other threads, avoiding race conditions during page splits.",
+      "To write data pages to disk in a single atomic filesystem operation.",
+      "To connect index pages across different database instances in a cluster."
     ],
     correct: 1,
     explanation: "Latches are lightweight concurrency control structures (similar to read-write locks or mutexes) used to protect the B-tree's internal data pages from inconsistent states when multiple threads are traversing or updating the tree structure.",
@@ -307,10 +307,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Which of the following is a B-tree optimization that reduces random disk writes by writing new pages to a different location on disk rather than overwriting existing pages?",
     options: [
-      "Page-overlay B-tree configurations",
+      "Page-overlay B-trees",
       "Append-only or copy-on-write B-trees",
-      "Leveled B-tree indexing strategies",
-      "Sharded distributed index tree maps"
+      "Leveled B-trees",
+      "Sharded index trees"
     ],
     correct: 1,
     explanation: "Copy-on-write or append-only B-trees write updated pages to a new location on disk and update parent pages to point to the new location. This avoids overwriting pages in place, turning random writes into sequential writes and assisting in crash recovery (since the old version remains intact).",

@@ -9,10 +9,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is the primary reason for sharding a database, as opposed to replication?",
     options: [
-      "To achieve high operational availability and automated fault tolerance across regions",
-      "To scale read query throughput horizontally by provisioning read-only node replicas",
-      "To handle extremely large datasets or write throughput that exceed a single node's capacity",
-      "To support complex distributed transactions and cross-shard SQL joins across schemas"
+      "To achieve high availability and fault tolerance",
+      "To scale read throughput by adding replicas",
+      "To handle datasets or write throughput that are too large for a single node",
+      "To support complex transactions and SQL joins across different schemas"
     ],
     correct: 2,
     explanation: "Sharding is primarily used for horizontal scalability of data storage volume and write throughput. If read capacity is the only bottleneck, read replicas (replication) are often a simpler solution.",
@@ -42,10 +42,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Which of the following is a significant architectural challenge when using sharding to implement a multitenant system?",
     options: [
-      "Tenant datasets are consistently too small in practice to fit comfortably within the resources of single database nodes",
-      "It is technically impossible to coordinate and run isolated backup operations on individual shards on a per-tenant basis",
-      "Grouped small tenants are highly difficult to migrate as they grow in size, and queries joining data across tenants become very hard",
-      "It completely prevents database administrators from executing rolling schema upgrades and migrations gradually across the cluster"
+      "Tenants are always too small to fit on a single node",
+      "It is impossible to backup shards on a per-tenant basis",
+      "Grouped small tenants are difficult to migrate as they grow, and queries joining data across tenants become hard",
+      "It completely prevents schema rollouts from being done gradually"
     ],
     correct: 2,
     explanation: "If small tenants are grouped on a single shard to reduce overhead, moving a tenant to a new shard as it grows requires complex data migration. Also, features requiring cross-tenant joins or queries are very difficult to implement across different shards.",
@@ -55,10 +55,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Why are key ranges not necessarily evenly spaced in key-range sharding?",
     options: [
-      "Because non-cryptographic hash functions always produce highly skewed and non-uniform output distributions",
-      "To accommodate non-uniform data distribution and prevent some database shards from becoming much larger than others",
-      "Because standard B-tree index structures require key ranges to be partitioned into fixed lengths of exactly 100 values",
-      "To guarantee that all alphanumeric keys starting with the same character prefix are stored within identical shard sizes"
+      "Because hash functions always produce uneven distributions",
+      "To accommodate uneven data distribution and prevent some shards from being much larger than others",
+      "Because B-tree indexes require key ranges to have a fixed length of 100 elements",
+      "To ensure that all keys starting with the same letter are stored in the same shard size"
     ],
     correct: 1,
     explanation: "Key ranges are adjusted dynamically or manually so that each shard holds a roughly equal amount of data. Equal-width ranges (e.g. two letters of the alphabet per volume) would result in highly skewed shard sizes because data is not uniformly distributed.",
@@ -95,10 +95,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Why are the built-in hash functions of languages like Java (`Object.hashCode()`) or Ruby (`Object#hash`) unsuitable for database sharding?",
     options: [
-      "They lack cryptographic security guarantees and can be easily decrypted by malicious clients",
+      "They are not cryptographically secure and can be easily decrypted",
       "They return different hash values for the same key in different processes or executions",
-      "They are restricted by design to only hash integer-based numeric attributes, not string values",
-      "They fail to distribute keys uniformly across the partition space, leading to severe hash collisions"
+      "They can only hash numeric values, not strings",
+      "They do not distribute keys uniformly"
     ],
     correct: 1,
     explanation: "Many programming languages generate process-specific hashes for strings to prevent hash-collision attacks. If used for sharding, different database processes or clients would compute different shard locations for the same key.",
@@ -108,10 +108,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is the main drawback of taking `hash(key) % N` (where N is the number of nodes) to assign keys to shards?",
     options: [
-      "It fails to distribute key signatures uniformly across the available database nodes, causing hotspots",
-      "It is computationally slow and CPU-intensive to calculate modulo division operations for every read query",
-      "Adding or removing a physical node (which changes N) forces almost all keys to be migrated between nodes",
-      "It requires contacting a centralized coordination cluster like ZooKeeper to resolve every client query"
+      "It does not distribute keys uniformly",
+      "It is computationally slow to calculate modulo operations",
+      "Adding or removing a node (changing N) forces almost all keys to be migrated between nodes",
+      "It requires a centralized ZooKeeper coordinator for every query"
     ],
     correct: 2,
     explanation: "If N changes, the mapping of hashes to nodes shifts completely. For example, going from 3 to 4 nodes changes the destination node of nearly all keys, causing massive, unnecessary data movement during rebalancing.",
@@ -128,10 +128,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "When using a fixed number of shards, what is the trade-off of choosing the number of shards?",
     options: [
-      "Too many logical shards slows down read queries due to scatter-gather overhead, while too few shards results in non-uniform key distribution hashes",
+      "Too many shards causes queries to be slow, while too few shards makes the hash function non-uniform",
       "Too many shards increases management and metadata overhead, while too few shards makes shards very large and expensive to rebalance or recover",
-      "Too many logical shards forces the storage engine to write exclusively to SSD arrays, while too few shards permits using cheaper physical HDDs",
-      "Too many logical shards restricts the maximum cluster size to exactly two nodes, while too few shards limits the architecture to ten nodes"
+      "Too many shards requires using SSDs, while too few shards requires HDDs",
+      "Too many shards limits the cluster to 2 nodes, while too few shards limits it to 10 nodes"
     ],
     correct: 1,
     explanation: "If the shard count is too high, the system incurs significant management and query planning overhead. If it is too low, each shard holds a large portion of the dataset, making network transfer during rebalancing and recovery from node outages extremely slow and expensive.",
@@ -141,10 +141,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What are the two core properties that define a consistent hashing algorithm?",
     options: [
-      "ACID transactional properties are maintained on all writes, and reads are guaranteed to be linearly consistent",
-      "Keys are uniformly distributed across all shards, and a minimal number of keys are moved when shard counts change",
-      "Reads are strictly served from a single primary coordinator node, and writes are replicated asynchronously to disk",
-      "Keys are sorted sequentially within each storage node, and the hashing function is guaranteed to be secure"
+      "ACID properties are maintained on writes, and reads are guaranteed to be linearly consistent",
+      "Keys are uniformly distributed across shards, and minimal keys are moved when the number of shards changes",
+      "Reads are served from a single node, and writes are replicated asynchronously",
+      "Keys are sorted within each node, and the hash function is cryptographically secure"
     ],
     correct: 1,
     explanation: "Consistent hashing is a technique where keys are mapped to shards such that the load is roughly balanced, and when a node joins or leaves, the number of keys that must be reassigned is minimized.",
@@ -161,10 +161,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "If a key is highly popular (such as a celebrity user ID on a social network), how can it cause a 'hot spot' even if consistent hashing is used?",
     options: [
-      "Because the underlying hash routing algorithm will map that specific key to multiple target shards simultaneously",
+      "Because the hash function will map that key to multiple shards simultaneously",
       "Because consistent hashing only ensures uniform distribution of keys, not the request throughput or data volume per key",
-      "Because highly popular keys like celebrity user IDs bypass the hash function entirely and are routed to random nodes",
-      "Because the database engine automatically locks all other nodes in the cluster when a celebrity user log-in occurs"
+      "Because the celebrity user ID bypasses the hash function",
+      "Because the database automatically locks all other nodes when a celebrity logs in"
     ],
     correct: 1,
     explanation: "Consistent hashing distributes key names uniformly across the partition space, assuming all keys are accessed with equal frequency. If a single key has a massive volume of traffic (like a celebrity), the node containing that key will be overloaded while others are idle.",
@@ -174,10 +174,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "If you append a 2-digit random decimal number to a hot key to split its write load across 100 shards, what is the cost when reading data for that key?",
     options: [
-      "Reads must query a centralized metadata coordinator service to determine which specific suffix digit was written",
-      "Reads must perform a parallel scatter-gather query across all 100 suffixed key variations and merge their results",
-      "Reads will be blocked by a cluster-wide distributed transaction lock on all partitions for at least 10 seconds",
-      "Reads are completely prohibited on active online nodes and must be performed via asynchronous offline batch jobs"
+      "Reads must query a centralized metadata coordinator to know which digit was written",
+      "Reads must perform a scatter-gather query across all 100 keys and merge the results",
+      "Reads will be blocked by a distributed transaction lock for 10 seconds",
+      "Reads are completely prohibited and can only be performed via batch jobs"
     ],
     correct: 1,
     explanation: "Because writes are randomly distributed among the 100 variations of the key (e.g. key_00 to key_99), a read query must scan all 100 keys and aggregate their contents, making reads significantly more expensive.",
@@ -194,10 +194,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is a major risk associated with fully automated rebalancing in combination with automatic failure detection?",
     options: [
-      "It forces the entire database cluster into a read-only state for the duration of the partition movement process to ensure data consistency",
+      "It makes the database completely read-only during the process",
       "It can trigger a cascading failure where slow, overloaded nodes are incorrectly assumed dead, shifting load and overloading the rest of the cluster",
-      "It permanently locks all existing shard boundaries and partition keys, preventing them from ever being split or split-merged in the future",
-      "It blocks external application clients from executing standard DNS resolution queries to locate the active IP addresses of database nodes"
+      "It permanently locks the shard boundaries so they can never be split again",
+      "It prevents clients from using DNS to resolve IP addresses"
     ],
     correct: 1,
     explanation: "If a node is slow due to high load, automated failure detection might mark it dead. Shifting its shards to other nodes requires expensive data transfer over the network, overloading the remaining nodes and causing them to fail, leading to a cascading outage.",
@@ -207,10 +207,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "In request routing, which strategy relies on a routing tier?",
     options: [
-      "Clients contact any random database node, which acts as a proxy and forwards the request if it does not own the target shard",
-      "A separate, shard-aware load balancing or proxy tier receives all requests, determines the correct node, and forwards them",
-      "Clients maintain a local copy of the partition map to determine the correct node and establish a direct connection to it",
-      "Clients cache all database record states locally inside the application runtime memory to avoid contacting any node over networks"
+      "Clients contact any random node, which forwards the request if it doesn't own the shard",
+      "A separate, shard-aware load balancer receives all requests, determines the correct node, and forwards them",
+      "Clients are shard-aware and connect directly to the correct node",
+      "Clients store all data in local caches to avoid contacting nodes"
     ],
     correct: 1,
     explanation: "A routing tier acts as a shard-aware proxy or load balancer. It does not store or process data itself but routes the client requests to the appropriate database node.",
@@ -234,10 +234,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is the main difference between Riak's gossip protocol and ZooKeeper-based shard management?",
     options: [
-      "Gossip protocols disseminate state changes peer-to-peer with eventually consistent results, allowing temporary routing mismatches",
-      "Gossip protocols are exclusively deployed in relational databases, whereas ZooKeeper-based systems are restricted to NoSQL storage",
-      "Gossip protocols require manual partition routing table configuration by a database administrator for every single client query",
-      "ZooKeeper acts as a primary database storing the actual user records, whereas gossip protocols only transmit and store backups"
+      "Gossip protocols are faster to write but have weaker consistency, allowing temporary split-brain states",
+      "Gossip protocols are only used in relational databases, while ZooKeeper is for NoSQL",
+      "Gossip protocols require manual configuration by an administrator for every query",
+      "ZooKeeper stores actual data, while the gossip protocol only stores backups"
     ],
     correct: 0,
     explanation: "Riak's gossip protocol distributes cluster state changes peer-to-peer. It provides weaker consistency than ZooKeeper, allowing different nodes to temporarily have different views of shard assignments, which leaderless databases can tolerate.",
@@ -247,10 +247,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Why are writes to a database with local secondary indexes simpler than with global secondary indexes?",
     options: [
-      "Local secondary index structures are held in volatile RAM cache memory and do not require any physical database disk writes",
-      "A write only needs to execute updates on the single shard containing the primary key and its corresponding local index",
-      "Local secondary indexes are updated asynchronously by the client-side application layer rather than by the storage engine",
-      "Global secondary indexes require the database to synchronously write updates to all active nodes in the cluster on every write"
+      "Local secondary indexes do not require any disk writes",
+      "A write only needs to update the single shard that contains the primary key and its local index",
+      "Local secondary indexes are updated by the client application, not the database",
+      "Global secondary indexes require writing to all shards in the database for every single write"
     ],
     correct: 1,
     explanation: "A local secondary index is partitioned in exact alignment with the primary key. Therefore, when writing or updating a record, the database only needs to write to the single shard containing that record's primary key and update its local index.",
@@ -280,10 +280,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "How is a global secondary index (term-partitioned) sharded relative to the primary key?",
     options: [
-      "It is partitioned using the exact same primary key boundaries and routing paths as the underlying primary database table",
-      "It is sharded based on the indexed value (the term itself), completely independently of the primary key's partitioning",
-      "It bypasses sharding entirely and is maintained as a single monolithic index structure stored on the master database node",
-      "It is sharded dynamically and randomly across different cluster nodes for every incoming write query to balance capacity"
+      "It is sharded using the exact same partition key and boundaries as the primary key",
+      "It is sharded based on the indexed value (term), independently of the primary key's partitioning",
+      "It is not sharded and is kept entirely on a single master node",
+      "It is sharded randomly on every write query"
     ],
     correct: 1,
     explanation: "A global secondary index is partitioned by the index values themselves (the 'terms'). This means entries for a specific value (e.g. color:red) are grouped in one shard of the index, even if the primary records they point to are scattered across all primary shards.",
@@ -300,10 +300,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "In DynamoDB, how are writes propagated to global secondary indexes, and what does this mean for reads?",
     options: [
-      "Synchronously via distributed transactions, ensuring reads are always strongly consistent",
-      "Asynchronously, meaning reads may temporarily return stale data due to replication lag",
-      "Manually, requiring client applications to write updates to both the table and the index",
-      "Periodically, during scheduled database maintenance windows executed once every week"
+      "Synchronously via distributed transactions; reads are always strongly consistent",
+      "Asynchronously; reads may return stale data due to replication lag",
+      "They are not propagated; clients must write to the index manually",
+      "Only during weekly database maintenance windows"
     ],
     correct: 1,
     explanation: "DynamoDB propagates writes to global secondary indexes asynchronously. As a result, reads from these indexes are eventually consistent and may temporarily return stale data due to replication lag.",
@@ -313,10 +313,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Which architecture is the primary foundation for horizontally scaling sharded databases?",
     options: [
-      "Shared-Memory system architectures",
-      "Shared-Disk system architectures",
-      "Shared-Nothing system architectures",
-      "Non-Uniform Memory Access architectures"
+      "Shared-Memory Architecture",
+      "Shared-Disk Architecture",
+      "Shared-Nothing Architecture",
+      "Nonuniform Memory Access (NUMA) Architecture"
     ],
     correct: 2,
     explanation: "Shared-nothing architecture distributes data across independent machines (nodes) that share neither CPU nor RAM nor disk. The nodes coordinate using standard network protocols, which is the basis for scaling out sharded databases.",

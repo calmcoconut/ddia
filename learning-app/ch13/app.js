@@ -10,10 +10,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Why is it often necessary to integrate multiple specialized storage systems rather than relying on a single 'general-purpose' database?",
     options: [
-      "A general-purpose database is architecturally constrained by internal block structures, preventing it from storing more than a few gigabytes of data.",
+      "A general-purpose database cannot store more than a few gigabytes of data.",
       "Different access patterns (e.g., keyword search vs transactional lookups) require fundamentally different storage engine designs for optimal performance.",
-      "Using a single centralized database server inherently violates modern strict security compliance standards and user data privacy regulations globally.",
-      "Standard relational databases are theoretically incapable of performing complex relational join queries across three or more partitioned source tables."
+      "Using a single database violates modern security and data privacy laws.",
+      "Relational databases are incapable of performing joins across multiple tables."
     ],
     correct: 1,
     explanation: "No single storage format or indexing structure is optimal for all access patterns. For example, keyword search requires an inverted index, while transactional lookups are best served by B-trees or LSM-trees.",
@@ -23,10 +23,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "In a data integration architecture where a search index is maintained by capturing changes from a database, which system acts as the 'system of record'?",
     options: [
-      "The user-facing search index, because it handles all query traffic and serves as the primary readout view.",
+      "The search index, because it handles the user-facing search queries.",
       "The database, because it holds the authoritative version of the data where new data is first written.",
-      "Both systems concurrently and symmetrically, as they must coordinate to decide on the ordering of writes.",
-      "The intermediary message broker or log queue that transport and route the changes to downstream consumers."
+      "Both systems concurrently, as they must decide on the ordering of writes.",
+      "The message broker or log that transports the changes."
     ],
     correct: 1,
     explanation: "The system of record holds the authoritative, canonical version of data. Any other representations (like the search index) are derived from the system of record and are therefore derived data systems.",
@@ -50,10 +50,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Why does scaling event throughput past a single machine's capacity limit the ability to maintain a total order of events?",
     options: [
-      "Total order broadcast becomes mathematically impossible to compute if more than one node participates in state.",
-      "Sharding the log across multiple machines means event order between different shards is ambiguous without coordination.",
-      "Consensus protocols are theoretically incapable of running or committing transactions on partition-sharded databases.",
-      "Network partitions and packet drops are physically guaranteed to occur if global network event throughput rises."
+      "Total order broadcast becomes mathematically impossible with more than one machine.",
+      "Sharding the log across multiple machines means the order of events in two different shards is ambiguous without coordination.",
+      "Consensus protocols cannot run on sharded databases.",
+      "Network partitions are guaranteed to occur if event throughput exceeds 10,000 events per second."
     ],
     correct: 1,
     explanation: "To establish a total order, all events typically must pass through a single leader. If throughput requires sharding the log, there is no inherent sequence ordering between events that are appended to different shards.",
@@ -70,10 +70,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "In the context of the Kappa architecture, how is application evolution (e.g., changing how a search index is computed) typically handled?",
     options: [
-      "By performing a zero-downtime relational schema migration using database triggers to replicate modifications live.",
-      "By running an offline batch process on a data warehouse cluster and performing a full recovery restore on the database.",
+      "By performing a zero-downtime database schema migration using SQL triggers.",
+      "By running a batch process on an offline data warehouse and performing a database restore.",
       "By replaying historical events through a new version of the stream processor and routing reads to the new view when ready.",
-      "By halting all incoming client write traffic to the system while administrators migrate historical database files manually."
+      "By halting all writes to the system while migrating historical files manually."
     ],
     correct: 2,
     explanation: "Kappa architecture unifies batch and stream processing by keeping historical events in a log. To evolve the app, you feed the historical event log into the new version of the stream processor, building a new derived view side-by-side with the old one, and gradually switch user reads.",
@@ -83,10 +83,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "When bootstrapping a new change data capture (CDC) consumer or executing CREATE INDEX on a live database, what is the correct chronological sequence of steps required to build a consistent derived view?",
     options: [
-      "1) Stop all incoming write transactions to parent tables, 2) build the secondary index from a static database snapshot, 3) resume write traffic and stream updates directly.",
+      "1) Stop all writes to parent tables, 2) build the index from a snapshot, 3) resume writes and stream updates directly to users.",
       "1) Take a consistent snapshot of the source table, 2) build the initial index/view from that snapshot, 3) apply accumulated log updates to catch up, 4) start streaming live updates.",
-      "1) Listen to the live change stream to collect new database updates, 2) sort the collected updates by key, 3) execute background jobs to overwrite historical table partitions.",
-      "1) Write all new transaction logs directly to both the parent database table and the new index, 2) run a background asynchronous garbage collector process to reconcile gaps."
+      "1) Listen to the live change stream to collect new writes, 2) sort the collected writes, 3) overwrite historical table partitions.",
+      "1) Write all new transactions directly to both the parent table and the index, 2) run a background garbage collector to reconcile differences."
     ],
     correct: 1,
     explanation: "Executing `CREATE INDEX` or initializing CDC requires building the derived view from a consistent snapshot of the source table (the backfill), then consuming the transaction log (change stream) to apply any writes that occurred after the snapshot was taken, and finally transitioning to processing live log events. This avoids having to halt parent writes during index creation.",
@@ -110,10 +110,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is a major advantage of the dataflow approach over the microservices approach when performing operations that require external data (e.g., currency conversion)?",
     options: [
-      "The dataflow approach executes synchronous REST endpoints to fetch dependencies, which avoids partition network splits and makes debugging simpler.",
+      "The dataflow approach uses synchronous REST calls, which are easier to debug.",
       "The dataflow approach subscribes to a stream of updates ahead of time, storing them locally, which replaces synchronous network queries with fast local lookups.",
-      "The dataflow approach completely eliminates the need for local storage layers or data caching systems, reducing overall database operations to zero.",
-      "The dataflow approach implements synchronous lock coordination protocols, guaranteeing that currency exchange rates are always strictly linearizable."
+      "The dataflow approach eliminates the need for any local storage.",
+      "The dataflow approach guarantees that the currency exchange rates are always linearizable."
     ],
     correct: 1,
     explanation: "By subscribing to exchange rate updates asynchronously and storing the current state in a local database, the dataflow service can process purchase transactions instantly without making synchronous network requests, increasing speed and fault isolation.",
@@ -130,10 +130,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "In terms of the 'write path' and 'read path,' how can we conceptualize the role of database indexes and caches?",
     options: [
-      "They operate as lazy evaluation mechanisms that run and rebuild indexes only when a database query execution fails.",
+      "They are lazy evaluation mechanisms that run only when a query fails.",
       "They shift the boundary between the read path and write path, doing more work at write time to save work at read time.",
-      "They function as hardware-specific silicon optimizations that completely eliminate the need for host CPU execution.",
-      "They represent the raw, un-derived canonical system of record that persists all incoming client transaction files."
+      "They are hardware-specific features that eliminate the need for CPU processing.",
+      "They represent the raw, un-derived system of record."
     ],
     correct: 1,
     explanation: "Caches and indexes are precomputed structures. By spending write-time resources to update them eagerly, we drastically reduce the work (e.g., full-table scans) required to serve queries on the read path.",
@@ -143,10 +143,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "In local-first software and offline-capable clients, how should we conceptualize the state stored on the user's device?",
     options: [
-      "It functions as the absolute, single system of record for the entire enterprise customer database.",
+      "It is the absolute system of record for the entire company.",
       "It is a local replica or cache of the server state, and the UI is a materialized view of that local state.",
-      "It is a stateless network buffer that must be completely wiped and deleted whenever connection is lost.",
-      "It represents an isolated, un-derivable data source that cannot be synchronized with other device nodes."
+      "It is a stateless buffer that must be wiped whenever connection is lost.",
+      "It is an un-derivable data source that cannot be synchronized with other devices."
     ],
     correct: 1,
     explanation: "Local-first software treats the device's storage as a local replica of the server state. The UI rendering on the screen is effectively a materialized view derived from this local model, and background sync engines propagate changes to and from the server.",
@@ -163,10 +163,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is a potential benefit of representing read queries as events and sending them through a stream processor?",
     options: [
-      "It guarantees that all incoming read queries are 100% linearizable without requiring any underlying database storage engines.",
+      "It makes read queries 100% linearizable without any database storage.",
       "It enables precise tracking of causal dependencies and data provenance by recording exactly what the user saw before taking an action.",
-      "It reduces server CPU usage, memory cache eviction, and disk I/O read overhead to absolute zero across the whole database cluster.",
-      "It completely eliminates the need for sharding database records, allowing a single single-leader node to handle petabyte streams."
+      "It reduces CPU and disk I/O overhead to zero.",
+      "It eliminates the need for sharding database records."
     ],
     correct: 1,
     explanation: "If read queries are logged as events, they can be joined with write events, allowing the system to record and verify exactly what state of the system a user was looking at (e.g., inventory and shipping dates) when they clicked 'buy'.",
@@ -176,10 +176,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Under what circumstances does treating queries as event streams and executing them through a stream processor become highly useful?",
     options: [
-      "When queries are restricted to simple single-row primary key lookups against a local B-tree index.",
+      "When queries are simple single-row primary key lookups.",
       "When performing complex distributed joins that must combine data from differently sharded datasets.",
-      "When the underlying database uses standard single-leader replication with asynchronous updates.",
-      "When client devices maintain high-bandwidth, 100% reliable network connections to broker nodes."
+      "When the database uses single-leader replication.",
+      "When client devices have high-bandwidth, 100% reliable network connections."
     ],
     correct: 1,
     explanation: "For complex multishard joins (such as fraud detection combining sharded email, billing, and IP reputation scores), the stream processor's message routing and partitioning infrastructure provides a powerful framework for distributed execution.",
@@ -197,9 +197,9 @@ const QUIZ_QUESTIONS = [
     q: "In Example 13-1 (transferring money by updating balances directly), what makes the transaction dangerous to retry after a client timeout?",
     options: [
       "The SQL statement UPDATE accounts SET balance = balance + 11.00 is non-idempotent.",
-      "The database will automatically lock both account rows in exclusive mode forever.",
-      "The SQL transaction block is missing a required starting BEGIN TRANSACTION command.",
-      "It uses a two-phase commit protocol, which is guaranteed to abort on any timeout."
+      "The database will automatically lock the accounts forever.",
+      "The transaction is missing a BEGIN TRANSACTION statement.",
+      "It uses 2PC, which always fails on network timeouts."
     ],
     correct: 0,
     explanation: "The balance update is a relative operation (+ 11.00). If the transaction committed but the client retried because of a timeout, the balance would be updated again, transferring a total of $22 instead of $11.",
@@ -209,10 +209,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "According to the end-to-end argument, what is the correct place to implement duplicate suppression for user requests?",
     options: [
-      "Exclusively within the TCP protocol stack of the operating system kernel handling the connection sockets.",
-      "Directly within the database engine's write locks and transaction isolation level control structures.",
+      "Only in the TCP protocol stack of the operating system.",
+      "In the database engine's write locks.",
       "With an application-level request identifier generated by the client and passed all the way to the storage engine.",
-      "At the network load balancer level using specialized HTTP header analysis and connection tracking tables."
+      "On the load balancer using HTTP header analysis."
     ],
     correct: 2,
     explanation: "The end-to-end argument states that a function can only be completely implemented with the help of the endpoints. A client-generated request ID (idempotence key) passed to the database ensures duplicate requests are rejected regardless of connection drops or server restarts.",
@@ -229,10 +229,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "In a distributed system, why does enforcing a strict uniqueness constraint (such as a unique username) require consensus?",
     options: [
-      "Because horizontal database sharding is mathematically impossible if primary key fields contain unique values.",
-      "Because the system must decide which of two concurrent conflicting writes is accepted, requiring agreement and coordination.",
-      "Because uniqueness constraints can only be validated using the Raft consensus protocol inside transaction managers.",
-      "Because unique column attributes must always be stored in a centralized, un-replicated table to prevent corruption."
+      "Because sharding is impossible if data is unique.",
+      "Because the system must decide which of two concurrent conflicting writes is accepted, which requires agreement and coordination.",
+      "Because unique constraints can only be validated using the Raft protocol.",
+      "Because unique columns are always stored in a centralized, un-replicated table."
     ],
     correct: 1,
     explanation: "If two users concurrently claim the same username, the system must coordinate to accept one and reject the other. Without consensus, different nodes could concurrently accept both, violating uniqueness.",
@@ -242,10 +242,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "How can uniqueness constraints be enforced in an unbundled database using sharded logs and stream processors?",
     options: [
-      "By executing a full Two-Phase Commit transaction across all independent log shards and database partitions for every single client write.",
+      "By running a 2PC transaction across all log shards for every write.",
       "By routing all requests for a specific value (e.g. username) to a single log shard where a single-threaded stream processor validates them sequentially.",
-      "By completely disabling log partition sharding and forcing the system to run on a single, non-replicated global database server instance.",
-      "By letting client applications write to any replica and subsequently resolve conflicting username entries using version vector clocks."
+      "By disabling sharding and using a single global database server.",
+      "By letting clients resolve conflicts using vector clocks after writing."
     ],
     correct: 1,
     explanation: "By routing all requests for a username to a shard determined by the hash of the username, a stream processor can sequentially and deterministically process requests on a single thread, accepting the first message and rejecting subsequent duplicates.",
@@ -262,10 +262,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "How does the author define the distinction between 'timeliness' and 'integrity' in database consistency?",
     options: [
-      "Timeliness means the database performs transactions quickly with sub-second latency, while integrity means the database has secure role-based access.",
+      "Timeliness means the database is fast, while integrity means it is secure.",
       "Timeliness means ensuring users see up-to-date state (lag is temporary), while integrity means the absence of permanent corruption or contradictory data.",
-      "Timeliness requires the query engine to run on relational schemas, while integrity requires document-oriented or key-value NoSQL database engines.",
-      "There is no theoretical or physical distinction between the two; they are simply interchangeable synonyms for ACID database consistency constraints."
+      "Timeliness requires relational databases, while integrity requires NoSQL databases.",
+      "There is no distinction; they are two terms for the same concept."
     ],
     correct: 1,
     explanation: "Timeliness is about lag (e.g., eventually consistent reads), which resolves itself simply by waiting. Integrity is about correctness (e.g., indexes matching tables, valid sums), and violations of integrity result in permanent database corruption.",
@@ -275,10 +275,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "In an event-based dataflow system, how are timeliness and integrity related?",
     options: [
-      "They are tightly coupled; the storage engine cannot maintain data integrity without ensuring immediate write timeliness.",
+      "They are tightly coupled; you cannot have integrity without timeliness.",
       "They are decoupled; the system can guarantee strict integrity (correct derivations and no lost writes) while allowing timeliness to lag.",
-      "The system guarantees microsecond timeliness for client read requests but permits index integrity to be violated during write bursts.",
-      "They are both completely obsolete concepts that are replaced by the linearizability guarantees defined in the PACELC and CAP theorems."
+      "The system guarantees timeliness but allows integrity to be violated.",
+      "They are both replaced by the CAP theorem."
     ],
     correct: 1,
     explanation: "Asynchronous stream processors decouple timeliness and integrity. Because they process logs asynchronously, reads can be stale (low timeliness), but deterministic processing and at-least-once delivery ensure that all writes are correctly incorporated without corruption (high integrity).",
@@ -295,10 +295,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Why does ACID consistency (in the traditional transaction sense) fail to protect data integrity from application-level software bugs?",
     options: [
-      "ACID consistency guarantees are structurally restricted to single-node databases and will fail to run on modern multi-core CPU architectures.",
+      "ACID consistency only works on single-core CPUs.",
       "Consistency in ACID assumes that transactions are bug-free; if a transaction writes incorrect data due to a bug, the database will faithfully commit it.",
-      "Application-level software bugs and logic exceptions always bypass the database transaction manager driver, writing raw corrupt records directly to disk.",
-      "Modern relational and document-oriented databases completely lack support for serializable transaction isolation levels or schema validation rules."
+      "Application-level bugs always bypass the database entirely.",
+      "Modern databases do not support transaction isolation."
     ],
     correct: 1,
     explanation: "Consistency in ACID means the database goes from one valid state to another, defined by database constraints. However, if the application has a logic bug (e.g., updating the wrong balance or missing checks), the database cannot know the intent and will commit the corrupted data.",
@@ -308,10 +308,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Why does event sourcing provide better auditability compared to traditional update-in-place databases?",
     options: [
-      "Event sourcing automatically encrypts all database rows and audit logs using homomorphic encryption keys, preventing any unauthorized modification.",
+      "Event sourcing automatically encrypts all database fields.",
       "Event sourcing represents user inputs as immutable events, and derived state is created via deterministic functions that can be rerun to verify correctness.",
-      "Event sourcing runs exclusively on decentralized, Byzantine fault-tolerant blockchain networks, which are cryptographically guaranteed to be secure.",
-      "Event sourcing does not store any historical event records or transaction logs on disk, keeping all system state strictly in volatile memory arrays."
+      "Event sourcing runs on blockchains, which are inherently secure.",
+      "Event sourcing does not store any historical data on disk."
     ],
     correct: 1,
     explanation: "Because event sourcing records the raw, immutable input events, we can audibly trace exactly why mutations occurred, rerun the derivation pipeline to check for corruption, or debug system behavior by replaying events.",

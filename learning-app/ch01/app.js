@@ -9,10 +9,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What does the term 'data-intensive' mean?",
     options: [
-      "An application whose performance is bottlenecked by raw CPU processing power, mathematical operations, or graphics rendering",
-      "An application where the complexity, volume, and rate of change of data represent the primary system development challenges",
-      "An application that relies on low-latency networks and real-time streaming interfaces to process over one gigabyte per second",
-      "An application designed specifically to store and archive massive datasets exceeding several petabytes of cold storage"
+      "An app that requires the most powerful CPUs available",
+      "An app where data management is one of the primary development challenges",
+      "An app that processes data faster than 1GB per second",
+      "An app that stores more than 1 petabyte of data"
     ],
     correct: 1,
     explanation: "A data-intensive app is one where data management (storing, processing, consistency, availability) is the primary challenge — not raw CPU power.",
@@ -22,10 +22,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Which is a characteristic of OLAP (analytical) systems, NOT OLTP?",
     options: [
-      "Point queries that retrieve a small number of records based on a specific key",
-      "Highly predictable queries that are pre-configured within the application code",
-      "Complex aggregate queries that scan and summarize a huge volume of database records",
-      "Frequent write operations that insert, modify, or delete individual user records"
+      "Point queries that fetch individual records by key",
+      "Fixed queries predefined by the application code",
+      "Aggregate queries scanning large numbers of records",
+      "Create, update, and delete individual records"
     ],
     correct: 2,
     explanation: "OLAP systems run aggregate queries over huge datasets (count, sum, average). OLTP handles individual record lookups and modifications.",
@@ -42,10 +42,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is a 'system of record' (source of truth)?",
     options: [
-      "The highest-throughput database optimized for processing transient cache and session data",
-      "Any relational database system that enforces strict SQL schemas and ACID transaction safety",
-      "The authoritative, canonical version of data where new writes are first received and stored",
-      "A cold-storage backup copy of the primary production database used solely for disaster recovery"
+      "The fastest database in your architecture",
+      "Any database that uses SQL",
+      "The authoritative, canonical version of data — where new data is first written",
+      "A backup copy of your production database"
     ],
     correct: 2,
     explanation: "A system of record holds the authoritative version. Each fact is represented exactly once (normalized). If there's a discrepancy, the system of record wins by definition.",
@@ -55,10 +55,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "When is self-hosting often cheaper than cloud services?",
     options: [
-      "In virtually all circumstances because cloud infrastructure providers always charge a premium markup",
-      "When application workloads are highly dynamic, unpredictable, and require automatic elastic scaling",
-      "When your team has operational expertise and system workloads are predictable and relatively stable",
-      "When running as an early-stage startup with fewer than ten engineers and limited initial funding"
+      "Always — cloud providers add markup",
+      "When load is unpredictable and spiky",
+      "When you have experience operating the systems and predictable, stable load",
+      "When you're a startup with fewer than 10 engineers"
     ],
     correct: 2,
     explanation: "The chapter states: if you already have operational expertise and your load is predictable (no need for elastic scaling), self-hosting is often cheaper.",
@@ -75,10 +75,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What does 'separation of storage and compute' mean in cloud native architecture?",
     options: [
-      "Developing the persistence layers and the business logic engines in different, isolated programming languages",
-      "Provisioning storage systems and compute capacity as independent resources that can be scaled and billed separately",
-      "Physically separating primary database servers from application servers by deploying them in different subnetworks",
-      "Allocating solid-state drives exclusively for data persistence and graphics processing units for execution threads"
+      "Using different programming languages for storage and processing code",
+      "Storage (e.g., S3) and computation (CPU/RAM) are independent, separately scalable resources",
+      "Keeping your database server in a different room from your application server",
+      "Using SSDs for storage and GPUs for compute"
     ],
     correct: 1,
     explanation: "Cloud native systems disaggregate storage (e.g., S3) from compute (CPU/RAM), allowing each to scale independently. Traditional systems bundle both on the same machine.",
@@ -88,10 +88,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "According to the chapter, microservices are primarily a solution to what kind of problem?",
     options: [
-      "A hardware performance problem by distributing processing tasks so that they run faster across separate nodes",
-      "A network security problem by enforcing strict access control boundaries and resource isolation between services",
-      "An organizational people problem by enabling multiple engineering teams to develop and deploy code independently",
-      "A database storage problem by splitting large database tables across multiple independent physical disks"
+      "A performance problem — distributed systems are always faster",
+      "A security problem — isolation between services",
+      "A people problem — allowing teams to work independently",
+      "A storage problem — databases can't handle the load"
     ],
     correct: 2,
     explanation: "The chapter explicitly states: 'Microservices are primarily a technical solution to a people problem: allowing different teams to make progress independently.'",
@@ -108,10 +108,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is 'data minimization' (Datensparsamkeit) and why does it matter?",
     options: [
-      "Applying compression algorithms to binary data payloads in order to minimize active storage costs",
-      "Collecting and storing only data that serves a specified, explicit purpose to limit legal and security risk",
-      "Selecting the smallest hardware capacity and disk sizes necessary to run your production database cluster",
-      "Optimizing application algorithms to minimize the frequency of queries sent to the relational database"
+      "Compressing data to use less storage space",
+      "Only storing data that serves a specified, explicit purpose — to reduce legal and security risk",
+      "Using the smallest possible database for your needs",
+      "Minimizing the number of database queries per request"
     ],
     correct: 1,
     explanation: "Data minimization means not storing data 'just in case.' The GDPR mandates collecting data only for a specified purpose. The chapter argues the cost of storage includes liability, reputational damage, and legal risk — not just S3 bills.",
@@ -121,10 +121,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is the main reason for separating OLTP and OLAP workloads?",
     options: [
-      "They inherently rely on completely different serialization structures, such as nested JSON and XML documents",
-      "Running resource-intensive analytical queries on OLTP databases can severely degrade performance for active users",
-      "OLTP is restricted to relational SQL systems, whereas OLAP can only be executed on schema-less NoSQL platforms",
-      "Analytical OLAP data must be encrypted at rest, whereas transactional OLTP data only requires transit encryption"
+      "They use different data structures (e.g., JSON vs XML)",
+      "Running heavy analytical queries on OLTP databases can degrade performance for operational users",
+      "OLTP is only for SQL databases, while OLAP is only for NoSQL databases",
+      "OLAP data is encrypted, while OLTP data is not"
     ],
     correct: 1,
     explanation: "Heavy aggregate queries in OLAP scan millions of rows and consume significant CPU/memory, which would starve resources for critical transaction operations in OLTP.",
@@ -141,10 +141,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What does ETL stand for?",
     options: [
-      "Encryption, Transmission, and Latency-limits",
-      "Elasticity, Throughput, and Load-balancing",
-      "Extraction, Transformation, and Loading",
-      "Execution, Testing, and Logging-procedures"
+      "Encryption, Transmission, Latency",
+      "Elasticity, Throughput, Load-balancing",
+      "Extract, Transform, Load",
+      "Execute, Test, Log"
     ],
     correct: 2,
     explanation: "ETL is the process of extracting data from operational databases, transforming it (cleaning, restructuring), and loading it into a data warehouse.",
@@ -154,10 +154,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is the primary difference between a data warehouse and a data lake?",
     options: [
-      "A warehouse stores data in flat files on cloud drives, while a lake organizes all data into relational SQL tables",
-      "A warehouse is optimized for high-volume write workloads, while a lake is built specifically for low-latency read paths",
-      "A warehouse enforces a structured schema on write, while a lake stores raw files and applies a schema on read",
-      "A warehouse is exclusively deployed in public cloud platforms, while a lake is restricted to on-premise hardware"
+      "A warehouse uses file storage, while a lake uses relational tables",
+      "A warehouse is for write-intensive tasks, while a lake is for read-intensive tasks",
+      "A warehouse enforces a schema on write, while a lake stores raw data and applies schema on read",
+      "A warehouse is cloud-only, while a lake is on-premise-only"
     ],
     correct: 2,
     explanation: "Data warehouses store structured, cleaned, and schema-conforming data. Data lakes store raw, unstructured or semi-structured files, letting analysts choose how to parse it later.",
@@ -174,10 +174,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is 'reverse ETL'?",
     options: [
-      "Extracting structured data from an analytical warehouse and loading it back into operational transactional systems",
-      "Migrating raw, unstructured data payloads from a distributed data lake directly into a relational data warehouse",
-      "Converting processed database records in a data warehouse back into raw, uncompressed CSV files on a local disk",
-      "Restoring an archived database backup to primary production servers immediately following a critical node failure"
+      "Extracting data from a data warehouse and loading it back into operational systems of record",
+      "Moving data from a data lake to a data warehouse",
+      "Converting a data lake back into raw CSV files",
+      "Restoring a database backup after a failure"
     ],
     correct: 0,
     explanation: "Reverse ETL takes derived, processed, or model-scored data from analytical systems (like a customer churn prediction score) and pushes it back into OLTP tools (like Salesforce) to drive business operations.",
@@ -187,10 +187,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Why is distributing a system across multiple machines considered a 'double-edged sword'?",
     options: [
-      "It significantly reduces hardware hosting costs but severely limits horizontal scale-out capacity",
-      "It scales throughput and availability but introduces complex partial failure modes and network latency",
-      "It requires a larger engineering team to maintain but reduces overall electricity consumption in data centers",
-      "It is only compatible with analytical OLAP engines and cannot be implemented for transactional OLTP workloads"
+      "It makes the system cheaper but reduces scalability",
+      "It scales capacity and improves availability but introduces complex failure modes and network latency",
+      "It requires more developers but reduces server electricity costs",
+      "It only works for OLAP and is impossible for OLTP"
     ],
     correct: 1,
     explanation: "Distribution lets you handle more load and tolerate node failures, but it introduces partial failure states, network partitions, split-brain issues, and consistency challenges.",
@@ -207,7 +207,7 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What does HTAP stand for?",
     options: [
-      "High-Throughput Application-Level Protocol",
+      "High Throughput Application Protocol",
       "Hybrid Transactional/Analytical Processing",
       "Hierarchical Transaction Allocation Process",
       "Horizontal Topology Architecture Paradigm"
@@ -220,10 +220,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Which of the following is an example of derived data?",
     options: [
-      "A security hash of a user's original signup password stored in the database",
-      "A transaction record generated and saved when a customer purchases an item",
-      "A search index updated automatically based on changes in the primary database",
-      "A raw, uncompressed user profile image uploaded directly to an object store"
+      "A user's original signup password hash",
+      "A transaction record created when a customer purchases an item",
+      "A search index updated in response to changes in the primary database",
+      "A raw, uploaded user profile image"
     ],
     correct: 2,
     explanation: "A search index is derived from the system of record. If lost, it can be fully rebuilt by re-processing the primary database's records.",
@@ -240,10 +240,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is vendor lock-in?",
     options: [
-      "A security mechanism that automatically locks developers out of their cloud console after suspicious logins",
-      "The high financial cost and technical difficulty of migrating an application from one cloud provider to another",
-      "An automated network firewall policy that blocks external database connections from entering local environments",
-      "Deploying a relational database that requires purchasing a proprietary, commercial license key from a vendor"
+      "When a developer is locked out of their AWS console",
+      "High costs and difficulty associated with migrating from one cloud provider to another",
+      "An automated firewall rule blocking external databases",
+      "Using a database that requires a proprietary license key"
     ],
     correct: 1,
     explanation: "Vendor lock-in happens when an architecture relies on proprietary, provider-specific features (like DynamoDB or BigQuery) making a migration to a competitor extremely expensive.",
@@ -254,9 +254,9 @@ const QUIZ_QUESTIONS = [
     q: "Which regulatory framework is directly mentioned as impacting data system design?",
     options: [
       "CCPA (California Consumer Privacy Act)",
-      "PCI-DSS (Payment Card Security Act)",
+      "PCI-DSS",
       "GDPR (General Data Protection Regulation)",
-      "SOX (Sarbanes-Oxley Compliance Act)"
+      "SOX"
     ],
     correct: 2,
     explanation: "The chapter specifically discusses the GDPR (and similar laws like CCPA) under 'Data Systems, Law, and Society,' highlighting how rules like the 'right to be forgotten' affect system architecture.",
@@ -273,10 +273,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is the role of a cache in a data-intensive application?",
     options: [
-      "To store raw log files indefinitely on durable object storage for compliance auditing purposes",
-      "To keep expensive, frequently accessed read results in memory to enable low-latency data retrieval",
-      "To execute complex analytical queries across petabytes of relational data in a distributed warehouse",
-      "To isolate microservice databases from one another in order to ensure strict security compliance"
+      "To store raw files indefinitely for audit purposes",
+      "To keep expensive, frequently accessed read results in memory for low-latency retrieval",
+      "To execute analytical queries over petabytes of data",
+      "To isolate services for security compliance"
     ],
     correct: 1,
     explanation: "Caches sit in front of database layers to remember common queries, protecting downstream systems from read load and returning results in milliseconds.",
@@ -286,10 +286,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Which of the following workloads is typically compute-intensive rather than data-intensive?",
     options: [
-      "A retail banking system processing millions of credit card transactions daily",
-      "A media streaming service distributing live video to thousands of active users",
-      "An atmospheric simulation modeling global wind currents on a supercomputer node",
-      "A sales dashboard running aggregate queries on transaction data from five years"
+      "A banking system processing millions of credit card transactions",
+      "A video streaming service serving thousands of concurrent users",
+      "An atmospheric simulation calculating global wind currents on a supercomputer",
+      "An analytics dashboard querying sales data from the past five years"
     ],
     correct: 2,
     explanation: "Atmospheric simulation requires executing complex mathematical models (millions of floating-point operations) on a fixed set of boundary conditions, bottlenecked by CPU/GPU computation. Conversely, a banking system is data-intensive because its primary challenges are data management, reliability, concurrency, and volume—not complex CPU math.",
@@ -306,10 +306,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What does the term 'elasticity' mean in cloud systems?",
     options: [
-      "The capacity of a relational database schema to accommodate new columns and indices without downtime",
-      "The automatic provisioning and deprovisioning of compute or storage resources to match current workload demands",
-      "The physical durability and read-write lifecycle limits of enterprise solid-state backup disk drives",
-      "The network latency buffer and package retransmission window configured when a connection is unstable"
+      "The ability of a database schema to accept new columns dynamically",
+      "The automatic scaling of compute or storage resources up or down to match current demand",
+      "The physical durability of database backup drives",
+      "The network latency buffer when a connection is unstable"
     ],
     correct: 1,
     explanation: "Elasticity is the cloud's ability to scale resources (e.g., spinning up new virtual machines) automatically in response to load spikes and scale them down when load decreases, saving costs.",
@@ -319,10 +319,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Which architectural pattern is commonly used to sync a system of record with a derived search index?",
     options: [
-      "Generating flat batch files manually and sending them via FTP once a week to the index server",
-      "Using Change Data Capture (CDC) to stream database modifications to the search index in near-real-time",
-      "Executing dual writes directly from the client application to both systems without transaction controls",
-      "Rebuilding the search index entirely by copying and exporting database records every single night"
+      "Manual batch files sent over FTP once a week",
+      "Change Data Capture (CDC) streaming updates in near-real-time",
+      "Dual writes directly from the client application without transaction controls",
+      "Re-installing the database every night"
     ],
     correct: 1,
     explanation: "Change Data Capture (CDC) reads the database transaction log and streams inserts/updates to the search index, ensuring consistency without client-side dual-write complexity.",

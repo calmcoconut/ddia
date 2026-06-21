@@ -9,10 +9,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is the primary drawback of using language-specific serialization formats like Java's java.io.Serializable or Python's pickle for long-term data storage?",
     options: [
-      "They suffer from extremely high execution latencies and consume more memory than text formats like JSON",
+      "They are extremely slow to execute compared to JSON",
       "They lock you into a single programming language and introduce severe security vulnerabilities",
-      "They cannot serialize complex nested data structures like arbitrary tree structures or nested hash maps",
-      "They fail to compile at runtime or generate valid type definitions in statically typed target languages"
+      "They cannot encode nested data structures like trees or hash maps",
+      "They fail to compile at runtime in statically typed languages"
     ],
     correct: 1,
     explanation: "Language-specific formats are tied to their host language, making multi-language integration very difficult. More importantly, they frequently suffer from security flaws where decoding untrusted data allows arbitrary code execution (RCE).",
@@ -22,10 +22,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Why did Twitter (now X) have to return post IDs twice (once as a number and once as a string) in their JSON API responses?",
     options: [
-      "To maintain backward compatibility with older XML parsers that require explicit schema definitions for parsing values",
+      "To support backward compatibility with XML parsers",
       "Because JSON does not distinguish integers from floats and JavaScript cannot exactly represent integers greater than 2^53",
-      "To optimize the parser throughput of JSON serializers running on memory-constrained mobile device architectures",
-      "To enable database engines to index the unique identifier as a full-text search field instead of a B-tree key"
+      "To speed up the parsing of the JSON object on mobile devices",
+      "To allow the ID to be indexed as a full-text search field"
     ],
     correct: 1,
     explanation: "JavaScript uses IEEE 754 double-precision floats, which cannot accurately represent 64-bit integers greater than 2^53. To prevent truncation and rounding errors, Twitter sent the ID as a decimal string alongside the raw number. In modern API design, it is widely recommended to treat all large unique identifiers (like Snowflake IDs or database primary keys) as opaque strings rather than integers across all clients, ensuring compatibility regardless of language or JSON parser implementation.",
@@ -42,10 +42,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "How does Protocol Buffers achieve a much smaller binary payload than binary JSON formats like MessagePack?",
     options: [
-      "By utilizing adaptive Huffman coding algorithms to compress all textual metadata fields",
-      "By omitting field names entirely and identifying fields using compact numeric tag numbers",
-      "By encoding all variable-length strings as compressed hexadecimal representation values",
-      "By enforcing that all floating-point numbers must be stored as raw 8-bit integer values"
+      "By using Huffman coding to compress all text fields",
+      "By omitting field names entirely and identifying fields using tag numbers",
+      "By converting all strings into hexadecimal representations",
+      "By enforcing that all numbers must be stored as 8-bit integers"
     ],
     correct: 1,
     explanation: "In MessagePack, the field names (like 'userName') are repeated in every record. Protocol Buffers omits these strings, replacing them with a 1-byte header containing the field tag (number) and wire type.",
@@ -55,10 +55,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "If a Protocol Buffers field is removed from a schema, what rule must you follow regarding its tag number to prevent future corruption?",
     options: [
-      "The removed tag number must be reassigned immediately to new fields to maintain schema size",
-      "You must never reuse that tag number again, and it should be marked as reserved in the schema",
-      "The tag number must be converted to a negative integer to indicate its deletion in binary logs",
-      "You must run a complete database migration to shift all subsequent field tag numbers down by one"
+      "The removed tag number must be reassigned immediately to a new field",
+      "You must never use that tag number again, and it should be marked as reserved",
+      "The tag number must be converted into a negative value",
+      "You must run a full database migration to shift all subsequent tags down"
     ],
     correct: 1,
     explanation: "If you reuse a tag number that was previously removed, old records stored in databases or archives containing that tag will be decoded incorrectly by new code, assuming it is the new field type and meaning.",
@@ -75,10 +75,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is a key architectural difference between Apache Avro and Protocol Buffers regarding the binary payload?",
     options: [
-      "Avro payloads include explicit field tag headers, whereas Protocol Buffers omits tags entirely",
-      "Avro payloads contain only concatenated byte values without embedding any field names or tag numbers",
-      "Avro stores schemas natively as XML definitions, while Protocol Buffers relies exclusively on JSON",
-      "Avro requires all serializable record attributes to be encoded as fixed-length binary values"
+      "Avro includes field tags, whereas Protocol Buffers does not",
+      "Avro payloads contain only concatenated values without field names or tag numbers",
+      "Avro stores schemas as XML, while Protocol Buffers uses JSON",
+      "Avro requires all fields to be fixed-length values"
     ],
     correct: 1,
     explanation: "Avro payloads contain no tags or markers to identify fields. It is simply a continuous sequence of byte values, requiring the exact writer's schema to reconstruct the data structure.",
@@ -88,10 +88,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "How does an Avro reader decode a binary record if the reader's schema differs from the writer's schema?",
     options: [
-      "It throws an immediate runtime parsing exception and halts deserialization because of strict schema mismatch rules",
+      "It throws a parsing error immediately",
       "It dynamically compares the writer's schema and reader's schema to resolve differences by matching field names",
-      "It queries a centralized schema registry to translate the binary payload into intermediate JSON representation structures",
-      "It falls back to a deterministic brute-force guess of field boundaries by inspecting type flags in the payload"
+      "It queries a central server to convert the binary payload to JSON first",
+      "It falls back to a brute-force guess of the field boundaries"
     ],
     correct: 1,
     explanation: "Avro handles schema evolution by comparing the schema used to write the data (writer's schema) with the one the current code expects (reader's schema). It matches fields by name, ignoring removed fields and filling in defaults for added fields. In practice (such as in Kafka data pipelines), this is often facilitated by a central Schema Registry where the reader retrieves the writer's schema using a version ID embedded in the binary message.",
@@ -108,10 +108,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What does the phrase 'data outlives code' refer to in database architectures?",
     options: [
-      "Database storage systems must be over-provisioned because raw business data occupies significantly more physical bytes than source code files",
+      "Data takes up more disk space than the source code files",
       "Application code is updated frequently, but historical data in the database remains in its original format unless explicitly rewritten",
-      "Data is persisted on high-end solid-state drives, which have a much longer physical and operational lifespan than standard application servers",
-      "Core query execution engines and storage drivers are implemented in low-level languages whose internal structures rarely undergo modification"
+      "Data is stored on SSDs, which have a longer physical lifespan than servers",
+      "Database query engines are written in low-level languages that rarely change"
     ],
     correct: 1,
     explanation: "While application code can be updated to a new version in minutes, data written years ago under older schemas will sit in the database in its original representation unless a costly rewrite migration is performed.",
@@ -121,10 +121,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Why are Avro object container files a good fit for database backups and archival storage?",
     options: [
-      "They compress all archived record blocks using highly efficient, standard LZW or gzip algorithms before writing them to disk",
+      "They compress data using standard zip algorithms",
       "They write the writer's schema once at the beginning of the file, allowing millions of records to be decoded efficiently",
-      "They freeze schema definitions permanently at the time of creation, guaranteeing that historical data records cannot be corrupted",
-      "They automatically translate binary database table dumps into human-readable, ANSI-compliant SQL migration scripts on export"
+      "They do not allow schema changes, ensuring data is never corrupted",
+      "They convert database records into human-readable SQL scripts"
     ],
     correct: 1,
     explanation: "Since all records in a large archival file are written with the same schema, Avro object container files store the writer's schema once in the file header, keeping individual records extremely small and self-describing.",
@@ -141,10 +141,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is a key distinction between a database query interface and a service API in a microservices architecture?",
     options: [
-      "Service APIs restrict clients to executing state-modifying write operations and do not allow any read-only query requests to be processed",
+      "Service APIs do not allow read queries",
       "Service APIs encapsulate business logic and expose a restricted set of endpoints, whereas databases allow arbitrary query expressions",
-      "Database query interfaces must block on thread-locked synchronous connections, while microservice endpoints are strictly asynchronous",
-      "Service API schemas must be defined using strict XML formats, whereas databases communicate using binary protocols or raw SQL text"
+      "Database queries are always synchronous, while services are always asynchronous",
+      "Service APIs are only defined using XML"
     ],
     correct: 1,
     explanation: "A service API provides encapsulation, restricting what clients can do through predetermined business routes. Databases, by contrast, allow flexible query models which makes exposing them directly to external clients architecturally risky.",
@@ -154,10 +154,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Which of the following is a fundamental reason why the Remote Procedure Call (RPC) model of location transparency is flawed?",
     options: [
-      "RPC protocols require compiling and binding the client code using native C++ environments and cannot support other languages",
+      "RPC is only supported in C++",
       "A network call is unpredictable, subject to latency spikes, timeouts, and partial failures, unlike a local function call",
-      "Local in-memory function calls incur significant overhead and are consistently slower than optimized network socket requests",
-      "RPC frameworks do not support passing complex parameters or serialized arguments, restricting calls to parameterless routines"
+      "Local function calls are always slower than network requests",
+      "RPC does not allow passing parameters to functions"
     ],
     correct: 1,
     explanation: "Local function calls are predictable and memory-local. Network calls can fail silently (leaving it unknown if the request succeeded), suffer from congestion, or time out, which breaks the illusion of location transparency.",
@@ -174,10 +174,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is the purpose of durable execution frameworks like Temporal or Restate?",
     options: [
-      "To speed up and parallelize database index rebuild operations across multi-node relational cluster setups",
+      "To speed up database index rebuilds",
       "To guarantee exactly-once semantics for workflows by logging state changes and replaying execution on failure",
-      "To automatically encrypt and replicate static database backup snapshots across secure cloud storage buckets",
-      "To replace external layer-7 load balancers with decentralized, in-memory route translation tables on nodes"
+      "To encrypt all S3 backup files automatically",
+      "To replace load balancers with in-memory routing tables"
     ],
     correct: 1,
     explanation: "Durable execution frameworks log RPCs and state modifications to a write-ahead log. If a worker crashes mid-workflow, the framework can rebuild state and resume, guaranteeing the workflow runs to completion exactly-once.",
@@ -187,10 +187,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "In a durable execution framework, what happens if you perform a rolling upgrade and reorder the activities inside a workflow's code?",
     options: [
-      "The orchestrator automatically parses the new source file and rewrites the historical execution log on-the-fly",
+      "The orchestrator automatically updates the log history",
       "The framework might throw an error or execute incorrect activities because replay relies on deterministic ordering",
-      "The runtime optimizer compiles the workflows into vectorized CPU instructions, increasing performance execution speed",
-      "The execution environment ignores the modified code paths entirely and falls back to cached, pre-compiled binaries"
+      "The code runs faster due to vectorized execution",
+      "The framework ignores the code changes and uses the compiled version"
     ],
     correct: 1,
     explanation: "Because durable execution replays the code to check against the event log, changing the order of activities will cause the replay to mismatch the logged history. This breaks determinism and triggers workflow execution errors.",
@@ -207,10 +207,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is a primary architectural advantage of using an asynchronous message broker (like Apache Kafka) over direct synchronous RPC?",
     options: [
-      "It avoids the serialization step by transmitting raw application memory references directly over network sockets",
+      "It eliminates the need to serialize data",
       "It acts as a buffer to handle consumer overload, improves system reliability, and decouples the sender from the consumer",
-      "It compresses all event packets using zero-copy transfers, effectively reducing the active network bandwidth to zero",
-      "It guarantees that all write operations to multiple database systems are wrapped in distributed commit transactions"
+      "It reduces network bandwidth usage to zero",
+      "It guarantees that database transactions are automatically distributed"
     ],
     correct: 1,
     explanation: "Message brokers act as temporary stores that buffer requests when consumers are offline or slow, decouple sender/receiver addresses, and can retry failed message deliveries automatically.",
@@ -220,10 +220,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "How does the actor model handle concurrency inside a single process?",
     options: [
-      "By placing distributed locking mechanisms on database tables to block concurrent execution threads dynamically",
+      "By utilizing distributed locks on SQL tables",
       "By encapsulating logic in independent actors that share no state and communicate exclusively via asynchronous messages",
-      "By assigning a dedicated physical CPU core to run each individual actor function sequentially inside the runtime",
-      "By converting all local function calls into blocking, synchronous REST API calls routed through a service proxy"
+      "By allocating a dedicated CPU core to every single function",
+      "By converting all local functions into synchronous REST API calls"
     ],
     correct: 1,
     explanation: "The actor model avoids race conditions and deadlocks by ensuring actors do not share state. Each actor processes messages sequentially from its mailbox, making concurrency safe within each actor's scope.",
@@ -260,10 +260,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "In RESTful APIs, how is versioning typically managed when backwards compatibility cannot be maintained?",
     options: [
-      "By dropping the database schema and purging historical records from the storage system entirely",
+      "By deleting the old database entirely",
       "By putting a version number in the URL path (e.g. /v2/) or utilizing the HTTP Accept header",
-      "By altering the TCP port number on which the web server listens for incoming network requests",
-      "By requiring all end-users to reinstall their local web browsers to load the new interface"
+      "By altering the TCP port number on which the server listens",
+      "By requesting all users to reinstall their web browsers"
     ],
     correct: 1,
     explanation: "When backward-incompatible changes are required, RESTful services frequently run multiple versions side-by-side, routing clients based on the URL path (like /api/v2) or request headers.",
@@ -280,10 +280,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Which of the following is a variable-length integer encoding technique used by Protocol Buffers to compress small numbers?",
     options: [
-      "Base64 schema-less text encoding (converting binary values into standard printable ASCII characters)",
-      "Varints (using the most significant bit in each byte to indicate that more continuation bytes follow)",
-      "Huffman prefix tree compression (generating variable-length bit keys derived from character frequencies)",
-      "Floating-point exponent truncation (discarding lower-order decimal precision bits from numeric values)"
+      "Base64 text encoding",
+      "Varints (using the most significant bit to indicate continuation bytes)",
+      "Huffman prefix trees",
+      "Floating-point exponent truncation"
     ],
     correct: 1,
     explanation: "Protocol Buffers uses varints, where each byte contains 7 bits of the number and 1 bit (the MSB) as a flag. If the MSB is set, it means another byte follows, allowing small numbers to fit into a single byte.",
@@ -300,10 +300,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "In the context of Avro schema evolution, if a field is added to the schema, what is the prerequisite to ensure backward compatibility?",
     options: [
-      "The new field must be assigned a unique numeric tag number in the schema",
-      "The new field must have a default value explicitly declared in the schema",
-      "The new field name must start with a capital letter for the parser to map it",
-      "The new field must be placed at the very beginning of the serialized record"
+      "The field must be assigned a unique numeric tag",
+      "The field must have a default value declared in the schema",
+      "The field name must start with a capital letter",
+      "The field must be placed at the very beginning of the record"
     ],
     correct: 1,
     explanation: "If a new field is added, backward compatibility requires that new readers can read old data (which lacks this field). Avro accomplishes this by filling in the declared default value. If no default is defined, the reader fails to parse old data.",
