@@ -11,9 +11,9 @@ const QUIZ_QUESTIONS = [
     q: "What is the primary difference between a batch processor and a stream processor regarding input data boundedness?",
     options: [
       "Batch processing processes bounded data of a known, finite size; stream processing processes unbounded data that arrives incrementally.",
-      "Batch processing handles only text files; stream processing handles only binary data.",
-      "Batch processing is always synchronous; stream processing is always asynchronous.",
-      "Batch processing stores input data in memory; stream processing stores it on disk."
+      "Batch processing handles only static text files on shared disks; stream processing handles only binary stream objects over network sockets.",
+      "Batch processing is always executed synchronously in single threads; stream processing is always executed asynchronously in parallel nodes.",
+      "Batch processing stores all input datasets in local volatile memory; stream processing stores and indexes them directly on persistent disk."
     ],
     correct: 0,
     explanation: "Batch processes work on bounded datasets (like a file or directory), whereas stream processes work on unbounded datasets that never end and must be processed incrementally as they arrive.",
@@ -23,10 +23,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Which of the following is a key characteristic of traditional JMS/AMQP style message brokers?",
     options: [
-      "They retain all messages indefinitely on disk for replaying.",
-      "They track consumer read progress using log offsets.",
+      "They retain all historical messages indefinitely on disk to support future replay and audits by separate consumers.",
+      "They track consumer read progress within partitions using log offsets managed and stored by the broker service.",
       "They are optimized for short queues and delete messages as soon as they are successfully acknowledged by consumers.",
-      "They require consumers to connect via UDP multicast."
+      "They require consumers to connect via low-latency UDP multicast protocols to stream events directly between tasks."
     ],
     correct: 2,
     explanation: "Traditional JMS/AMQP style message brokers (like RabbitMQ) are designed to route and deliver messages to consumers, deleting them as soon as they are processed. They assume queues are short.",
@@ -43,10 +43,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "In a log-based message broker, what is the role of a consumer offset?",
     options: [
-      "It defines the partition ID to which a producer must write.",
-      "It is the byte size of the message currently being processed.",
+      "It defines the specific partition ID to which a producer must write its next event payload.",
+      "It represents the exact byte size of the message currently being processed by the worker node.",
       "It is a sequential number tracking the consumer's read progress within a partition log.",
-      "It is the encryption key used to decode event payloads."
+      "It is the symmetric encryption key used to decode sensitive event payloads in transit."
     ],
     correct: 2,
     explanation: "The offset is a monotonically increasing integer that tracks the next record a consumer group is due to read from a log partition. It allows the consumer to resume reading correctly after a crash.",
@@ -63,10 +63,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is the primary technical risk of 'dual writes' when attempting to keep a database and a search index in sync?",
     options: [
-      "The search index will reject updates that do not match its relational schema.",
+      "The search index will reject incoming updates that do not match its relational schema, causing runtime errors.",
       "Network partitions or client crashes can cause one write to succeed while the other fails, leading to permanent inconsistency.",
-      "Writing to two systems simultaneously always doubles the network cost of database reads.",
-      "Relational databases do not support writes from applications that also connect to search indexes."
+      "Writing to two systems simultaneously always doubles the network and storage cost of subsequent database read operations.",
+      "Relational databases do not support writing from applications that maintain concurrent connections to secondary indexes."
     ],
     correct: 1,
     explanation: "Without atomic transactions across both systems, dual writes easily go out of sync if one write fails due to network issues, client crashes, or concurrent race conditions where updates arrive in different orders at the database and the index.",
@@ -76,10 +76,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "In Change Data Capture (CDC), how does the system capture database updates to propagate them to downstream systems?",
     options: [
-      "By polling the database with SELECT queries every second.",
-      "By reading the database's internal replication log or write-ahead log.",
-      "By intercepting direct database writes in the web server application code.",
-      "By periodically exporting the entire database to CSV files."
+      "By polling the database with periodic SELECT queries checking updated timestamps.",
+      "By reading the database's internal replication log or write-ahead log directly.",
+      "By intercepting and replicating database writes in the application-level logic.",
+      "By exporting the entire database to CSV file segments at regular hourly gaps."
     ],
     correct: 1,
     explanation: "CDC systems read the database's internal replication log (or transaction log) to extract all inserts, updates, and deletes, converting them into a stream of change events that can be mirrored elsewhere.",
@@ -96,10 +96,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What does 'log compaction' do in a log-based stream or database?",
     options: [
-      "It compresses the log files using GZIP or Snappy to save disk space.",
-      "It discards old log records, keeping only the most recent update for each key.",
-      "It merges multiple log partitions into a single global log file.",
-      "It deletes all entries in the log that are older than 24 hours."
+      "It compresses physical log files using GZIP or Snappy algorithms to reduce disk usage.",
+      "It discards old log records, keeping only the most recent update for each unique key.",
+      "It merges multiple independent log partitions into a single unified global partition.",
+      "It deletes all historical records in the log that exceed a static 24-hour retention window."
     ],
     correct: 1,
     explanation: "Log compaction garbage-collects old updates for a key, keeping only the latest state. This allows a log to be replayed from the beginning to restore state without processing redundant intermediate updates.",
@@ -116,10 +116,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "In stream processing, what is 'event time'?",
     options: [
-      "The time according to the system clock of the machine running the stream processor.",
+      "The current system clock timestamp of the machine executing the stream processor.",
       "The time at which the event occurred, typically recorded on the producing device.",
-      "The duration of time it takes to process the event through the stream pipeline.",
-      "The scheduled time when a batch job is triggered to process events."
+      "The total duration of time required to process the event through the pipeline stages.",
+      "The scheduled clock time when a downstream batch job starts consuming the events."
     ],
     correct: 1,
     explanation: "Event time is the time when the event originally happened according to the clock of the device that generated it (e.g., a phone, sensor, or server).",
@@ -129,10 +129,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Which window type has a fixed length, and partitions events such that every event belongs to exactly one window?",
     options: [
-      "Sliding window",
-      "Session window",
-      "Tumbling window",
-      "Hopping window"
+      "A sliding window, which is defined by events occurring within a target duration",
+      "A session window, which dynamically expands and closes after a gap of inactivity",
+      "A tumbling window, which divides time into contiguous, non-overlapping segments",
+      "A hopping window, which moves forward by a step size that is smaller than its length"
     ],
     correct: 2,
     explanation: "Tumbling windows have a fixed duration (e.g., 5 minutes) and do not overlap. Every event falls into exactly one window based on its timestamp.",
@@ -149,10 +149,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is a 'watermark' in stream processing?",
     options: [
-      "A cryptographic signature confirming the integrity of stream events.",
+      "A cryptographic signature embedded in headers confirming the data integrity of raw streaming events.",
       "A temporal threshold indicating that no more events with timestamps prior to the watermark are expected.",
-      "The maximum memory size allocated for stream state buffers.",
-      "A marker indicating that a partition has reached its disk quota."
+      "The maximum buffer memory size allocated for storing event states before writing to local database disks.",
+      "A metadata marker indicating that a log partition has reached its configured retention size or disk quota."
     ],
     correct: 1,
     explanation: "A watermark is a progress indicator in event time. It tells the stream processor that it can assume it has received all events up to a certain timestamp, allowing it to close windows and output aggregates.",
@@ -169,10 +169,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Which type of stream join requires buffering events from both input streams in time windows to match related keys?",
     options: [
-      "Stream-table join",
-      "Table-table join",
-      "Stream-stream join",
-      "Compacted log join"
+      "A stream-table join, which enriches incoming stream events with relational database rows",
+      "A table-table join, which materializes and maintains a join view between two databases",
+      "A stream-stream join, which matches and joins events from two active streams within a window",
+      "A compacted log join, which matches new events against only the latest value of each key"
     ],
     correct: 2,
     explanation: "A stream-stream join (such as matching search queries with search clicks) requires buffering events from both streams for a specific window of time because the matching events can arrive out of order and with variable latency.",
@@ -182,10 +182,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is the primary concern when performing table-table joins in stream processing?",
     options: [
-      "Table-table joins are only supported in relational databases and cannot be done in stream processors.",
+      "Table-table joins are exclusively supported inside relational databases and cannot be run on stream processor clusters.",
       "They require maintaining materialized views of both tables, where updates to either table trigger updates to the join result.",
-      "They require converting all database records into binary files.",
-      "They only work if both tables have identical keys and row counts."
+      "They require converting all table records into binary format structures before any join attributes can be compared.",
+      "They only complete successfully if both input tables contain identical partition keys, schemas, and total row counts."
     ],
     correct: 1,
     explanation: "Table-table joins (e.g., joining a users table with a subscriptions table) are equivalent to maintaining a materialized view of the join. Changes to either table require updating the joined state, which requires indexing both inputs.",
@@ -202,10 +202,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "How does the microbatching model (used in Apache Spark Streaming) achieve fault tolerance?",
     options: [
-      "By replicating every stream processor node 10 times.",
+      "By replicating every active stream processor node ten times across independent availability zones in the cloud.",
       "By treating the stream as a series of short, bounded batch jobs and saving checkpoints to a reliable filesystem.",
-      "By forcing clients to store all events in memory.",
-      "By dropping any events that cannot be processed immediately."
+      "By forcing client applications to cache all emitted events in local memory until final pipeline stages complete.",
+      "By dropping any out-of-order events that cannot be processed immediately by active, thread-pooled executors."
     ],
     correct: 1,
     explanation: "Microbatching divides the stream into small chunks (e.g., 1-second batches). Because each microbatch is a small batch job, the engine can use traditional batch fault-tolerance mechanisms, re-running a batch if a worker node crashes.",
@@ -215,10 +215,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Which of the following operations is inherently idempotent?",
     options: [
-      "Incrementing a counter by 1.",
-      "Appending a message to a list.",
+      "Incrementing a metrics counter value by 1.",
+      "Appending a log message to a dynamic list.",
       "Setting the status of an order to 'SHIPPED'.",
-      "Withdrawing $10 from a bank account."
+      "Withdrawing exactly $10 from a bank account."
     ],
     correct: 2,
     explanation: "Setting an order's status to 'SHIPPED' is idempotent because executing it multiple times has the same outcome as executing it once. In contrast, incrementing, appending, and withdrawing are not idempotent.",
@@ -235,10 +235,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is a main limitation of log immutability when dealing with modern data regulations?",
     options: [
-      "Immutable logs are too slow to write on modern SSDs.",
-      "They make it difficult to satisfy the GDPR 'right to be forgotten' (erasure) because rewriting history is technically complex.",
-      "They cannot be replicated across multiple machines.",
-      "They require special operating system kernels to run."
+      "Immutable logs exhibit severe write latency penalties when run on standard enterprise-grade SSD storage arrays.",
+      "They make it difficult to satisfy the GDPR 'right to be forgotten' because rewriting history is technically complex.",
+      "They cannot be replicated across multiple machines without triggering partition splits and split-brain scenarios.",
+      "They require specialized operating system kernels and system call libraries to enforce append-only file writes."
     ],
     correct: 1,
     explanation: "Laws like GDPR require companies to delete a user's data upon request. In an append-only, immutable event log, deleting data requires rewriting the historical log or using workarounds like cryptographic erasure (key shredding) to render the data unreadable.",
@@ -248,10 +248,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "In log-based message brokers, what happens when multiple consumers read the same log partition?",
     options: [
-      "They compete for messages; each message is delivered to only one consumer.",
-      "They can each read the entire log independently without affecting other consumers.",
-      "The broker locks the partition for the first consumer, blocking all others.",
-      "The messages are duplicated in disk storage for each consumer."
+      "They compete for messages; each message is delivered to only one active consumer node.",
+      "They can each read the entire log independently without affecting other consumer groups.",
+      "The broker locks the partition for the first active consumer, blocking all other reads.",
+      "The message payloads are physically duplicated in disk storage for each consumer queue."
     ],
     correct: 1,
     explanation: "Log-based message brokers act like files on disk. Multiple independent consumers can read the same partition sequentially, each tracking its own offset, without removing data or affecting other readers.",
@@ -268,10 +268,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "How does Flink or Samza maintain state (like join buffers or aggregate values) in a way that is fault-tolerant without relying on a centralized database?",
     options: [
-      "By storing all state on the client device.",
+      "By writing and serializing all dynamic pipeline state directly to client-side cookie stores or local application memory buffers.",
       "By maintaining local state (e.g., in RocksDB) and writing a changelog stream of state updates back to a partitioned log broker like Kafka.",
-      "By performing memory swaps with peer machines every millisecond.",
-      "By restarting the stream processing job from scratch on every failure."
+      "By performing continuous peer-to-peer memory swaps and synchronization checkpoints with neighbor worker nodes in the cluster.",
+      "By restarting the stream processing task from scratch and replaying all original events from the beginning of time on failure."
     ],
     correct: 1,
     explanation: "Stream processors store their state locally in embedded key-value stores (like RocksDB) for fast local access, and continuously replicate state changes to a replicated log (like Kafka) to recover state if a node crashes.",
@@ -281,10 +281,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Why is an event-driven architecture based on an event log helpful for schema evolution and system migration?",
     options: [
-      "Events do not contain schemas, so they never need to evolve.",
+      "Event payloads do not contain any structured schemas or object types, which entirely eliminates the need for schema evolution over time.",
       "You can keep the old system running, deploy the new system, and replay the historical event log to populate the new system's state.",
-      "Immutable logs automatically convert JSON to SQL tables.",
-      "It forces all microservices to use the same database."
+      "Immutable logs automatically parse and map incoming JSON event payloads into structured SQL database tables without developer overhead.",
+      "It enforces strict shared-database consistency, which forces all independent microservices to query and write to the same database server."
     ],
     correct: 1,
     explanation: "An event log preserves history. When migrating to a new system or evolving a schema, you can run the new code in parallel, replay the log from the beginning to build the new state, and switch over when ready.",
@@ -301,10 +301,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is a hopping window of length 5 minutes and hop size 1 minute?",
     options: [
-      "A window that changes position every 5 minutes.",
-      "A 5-minute window that overlaps with the next window, moving forward by 1 minute on every step.",
-      "A window that contains only events that are exactly 1 minute apart.",
-      "A window that closes after 1 minute of inactivity."
+      "A window partition that periodically changes its physical host location and network address every 5 minutes.",
+      "A 5-minute window that overlaps with subsequent windows, moving forward by 1 minute on every evaluation step.",
+      "A static window bucket that filters and processes only those event records that occurred exactly 1 minute apart.",
+      "A dynamic session window that automatically closes and flushes its state after 1 minute of user inactivity."
     ],
     correct: 1,
     explanation: "A hopping window has a fixed length (e.g., 5 mins) and advances by a smaller step size or hop (e.g., 1 min), meaning successive windows overlap and events belong to multiple windows.",
@@ -314,10 +314,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "In a stream join, what is a stream-table join (enrichment join)?",
     options: [
-      "Joining two tables in a SQL database using stream APIs.",
+      "Joining two static tables in a relational SQL database using stream-like execution plans in the compiler.",
       "Joining a continuous stream of events with a static or slowly changing database table to add context to the events.",
-      "Converting a stream of events into a relational table.",
-      "Sending data back and forth between Kafka and PostgreSQL."
+      "Converting a real-time stream of incoming events into a physical relational table stored in shared memory.",
+      "Sending event records back and forth between a Kafka broker partition and a PostgreSQL table in a loop."
     ],
     correct: 1,
     explanation: "A stream-table join enriches a continuous stream of events (like clicks) with database records (like user metadata) in real-time.",
