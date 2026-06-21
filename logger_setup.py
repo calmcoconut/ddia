@@ -17,6 +17,15 @@ MAX_BYTES   = 5 * 1024 * 1024   # 5 MB
 BACKUP_COUNT = 3
 
 
+from pythonjsonlogger import jsonlogger
+
+class CustomJsonFormatter(jsonlogger.JsonFormatter):
+    def format(self, record: logging.LogRecord) -> str:
+        # Ensure basic fields exist
+        if not hasattr(record, 'timestamp'):
+            record.timestamp = self.formatTime(record, self.datefmt)
+        return super().format(record)
+
 class JsonFormatter(logging.Formatter):
     """Emit each log record as a single-line JSON object (NDJSON)."""
 
