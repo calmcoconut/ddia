@@ -404,12 +404,13 @@ const STATE_KEY = 'ddia_ch5_learning';
 
 
 function loadState() {
-  return window.loadState ? window.loadState(STATE_KEY) : {};
+  const s = window.dbLoadState ? window.dbLoadState(STATE_KEY) : {};
+  return (s && typeof s === 'object') ? s : {};
 }
 
 function saveState(data) {
-  if (window.saveState) {
-    window.saveState(data, STATE_KEY);
+  if (window.dbSaveState) {
+    window.dbSaveState(data, STATE_KEY);
   }
 }
 
@@ -532,168 +533,175 @@ document.getElementById('saveBrainDump').addEventListener('click', () => {
 let currentFilter = 'all';
 
 function renderQuiz() {
-  const container = document.getElementById('quizContainer');
-  container.innerHTML = '';
-  
-  const state = loadState();
-  const selections = state.quizSelections || {};
-  const writeIns = state.writeInAnswers || {};
-  const graded = state.quizGraded || false;
+  console.log("[Quiz] renderQuiz() initiated");
+  try {
+    const container = document.getElementById('quizContainer');
+    container.innerHTML = '';
+    
+    const state = loadState();
+    console.log("[Quiz] Loaded state inside renderQuiz:", state);
+    const selections = state.quizSelections || {};
+    const writeIns = state.writeInAnswers || {};
+    const graded = state.quizGraded || false;
 
-  let renderedCount = 0;
+    let renderedCount = 0;
 
-  QUIZ_QUESTIONS.forEach((q, idx) => {
-    // Apply filters
-    const isMc = q.type === 'mc';
-    const hasSelection = selections[idx] !== undefined;
-    const hasWriteIn = writeIns[idx] && writeIns[idx].trim().length > 0;
-    const isAnswered = isMc ? hasSelection : hasWriteIn;
+    QUIZ_QUESTIONS.forEach((q, idx) => {
+      // Apply filters
+      const isMc = q.type === 'mc';
+      const hasSelection = selections[idx] !== undefined;
+      const hasWriteIn = writeIns[idx] && writeIns[idx].trim().length > 0;
+      const isAnswered = isMc ? hasSelection : hasWriteIn;
 
-    if (currentFilter === 'mc' && !isMc) return;
-    if (currentFilter === 'write' && isMc) return;
-    if (currentFilter === 'unanswered' && isAnswered) return;
+      if (currentFilter === 'mc' && !isMc) return;
+      if (currentFilter === 'write' && isMc) return;
+      if (currentFilter === 'unanswered' && isAnswered) return;
 
-    renderedCount++;
+      renderedCount++;
 
-    const div = document.createElement('div');
-    div.className = `quiz-question ${isMc ? 'type-mc' : 'type-write'}`;
-    div.setAttribute('data-q-index', idx);
-    div.dataset.qIndex = idx;
+      const div = document.createElement('div');
+      div.className = `quiz-question ${isMc ? 'type-mc' : 'type-write'}`;
+      div.setAttribute('data-q-index', idx);
+      div.dataset.qIndex = idx;
 
-    if (isMc) {
-      // Multiple Choice Question
-      const selectedOptionIdx = selections[idx];
-      const isCorrect = selectedOptionIdx === q.correct;
+      if (isMc) {
+        // Multiple Choice Question
+        const selectedOptionIdx = selections[idx];
+        const isCorrect = selectedOptionIdx === q.correct;
 
-      div.innerHTML = `
-        <div class="quiz-q-text">
-          <span class="quiz-q-num">${idx + 1}</span>
-          <span>${q.q}</span>
-          <span class="badge-tag" style="margin-left:auto; font-size:0.65rem; color:var(--accent-indigo); border:1px solid rgba(99,102,241,0.2); padding:0.1rem 0.3rem; border-radius:3px;">${q.section}</span>
-        </div>
-        <div class="quiz-options">
-          ${q.options.map((opt, oi) => {
-            let extraClass = '';
-            let markerText = '';
-            
-            if (graded) {
-              if (oi === q.correct) {
-                extraClass = 'correct-answer';
-                markerText = '✓';
-              } else if (oi === selectedOptionIdx && !isCorrect) {
-                extraClass = 'wrong-answer';
-                markerText = '✗';
+        div.innerHTML = `
+          <div class="quiz-q-text">
+            <span class="quiz-q-num">${idx + 1}</span>
+            <span>${q.q}</span>
+            <span class="badge-tag" style="margin-left:auto; font-size:0.65rem; color:var(--accent-indigo); border:1px solid rgba(99,102,241,0.2); padding:0.1rem 0.3rem; border-radius:3px;">${q.section}</span>
+          </div>
+          <div class="quiz-options">
+            ${q.options.map((opt, oi) => {
+              let extraClass = '';
+              let markerText = '';
+              
+              if (graded) {
+                if (oi === q.correct) {
+                  extraClass = 'correct-answer';
+                  markerText = '✓';
+                } else if (oi === selectedOptionIdx && !isCorrect) {
+                  extraClass = 'wrong-answer';
+                  markerText = '✗';
+                }
+              } else {
+                if (oi === selectedOptionIdx) {
+                  extraClass = 'selected';
+                }
               }
-            } else {
-              if (oi === selectedOptionIdx) {
-                extraClass = 'selected';
-              }
-            }
 
-            return `
-              <button class="quiz-option ${extraClass}" data-q="${idx}" data-o="${oi}" ${graded ? 'disabled' : ''}>
-                <span class="quiz-option-marker">${markerText}</span>
-                <span>${opt}</span>
-              </button>
-            `;
-          }).join('')}
-        </div>
-      `;
+              return `
+                <button class="quiz-option ${extraClass}" data-q="${idx}" data-o="${oi}" ${graded ? 'disabled' : ''}>
+                  <span class="quiz-option-marker">${markerText}</span>
+                  <span>${opt}</span>
+                </button>
+              `;
+            }).join('')}
+          </div>
+        `;
 
-      // If graded, append explanation
-      if (graded) {
-        div.classList.add(isCorrect ? 'answered-correct' : 'answered-wrong');
-        const explDiv = document.createElement('div');
-        explDiv.className = 'quiz-explanation';
-        explDiv.textContent = q.explanation;
-        div.appendChild(explDiv);
+        // If graded, append explanation
+        if (graded) {
+          div.classList.add(isCorrect ? 'answered-correct' : 'answered-wrong');
+          const explDiv = document.createElement('div');
+          explDiv.className = 'quiz-explanation';
+          explDiv.textContent = q.explanation;
+          div.appendChild(explDiv);
+        }
+      } else {
+        // Write-In Question
+        const savedText = writeIns[idx] || '';
+        div.innerHTML = `
+          <div class="quiz-q-text">
+            <span class="quiz-q-num">${idx + 1}</span>
+            <span>${q.q}</span>
+            <span class="badge-tag" style="margin-left:auto; font-size:0.65rem; color:var(--accent-cyan); border:1px solid rgba(6,182,212,0.2); padding:0.1rem 0.3rem; border-radius:3px;">${q.section}</span>
+          </div>
+          <div class="quiz-writein-container">
+            <div class="elab-hint">Hint: ${q.hint}</div>
+            <textarea class="quiz-writein-textarea" data-q="${idx}" placeholder="Write your conceptual answer here (saved automatically)..." ${graded ? 'disabled' : ''}>${savedText}</textarea>
+            ${graded ? `<div class="quiz-writein-feedback">✓ Response recorded & locked. Ready for LLM grading.</div>` : ''}
+          </div>
+        `;
+      }
+
+      container.appendChild(div);
+    });
+
+    if (renderedCount === 0) {
+      const emptyMsg = document.createElement('div');
+      emptyMsg.className = 'empty-filter-msg';
+      emptyMsg.style.textAlign = 'center';
+      emptyMsg.style.padding = '2rem';
+      emptyMsg.style.color = 'var(--text-muted)';
+      emptyMsg.style.fontSize = '0.9rem';
+      emptyMsg.textContent = 'No questions match the current filter.';
+      container.appendChild(emptyMsg);
+    }
+
+    // Update progress info
+    updateQuizProgress();
+
+    // Add click handlers for MC options
+    if (!graded) {
+      container.querySelectorAll('.quiz-option').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const qIndex = parseInt(this.dataset.q);
+          const oIndex = parseInt(this.dataset.o);
+          
+          // Remove selection from siblings
+          container.querySelectorAll(`.quiz-option[data-q="${qIndex}"]`).forEach(b => b.classList.remove('selected'));
+          this.classList.add('selected');
+
+          // Save selection to state
+          const state = loadState();
+          const selections = state.quizSelections || {};
+          selections[qIndex] = oIndex;
+          saveState({ quizSelections: selections });
+
+          updateQuizProgress();
+        });
+      });
+
+      // Add input handlers for write-in textareas
+      container.querySelectorAll('.quiz-writein-textarea').forEach(tx => {
+        tx.addEventListener('input', function() {
+          const qIndex = parseInt(this.dataset.q);
+          const val = this.value;
+
+          // Save write-in to state
+          const state = loadState();
+          const writeIns = state.writeInAnswers || {};
+          writeIns[qIndex] = val;
+          saveState({ writeInAnswers: writeIns });
+
+          updateQuizProgress();
+        });
+      });
+    }
+
+    // Show results or submit button
+    if (graded) {
+      showQuizResultsPanel(loadState());
+      const cachedState = loadState();
+      if (cachedState.aiGrades) {
+        renderAiGrades(cachedState.aiGrades);
       }
     } else {
-      // Write-In Question
-      const savedText = writeIns[idx] || '';
-      div.innerHTML = `
-        <div class="quiz-q-text">
-          <span class="quiz-q-num">${idx + 1}</span>
-          <span>${q.q}</span>
-          <span class="badge-tag" style="margin-left:auto; font-size:0.65rem; color:var(--accent-cyan); border:1px solid rgba(6,182,212,0.2); padding:0.1rem 0.3rem; border-radius:3px;">${q.section}</span>
-        </div>
-        <div class="quiz-writein-container">
-          <div class="elab-hint">Hint: ${q.hint}</div>
-          <textarea class="quiz-writein-textarea" data-q="${idx}" placeholder="Write your conceptual answer here (saved automatically)..." ${graded ? 'disabled' : ''}>${savedText}</textarea>
-          ${graded ? `<div class="quiz-writein-feedback">✓ Response recorded & locked. Ready for LLM grading.</div>` : ''}
-        </div>
-      `;
+      // Render submit row
+      const submitRow = document.createElement('div');
+      submitRow.className = 'quiz-submit-row';
+      submitRow.innerHTML = `<button class="btn-primary" id="submitQuiz">Check Answers</button>`;
+      container.appendChild(submitRow);
+      document.getElementById('submitQuiz').addEventListener('click', gradeQuiz);
     }
-
-    container.appendChild(div);
-  });
-
-  if (renderedCount === 0) {
-    const emptyMsg = document.createElement('div');
-    emptyMsg.className = 'empty-filter-msg';
-    emptyMsg.style.textAlign = 'center';
-    emptyMsg.style.padding = '2rem';
-    emptyMsg.style.color = 'var(--text-muted)';
-    emptyMsg.style.fontSize = '0.9rem';
-    emptyMsg.textContent = 'No questions match the current filter.';
-    container.appendChild(emptyMsg);
-  }
-
-  // Update progress info
-  updateQuizProgress();
-
-  // Add click handlers for MC options
-  if (!graded) {
-    container.querySelectorAll('.quiz-option').forEach(btn => {
-      btn.addEventListener('click', function() {
-        const qIndex = parseInt(this.dataset.q);
-        const oIndex = parseInt(this.dataset.o);
-        
-        // Remove selection from siblings
-        container.querySelectorAll(`.quiz-option[data-q="${qIndex}"]`).forEach(b => b.classList.remove('selected'));
-        this.classList.add('selected');
-
-        // Save selection to state
-        const state = loadState();
-        const selections = state.quizSelections || {};
-        selections[qIndex] = oIndex;
-        saveState({ quizSelections: selections });
-
-        updateQuizProgress();
-      });
-    });
-
-    // Add input handlers for write-in textareas
-    container.querySelectorAll('.quiz-writein-textarea').forEach(tx => {
-      tx.addEventListener('input', function() {
-        const qIndex = parseInt(this.dataset.q);
-        const val = this.value;
-
-        // Save write-in to state
-        const state = loadState();
-        const writeIns = state.writeInAnswers || {};
-        writeIns[qIndex] = val;
-        saveState({ writeInAnswers: writeIns });
-
-        updateQuizProgress();
-      });
-    });
-  }
-
-  // Show results or submit button
-  if (graded) {
-    showQuizResultsPanel(loadState());
-    const cachedState = loadState();
-    if (cachedState.aiGrades) {
-      renderAiGrades(cachedState.aiGrades);
-    }
-  } else {
-    // Render submit row
-    const submitRow = document.createElement('div');
-    submitRow.className = 'quiz-submit-row';
-    submitRow.innerHTML = `<button class="btn-primary" id="submitQuiz">Check Answers</button>`;
-    container.appendChild(submitRow);
-    document.getElementById('submitQuiz').addEventListener('click', gradeQuiz);
+    console.log("[Quiz] renderQuiz() successfully finished rendering");
+  } catch (err) {
+    console.error("[Quiz] CRITICAL EXCEPTION during renderQuiz():", err);
   }
 }
 

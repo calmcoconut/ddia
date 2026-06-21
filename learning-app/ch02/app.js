@@ -431,42 +431,16 @@ const MISCONCEPTION_EXPLANATIONS = {
 // ── State Management ────────────────────────────────
 
 const STATE_KEY = 'ddia_ch2_learning';
-let _state = null;
 
 function loadState() {
-  if (!_state) {
-    try {
-      const raw = localStorage.getItem(STATE_KEY);
-      if (raw) _state = JSON.parse(raw);
-    } catch (e) {}
-
-    if (!_state) {
-      try {
-        if (window.parent && window.parent.__ddiaState && window.parent.__ddiaState[STATE_KEY]) {
-          _state = window.parent.__ddiaState[STATE_KEY];
-        }
-      } catch (e) {}
-    }
-
-    if (!_state) _state = {};
-  }
-  // Return a snapshot, not the live object
-  return JSON.parse(JSON.stringify(_state));
+  const s = window.dbLoadState ? window.dbLoadState(STATE_KEY) : {};
+  return (s && typeof s === 'object') ? s : {};
 }
 
 function saveState(data) {
-  if (!_state) loadState();
-  // Clone incoming data and merge to avoid reference aliasing
-  _state = { ..._state, ...JSON.parse(JSON.stringify(data)) };
-
-  try {
-    localStorage.setItem(STATE_KEY, JSON.stringify(_state));
-  } catch (e) {}
-
-  try {
-    window.parent.__ddiaState = window.parent.__ddiaState || {};
-    window.parent.__ddiaState[STATE_KEY] = _state;
-  } catch (e) {}
+  if (window.dbSaveState) {
+    window.dbSaveState(data, STATE_KEY);
+  }
 }
 
 // ── Navigation ──────────────────────────────────────
@@ -1397,4 +1371,17 @@ function init() {
 }
 
 // Start
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', async () => {
+  if (typeof initDb !== 'undefined') {
+    await initDb();
+  }
+  const cachedUser = sessionStorage.getItem('ddia_active_user');
+  if (cachedUser) {
+    if (typeof getOrCreateUser !== 'undefined') {
+      getOrCreateUser(cachedUser);
+    }
+    init();
+  } else {
+    window.location.href = '../index.html';
+  }
+});

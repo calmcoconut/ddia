@@ -405,12 +405,13 @@ const STATE_KEY = 'ddia_ch1_learning';
 
 
 function loadState() {
-  return window.loadState ? window.loadState(STATE_KEY) : {};
+  const s = window.dbLoadState ? window.dbLoadState(STATE_KEY) : {};
+  return (s && typeof s === 'object') ? s : {};
 }
 
 function saveState(data) {
-  if (window.saveState) {
-    window.saveState(data, STATE_KEY);
+  if (window.dbSaveState) {
+    window.dbSaveState(data, STATE_KEY);
   }
 }
 

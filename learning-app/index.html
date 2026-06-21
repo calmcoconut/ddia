@@ -256,18 +256,23 @@
     // Startup Flow
     async function migrateFromLocalStorage(username) {
       const chapters = [
-        'ch01', 'ch02', 'ch03', 'ch04', 'ch05', 'ch06', 'ch07',
-        'ch08', 'ch09', 'ch10', 'ch11', 'ch12', 'ch13', 'ch14'
+        { num: 1, dir: 'ch01' }, { num: 2, dir: 'ch02' }, { num: 3, dir: 'ch03' }, { num: 4, dir: 'ch04' },
+        { num: 5, dir: 'ch05' }, { num: 6, dir: 'ch06' }, { num: 7, dir: 'ch07' }, { num: 8, dir: 'ch08' },
+        { num: 9, dir: 'ch09' }, { num: 10, dir: 'ch10' }, { num: 11, dir: 'ch11' }, { num: 12, dir: 'ch12' },
+        { num: 13, dir: 'ch13' }, { num: 14, dir: 'ch14' }
       ];
       for (const ch of chapters) {
-        const stateKey = `ddia_${ch}_learning`;
-        const raw = localStorage.getItem(stateKey);
-        if (raw) {
-          try {
-            const existing = JSON.parse(raw);
-            saveState(existing, stateKey);
-            localStorage.removeItem(stateKey);
-          } catch {}
+        const destKey = ch.num === 8 ? "ddia_ch8_transactions_learning" : `ddia_ch${ch.num}_learning`;
+        const oldStateKeys = [`ddia_${ch.dir}_learning`, destKey];
+        for (const key of oldStateKeys) {
+          const raw = localStorage.getItem(key);
+          if (raw) {
+            try {
+              const existing = JSON.parse(raw);
+              saveState(existing, destKey);
+              localStorage.removeItem(key);
+            } catch {}
+          }
         }
       }
       // Migrate exams
@@ -296,7 +301,7 @@
       let overallProgressSum = 0;
 
       CHAPTERS.forEach(ch => {
-        const stateKey = `ddia_${ch.dir}_learning`;
+        const stateKey = ch.num === 8 ? "ddia_ch8_transactions_learning" : `ddia_ch${ch.num}_learning`;
         const state = loadState(stateKey);
 
         let mcCount = 0;
@@ -373,7 +378,7 @@
           const displayId = `${type}ScoreVal`;
           if (eState && eState.isSubmitted) {
             document.getElementById(displayId).textContent = `High Score: ${eState.mcScore}% (MC)`;
-          } else if (eState) {
+          } else if (eState && eState.timeRemaining !== undefined) {
             document.getElementById(displayId).textContent = `In Progress (${Math.round(eState.timeRemaining / 60)} min left)`;
           } else {
             document.getElementById(displayId).textContent = "Not Attempted";

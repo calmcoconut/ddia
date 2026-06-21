@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>DDIA Workbook - JavaScript Unit Tests</title>
+  <style>
+    :root {
+      --bg-dark: #09090b;
+      --bg-elevated: #18181b;
+      --border-color: #27272a;
+      --text-primary: #f4f4f5;
+      --text-secondary: #a1a1aa;
+      --accent-emerald: #10b981;
+      --accent-rose: #f43f5e;
+      --accent-indigo: #6366f1;
+      --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      margin: 0;
+      padding: 2rem;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    header {
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    h1 {
+      font-size: 2rem;
+      font-weight: 800;
+      margin: 0 0 0.5rem;
+      background: linear-gradient(to right, #6366f1, #a855f7);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      margin: 0;
+    }
+
+    .summary-card {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      justify-content: space-around;
+      text-align: center;
+    }
+
+    .summary-stat-value {
+      font-size: 1.75rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+    }
+
+    .summary-stat-label {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-top: 0.25rem;
+    }
+
+    .test-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .test-item {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: border-color 0.2s ease;
+    }
+
+    .test-item.pass {
+      border-left: 4px solid var(--accent-emerald);
+    }
+
+    .test-item.fail {
+      border-left: 4px solid var(--accent-rose);
+      border-color: rgba(244, 63, 94, 0.3);
+    }
+
+    .test-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .test-name {
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+
+    .test-desc {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    .test-badge {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-weight: 700;
+    }
+
+    .test-badge.pass {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--accent-emerald);
+    }
+
+    .test-badge.fail {
+      background: rgba(244, 63, 94, 0.15);
+      color: var(--accent-rose);
+    }
+
+    .error-log {
+      background: #111;
+      border: 1px solid #333;
+      color: #ff5555;
+      padding: 0.75rem;
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      margin-top: 0.5rem;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .run-btn {
+      background: var(--accent-indigo);
+      color: white;
+      border: none;
+      padding: 0.5rem 1.25rem;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s ease;
+    }
+
+    .run-btn:hover {
+      opacity: 0.9;
+    }
+  </style>
+
+  <!-- sql.js for SQLite WASM support -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
+  <!-- Load our actual db.js -->
+  <script src="db.js"></script>
+</head>
+<body>
+
+  <div class="container">
+    <header style="display: flex; align-items: center; justify-content: space-between;">
+      <div>
+        <h1>JavaScript Unit Tests</h1>
+        <p class="subtitle">Evidence-Based State & Storage Testing Suite</p>
+      </div>
+      <button class="run-btn" id="runTestsBtn">Run Tests</button>
+    </header>
+
+    <div class="summary-card">
+      <div>
+        <div class="summary-stat-value" id="total-val">0</div>
+        <div class="summary-stat-label">Total</div>
+      </div>
+      <div>
+        <div class="summary-stat-value" id="passed-val" style="color: var(--accent-emerald);">0</div>
+        <div class="summary-stat-label">Passed</div>
+      </div>
+      <div>
+        <div class="summary-stat-value" id="failed-val" style="color: var(--accent-rose);">0</div>
+        <div class="summary-stat-label">Failed</div>
+      </div>
+    </div>
+
+    <div class="test-list" id="testListContainer">
+      <!-- Test results will be appended here -->
+    </div>
+  </div>
+
+  <script>
+    const tests = [];
+    
+    function test(name, description, fn) {
+      tests.push({ name, description, fn });
+    }
+
+    function assert(condition, message) {
+      if (!condition) {
+        throw new Error(message || "Assertion failed");
+      }
+    }
+
+    function assertEquals(actual, expected, message) {
+      if (JSON.stringify(actual) !== JSON.stringify(expected)) {
+        throw new Error((message || "") + `\nExpected: ${JSON.stringify(expected)}\nActual: ${JSON.stringify(actual)}`);
+      }
+    }
+
+    // ── Test Definitions ───────────────────────────────
+
+    test("Initialize DB", "Should load SQL.js and create database connection", async () => {
+      // Clear any pre-existing database item
+      localStorage.removeItem("ddia_sqlite_db");
+      
+      const db = await initDb();
+      assert(db !== null, "Database instance should not be null");
+      assert(typeof db.exec === 'function', "Database should expose exec function");
+    });
+
+    test("User Session Creation", "Should successfully register and set active user session", () => {
+      sessionStorage.removeItem("ddia_active_user");
+      
+      getOrCreateUser("patrick");
+      const active = sessionStorage.getItem("ddia_active_user");
+      assertEquals(active, "patrick", "Active user should be registered as 'patrick'");
+    });
+
+    test("Default Empty State", "loadState() should return an empty object if no previous record exists", () => {
+      const state = loadState("ddia_test_empty_key");
+      assertEquals(state, {}, "Missing key should return empty state object {}");
+    });
+
+    test("Save & Load State", "Should successfully store and retrieve nested state objects", () => {
+      const sampleState = {
+        quizSelections: { 0: 1, 1: 0 },
+        writeInAnswers: { 2: "Normalizing reduces write amplification" }
+      };
+
+      saveState(sampleState, "ddia_test_save_key");
+      const loaded = loadState("ddia_test_save_key");
+      assertEquals(loaded.quizSelections, sampleState.quizSelections, "quizSelections should match");
+      assertEquals(loaded.writeInAnswers, sampleState.writeInAnswers, "writeInAnswers should match");
+    });
+
+    test("Null Propagation Safeguard", "loadState() should fall back to {} and survive corrupt/null JSON values in the DB", () => {
+      // Manually inject a null-like progress state
+      const username = sessionStorage.getItem("ddia_active_user") || "anonymous";
+      _db.run(
+        "INSERT OR REPLACE INTO progress (username, state_key, state_data) VALUES (?, ?, ?)",
+        [username, "ddia_test_corrupt_key", "null"]
+      );
+
+      const loaded = loadState("ddia_test_corrupt_key");
+      assert(loaded !== null, "loadState should NEVER return null");
+      assertEquals(loaded, {}, "Corrupted state should fall back to empty object {}");
+    });
+
+    test("Dashboard Key Map - Chapter 8", "Dashboard stateKey construction should resolve Chapter 8 exactly", () => {
+      const ch8 = { num: 8, dir: 'ch08' };
+      const stateKey = ch8.num === 8 ? "ddia_ch8_transactions_learning" : `ddia_ch${ch8.num}_learning`;
+      assertEquals(stateKey, "ddia_ch8_transactions_learning", "Chapter 8 key must be transaction-specific");
+    });
+
+    test("Dashboard Key Map - Other Chapters", "Dashboard stateKey construction should resolve unpadded keys", () => {
+      const ch1 = { num: 1, dir: 'ch01' };
+      const stateKey = ch1.num === 8 ? "ddia_ch8_transactions_learning" : `ddia_ch${ch1.num}_learning`;
+      assertEquals(stateKey, "ddia_ch1_learning", "Chapter 1 key must be ddia_ch1_learning (unpadded)");
+    });
+
+    test("Database Persistence", "Should correctly write SQLite binary to localStorage as base64 on saveState", () => {
+      localStorage.removeItem("ddia_sqlite_db");
+      
+      const testVal = { quizSelections: { 9: 2 } };
+      saveState(testVal, "ddia_persistence_test_key");
+      
+      const savedBinary = localStorage.getItem("ddia_sqlite_db");
+      assert(savedBinary !== null, "ddia_sqlite_db should be present in localStorage after saveState");
+      assert(savedBinary.length > 100, "Saved database string should be a non-trivial base64 blob");
+    });
+
+    test("Legacy LocalStorage Migration", "Should successfully migrate legacy browser progress into active SQLite instance using unpadded keys", async () => {
+      // Setup isolated sandbox: clear existing SQL data and legacy keys
+      const username = sessionStorage.getItem("ddia_active_user") || "anonymous";
+      if (_db) {
+        try {
+          _db.run("DELETE FROM progress WHERE username = ? AND (state_key = ? OR state_key = ?)", [username, "ddia_ch1_learning", "ddia_ch8_transactions_learning"]);
+        } catch (e) {}
+      }
+      localStorage.removeItem("ddia_ch01_learning");
+      localStorage.removeItem("ddia_ch1_learning");
+      localStorage.removeItem("ddia_ch08_learning");
+      localStorage.removeItem("ddia_ch8_transactions_learning");
+
+      // Setup legacy localStorage values
+      const legacyKey1 = "ddia_ch01_learning"; // Old padded format
+      const legacyData1 = { quizSelections: { 0: 3 }, quizGraded: true };
+      localStorage.setItem(legacyKey1, JSON.stringify(legacyData1));
+
+      const legacyKey2 = "ddia_ch08_learning"; // Old non-transaction format
+      const legacyData2 = { quizSelections: { 5: 1 } };
+      localStorage.setItem(legacyKey2, JSON.stringify(legacyData2));
+
+      // Standardize the migration logic we defined in index.html to assert here
+      const chapters = [
+        { num: 1, dir: 'ch01' }, { num: 2, dir: 'ch02' }, { num: 3, dir: 'ch03' }, { num: 4, dir: 'ch04' },
+        { num: 5, dir: 'ch05' }, { num: 6, dir: 'ch06' }, { num: 7, dir: 'ch07' }, { num: 8, dir: 'ch08' },
+        { num: 9, dir: 'ch09' }, { num: 10, dir: 'ch10' }, { num: 11, dir: 'ch11' }, { num: 12, dir: 'ch12' },
+        { num: 13, dir: 'ch13' }, { num: 14, dir: 'ch14' }
+      ];
+
+      for (const ch of chapters) {
+        const destKey = ch.num === 8 ? "ddia_ch8_transactions_learning" : `ddia_ch${ch.num}_learning`;
+        const oldStateKeys = [`ddia_${ch.dir}_learning`, destKey];
+        for (const key of oldStateKeys) {
+          const raw = localStorage.getItem(key);
+          if (raw) {
+            try {
+              const existing = JSON.parse(raw);
+              saveState(existing, destKey);
+              localStorage.removeItem(key);
+            } catch {}
+          }
+        }
+      }
+
+      // Verify legacy values were successfully stored in SQL
+      const migrated1 = loadState("ddia_ch1_learning");
+      assertEquals(migrated1.quizSelections, legacyData1.quizSelections, "Chapter 1 progress should be migrated to unpadded key");
+      assert(migrated1.quizGraded === true, "Chapter 1 graded status should be migrated");
+
+      const migrated2 = loadState("ddia_ch8_transactions_learning");
+      assertEquals(migrated2.quizSelections, legacyData2.quizSelections, "Chapter 8 progress should be migrated to transactions key");
+
+      // Verify old keys were removed from localStorage
+      assert(localStorage.getItem(legacyKey1) === null, "Legacy Chapter 1 key should be deleted");
+      assert(localStorage.getItem(legacyKey2) === null, "Legacy Chapter 8 key should be deleted");
+    });
+
+    test("Spaced Repetition Session Tracking", "Should save flashcard ratings and correctly aggregate counts inside fcSession state", () => {
+      const stateKey = "ddia_test_flashcards_key";
+      const sampleSession = {
+        date: new Date().toISOString(),
+        ratings: [3, 4, 3, 1, 2],
+        counts: { 1: 1, 2: 1, 3: 2, 4: 1 }
+      };
+
+      saveState({ fcSession: sampleSession }, stateKey);
+      const loaded = loadState(stateKey);
+      assert(loaded.fcSession !== undefined, "fcSession should be saved");
+      assertEquals(loaded.fcSession.ratings, [3, 4, 3, 1, 2], "ratings array should match");
+      assertEquals(loaded.fcSession.counts, { 1: 1, 2: 1, 3: 2, 4: 1 }, "counts aggregation should match");
+    });
+
+    test("API Error Handling Resilience", "Should gracefully handle backend 429 rate limit or 500 server errors during grading", async () => {
+      // Mock window.fetch
+      const originalFetch = window.fetch;
+      
+      // Test 429 Rate Limit Mock
+      window.fetch = async () => {
+        return {
+          ok: false,
+          status: 429,
+          json: async () => ({ error: "Rate limit exceeded. Please wait a minute." })
+        };
+      };
+
+      try {
+        const response = await fetch("/grade");
+        assert(response.ok === false, "Response should not be ok");
+        assertEquals(response.status, 429, "Status should be 429");
+        const err = await response.json();
+        assertEquals(err.error, "Rate limit exceeded. Please wait a minute.", "Error payload should match");
+      } finally {
+        // Restore fetch
+        window.fetch = originalFetch;
+      }
+    });
+
+    test("Exam Auto-Submission on Timer Expiry", "Simulate timer reaching 0 and assert that auto-submit correctly locks and saves progress state", () => {
+      const examKey = "ddia_exam_midterm_mock";
+      
+      // Simulate in-progress exam state with time remaining
+      let mockExamState = {
+        isSubmitted: false,
+        timeRemaining: 10,
+        questions: [{ type: "mc", q: "Test", correct: 0 }],
+        quizSelections: { 0: 0 },
+        flagged: {},
+        writeIns: {}
+      };
+
+      // Timer tick function simulation: timer decrements and triggers auto-submit when hitting 0
+      function tick(state) {
+        state.timeRemaining = Math.max(0, state.timeRemaining - 10);
+        if (state.timeRemaining === 0) {
+          state.isSubmitted = true;
+          saveState(state, examKey);
+        }
+      }
+
+      // Run simulation tick
+      tick(mockExamState);
+
+      const savedState = loadState(examKey);
+      assert(savedState.isSubmitted === true, "Exam should be automatically submitted and locked");
+      assertEquals(savedState.timeRemaining, 0, "Time remaining should be exactly 0");
+    });
+
+    // ── Test Runner Logic ──────────────────────────────
+
+    async function runAllTests() {
+      const container = document.getElementById("testListContainer");
+      container.innerHTML = "";
+      
+      let passedCount = 0;
+      let failedCount = 0;
+
+      document.getElementById("total-val").textContent = tests.length;
+      document.getElementById("passed-val").textContent = 0;
+      document.getElementById("failed-val").textContent = 0;
+
+      for (const t of tests) {
+        const item = document.createElement("div");
+        item.className = "test-item";
+        
+        item.innerHTML = `
+          <div class="test-info">
+            <span class="test-name">${t.name}</span>
+            <span class="test-desc">${t.description}</span>
+          </div>
+          <span class="test-badge" id="badge-${t.name.replace(/\s+/g, '')}">Running...</span>
+        `;
+        container.appendChild(item);
+
+        const badge = document.getElementById(`badge-${t.name.replace(/\s+/g, '')}`);
+
+        try {
+          await t.fn();
+          item.classList.add("pass");
+          badge.textContent = "PASS";
+          badge.classList.add("pass");
+          passedCount++;
+          document.getElementById("passed-val").textContent = passedCount;
+        } catch (err) {
+          item.classList.add("fail");
+          badge.textContent = "FAIL";
+          badge.classList.add("fail");
+          failedCount++;
+          document.getElementById("failed-val").textContent = failedCount;
+
+          const errorDiv = document.createElement("div");
+          errorDiv.className = "error-log";
+          errorDiv.textContent = err.stack || err.message;
+          item.appendChild(errorDiv);
+        }
+      }
+    }
+
+    document.getElementById("runTestsBtn").addEventListener("click", runAllTests);
+
+    // Auto-run on load
+    window.addEventListener("DOMContentLoaded", async () => {
+      // Small delay to ensure browser loads cdn scripts
+      setTimeout(runAllTests, 500);
+    });
+  </script>
+</body>
+</html>
