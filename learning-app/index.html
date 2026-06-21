@@ -67,7 +67,6 @@
   <main class="hub-wrapper">
     <!-- Hero Section -->
     <section class="hub-hero">
-      <div class="hub-badge">Pedagogical Consensus 2026</div>
       <h1 class="hub-title">Master Distributed Systems</h1>
       <p class="hub-subtitle">
         Deepen your engineering expertise through effortful cognitive processing. 
@@ -392,10 +391,11 @@
       });
 
       // 3. Handle Auto-Login if User Session Exists
-      const cachedUser = sessionStorage.getItem('ddia_active_user');
+      const cachedUser = sessionStorage.getItem('ddia_active_user') || localStorage.getItem('ddia_active_user');
       if (cachedUser) {
         getOrCreateUser(cachedUser);
-        document.getElementById('loginOverlay').remove();
+        const overlay = document.getElementById('loginOverlay');
+        if (overlay) overlay.remove();
         initHub();
       }
 
