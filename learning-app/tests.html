@@ -689,6 +689,200 @@
       }
     });
 
+    test("Database Base64 Round-trip Serialization", "Verify base64 binary encoding and decoding helpers", () => {
+      const buffer = new Uint8Array([72, 101, 108, 108, 111, 32, 83, 81, 76, 105, 116, 101]).buffer;
+      const base64 = arrayBufferToBase64(buffer);
+      assertEquals(base64, "SGVsbG8gU1FMaXRl", "Base64 encoding should match 'SGVsbG8gU1FMaXRl'");
+      
+      const decoded = base64ToArrayBuffer(base64);
+      const decodedArray = new Uint8Array(decoded);
+      const originalArray = new Uint8Array(buffer);
+      assertEquals(decodedArray.length, originalArray.length, "Decoded length should match original");
+      for (let i = 0; i < originalArray.length; i++) {
+        assertEquals(decodedArray[i], originalArray[i], `Byte at index ${i} should match`);
+      }
+    });
+
+    test("Database User Listing", "Verify listUsers correctly retrieves and sorts registered usernames", () => {
+      // Clear database users
+      if (_db) {
+        try {
+          _db.run("DELETE FROM users");
+        } catch (e) {}
+      }
+
+      // Initial listing should be empty
+      const emptyList = listUsers();
+      assertEquals(emptyList, [], "User list should be empty initially");
+
+      // Register two users out of alphabetical order
+      getOrCreateUser("zach");
+      getOrCreateUser("alice");
+
+      const userList = listUsers();
+      // Should sort alphabetically: alice, zach
+      assertEquals(userList, [["alice"], ["zach"]], "Usernames should be retrieved and sorted alphabetically");
+    });
+
+    test("Hamburger Menu UI State Toggle", "Verify hamburger button, drawer, and overlay classes toggle on click events", () => {
+      const toggleBtn = document.getElementById('hamburgerMenuBtn');
+      const drawer = document.getElementById('navDrawer');
+      const overlay = document.getElementById('navDrawerOverlay');
+
+      assert(toggleBtn !== null, "Hamburger toggle button should exist in the DOM");
+      assert(drawer !== null, "Navigation drawer should exist in the DOM");
+      assert(overlay !== null, "Overlay element should exist in the DOM");
+
+      // Save initial state
+      const isInitialOpen = drawer.classList.contains('open');
+
+      // Click to toggle
+      toggleBtn.click();
+      assertEquals(drawer.classList.contains('open'), !isInitialOpen, "Drawer open class should toggle");
+      assertEquals(overlay.classList.contains('open'), !isInitialOpen, "Overlay open class should toggle");
+      assertEquals(toggleBtn.classList.contains('open'), !isInitialOpen, "Toggle button open class should toggle");
+
+      // Click again to toggle back
+      toggleBtn.click();
+      assertEquals(drawer.classList.contains('open'), isInitialOpen, "Drawer open class should toggle back");
+      assertEquals(overlay.classList.contains('open'), isInitialOpen, "Overlay open class should toggle back");
+      assertEquals(toggleBtn.classList.contains('open'), isInitialOpen, "Toggle button open class should toggle back");
+    });
+
+    test("Forgetting Curve Canvas Rendering", "Verify drawForgettingCurve executes without error when element is present", () => {
+      const canvas = document.createElement('canvas');
+      canvas.id = 'forgettingCurve';
+      // Mock offsetWidth and offsetHeight
+      Object.defineProperty(canvas, 'offsetWidth', { value: 600, configurable: true });
+      Object.defineProperty(canvas, 'offsetHeight', { value: 300, configurable: true });
+      
+      document.body.appendChild(canvas);
+      try {
+        // Run function
+        drawForgettingCurve();
+        // If it got here without throwing, draw was successful
+        assert(true, "drawForgettingCurve executed successfully");
+      } finally {
+        document.body.removeChild(canvas);
+      }
+    });
+
+    test("Misconceptions UI Interaction and Summary", "Verify renderMisconceptions handles rendering and correct answer state update", () => {
+      const container = document.createElement('div');
+      container.innerHTML = `
+        <div id="misconceptionList"></div>
+        <div id="misconceptionSummary" class="hidden">
+          <span id="misconceptionResult"></span>
+        </div>
+      `;
+      document.body.appendChild(container);
+
+      const originalMisconceptions = window.MISCONCEPTIONS;
+      window.MISCONCEPTIONS = [
+        { key: "m1", statement: "SQLite is not transaction-safe.", correct: "false", explanation: { true: "Wrong", false: "SQLite supports ACID transactions", unsure: "Unsure explanation" } }
+      ];
+
+      try {
+        renderMisconceptions();
+
+        const items = container.querySelectorAll('.misconception-item');
+        assertEquals(items.length, 1, "Should render exactly 1 misconception item");
+
+        const firstItem = items[0];
+        const buttons = firstItem.querySelectorAll('.mc-btn');
+        assertEquals(buttons.length, 3, "Each misconception item should have 3 buttons");
+
+        // Simulate choosing the correct option (False)
+        const falseBtn = firstItem.querySelector('[data-value="false"]');
+        assert(falseBtn !== null, "False button should exist");
+        
+        falseBtn.click();
+
+        assert(falseBtn.classList.contains('selected'), "False button should be selected");
+        const feedback = firstItem.querySelector('.misconception-feedback');
+        assert(!feedback.classList.contains('hidden'), "Feedback should be visible");
+        assertEquals(feedback.textContent, "SQLite supports ACID transactions", "Feedback content should match the false option explanation");
+        assert(feedback.classList.contains('correct'), "Feedback should have the 'correct' class");
+
+        // Since all misconceptions (1/1) were answered, the summary panel should be visible
+        const summary = document.getElementById('misconceptionSummary');
+        assert(!summary.classList.contains('hidden'), "Summary panel should be visible");
+        const result = document.getElementById('misconceptionResult');
+        assert(result.innerHTML.includes("1 out of 1"), "Result text should indicate 1 out of 1 correct");
+
+      } finally {
+        window.MISCONCEPTIONS = originalMisconceptions;
+        document.body.removeChild(container);
+      }
+    });
+
+    test("Flashcards Flow & Session Save", "Verify flashcard state transitions, ratings aggregate, and state persistence on completion", () => {
+      const container = document.createElement('div');
+      container.innerHTML = `
+        <div id="flashcardDeck">
+          <div id="flashcard">
+            <div id="flashcardInner">
+              <div id="fcFront"></div>
+              <div id="fcBack"></div>
+            </div>
+          </div>
+          <div id="fcProgress"></div>
+          <div id="fcProgressFill"></div>
+          <button id="fcFlip"></button>
+          <div id="fcRating" class="hidden"></div>
+        </div>
+        <div id="fcComplete" class="hidden">
+          <div id="fcStats"></div>
+          <button id="fcRestart"></button>
+        </div>
+      `;
+      document.body.appendChild(container);
+
+      const originalFlashcards = window.FLASHCARDS;
+      const originalStateKey = window.STATE_KEY;
+      
+      window.FLASHCARDS = [
+        { front: "Front 1", back: "Back 1" },
+        { front: "Front 2", back: "Back 2" }
+      ];
+      window.STATE_KEY = "ddia_test_fc_save_key";
+
+      // Reset global tracking variables used in shared-app.js
+      fcIndex = 0;
+      fcRatings = [];
+      fcDeck = [ ...window.FLASHCARDS ]; 
+
+      try {
+        // 1. Test initial rendering
+        renderFlashcard();
+        assertEquals(document.getElementById('fcFront').textContent, "Front 1", "First card front text should be 'Front 1'");
+        assertEquals(document.getElementById('fcProgress').textContent, "Card 1 of 2", "Progress text should show Card 1 of 2");
+
+        // 2. Simulate user answering and rating card 1
+        fcRatings.push({ card: 0, rating: 3 }); // rated "Good"
+        fcIndex = 1;
+        renderFlashcard();
+        assertEquals(document.getElementById('fcFront').textContent, "Front 2", "Second card front text should be 'Front 2'");
+        assertEquals(document.getElementById('fcProgress').textContent, "Card 2 of 2", "Progress text should show Card 2 of 2");
+
+        // 3. Simulate rating card 2 and complete session
+        fcRatings.push({ card: 1, rating: 4 }); // rated "Easy"
+        showFcComplete();
+
+        // 4. Verify DOM update and saved state
+        assert(document.getElementById('flashcardDeck').classList.contains('hidden'), "Flashcard deck should be hidden");
+        assert(!document.getElementById('fcComplete').classList.contains('hidden'), "Completion screen should be visible");
+        
+        const savedState = loadState("ddia_test_fc_save_key");
+        assert(savedState.fcSession !== undefined, "fcSession state should be saved in DB");
+        assertEquals(savedState.fcSession.counts, { 1: 0, 2: 0, 3: 1, 4: 1 }, "Counts object should match rating distribution");
+      } finally {
+        window.FLASHCARDS = originalFlashcards;
+        window.STATE_KEY = originalStateKey;
+        document.body.removeChild(container);
+      }
+    });
+
     // ── Test Runner Logic ──────────────────────────────
 
     async function runAllTests() {
