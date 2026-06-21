@@ -4,14 +4,16 @@
 
 // ── State Management ────────────────────────────────
 
-function loadState() {
-  const s = window.dbLoadState ? window.dbLoadState(STATE_KEY) : {};
+function loadState(stateKey) {
+  const key = stateKey || STATE_KEY;
+  const s = window.dbLoadState ? window.dbLoadState(key) : {};
   return (s && typeof s === 'object') ? s : {};
 }
 
-function saveState(data) {
+function saveState(data, stateKey) {
+  const key = stateKey || STATE_KEY;
   if (window.dbSaveState) {
-    window.dbSaveState(data, STATE_KEY);
+    window.dbSaveState(data, key);
   }
 }
 
@@ -469,7 +471,44 @@ function showQuizResultsPanel(state) {
 }
 
 function setupQuizFilters() {
-  document.querySelectorAll('.filter-btn').forEach(btn => {
+  const filterContainer = document.querySelector('.quiz-filter-btns');
+  if (filterContainer && !document.getElementById('resetQuizBtn')) {
+    const resetBtn = document.createElement('button');
+    resetBtn.id = 'resetQuizBtn';
+    resetBtn.className = 'filter-btn reset-quiz-btn';
+    resetBtn.style.marginLeft = '1rem';
+    resetBtn.textContent = 'Reset Quiz';
+    resetBtn.addEventListener('click', () => {
+      const confirmReset = confirm('Are you sure you want to reset the quiz? This will permanently clear all your multiple-choice and write-in answers, as well as AI grading feedback for this chapter.');
+      if (confirmReset) {
+        saveState({
+          quizGraded: false,
+          quizSelections: {},
+          writeInAnswers: {},
+          aiGrades: {}
+        });
+        
+        // Hide results panel if visible
+        const resultsPanel = document.getElementById('quizResults');
+        if (resultsPanel) resultsPanel.classList.add('hidden');
+        
+        // Reset current filter to 'all' and active filter button
+        currentFilter = 'all';
+        document.querySelectorAll('.filter-btn').forEach(b => {
+          if (b.dataset.filter === 'all') {
+            b.classList.add('active');
+          } else {
+            b.classList.remove('active');
+          }
+        });
+        
+        renderQuiz();
+      }
+    });
+    filterContainer.appendChild(resetBtn);
+  }
+
+  document.querySelectorAll('.filter-btn:not(.reset-quiz-btn)').forEach(btn => {
     btn.addEventListener('click', function() {
       document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
       this.classList.add('active');

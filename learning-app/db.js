@@ -301,6 +301,10 @@ function injectHamburgerMenu() {
             <a href="${prefix}exams/index.html?type=final" class="nav-drawer-link ${isFinal ? 'active' : ''}">
                 <span style="margin-right: 0.5rem;">🏆</span> Final Exam
             </a>
+            <div class="nav-drawer-divider" style="margin-top: 1.5rem;">Session</div>
+            <button id="hamburgerSwitchAccountBtn" class="nav-drawer-link" style="background: none; border: none; width: 100%; text-align: left; cursor: pointer; color: var(--text-primary); outline: none;">
+                <span style="margin-right: 0.5rem;">👤</span> Switch Account (${getCurrentUsername()})
+            </button>
         </div>
     `;
     
@@ -318,6 +322,16 @@ function injectHamburgerMenu() {
     
     toggleBtn.addEventListener('click', toggle);
     overlay.addEventListener('click', toggle);
+
+    // Wire up hamburger Switch Account
+    const burgerSwitchBtn = document.getElementById('hamburgerSwitchAccountBtn');
+    if (burgerSwitchBtn) {
+        burgerSwitchBtn.addEventListener('click', () => {
+            sessionStorage.removeItem('ddia_active_user');
+            localStorage.removeItem('ddia_active_user');
+            window.location.href = prefix + 'index.html';
+        });
+    }
 
     // Make logo-area clickable to homepage
     const logoArea = document.querySelector('.logo-area');

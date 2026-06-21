@@ -57,6 +57,12 @@
         </div>
       </div>
       <div style="margin-left: auto; display: flex; gap: 1rem; align-items: center;">
+        <span id="activeUserDisplay" style="font-size: 0.85rem; color: var(--text-secondary); background: rgba(255,255,255,0.05); padding: 0.35rem 0.75rem; border-radius: 4px; border: 1px solid var(--border-color); display: none;">
+          User: <strong id="usernameLabel" style="color: var(--text-primary); text-transform: capitalize;"></strong>
+        </span>
+        <button id="switchAccountBtn" class="nav-btn" style="padding: 0.5rem 1rem; font-size: 0.85rem; cursor: pointer; display: none;">
+          👤 Switch Account
+        </button>
         <button id="exportStateBtn" class="nav-btn" style="padding: 0.5rem 1rem; font-size: 0.85rem; cursor: pointer;" title="Downloads your progress as 'ddia_progress.json' to run with the python grade_responses.py script for automated AI feedback.">
           📥 Export Progress
         </button>
@@ -387,6 +393,17 @@
       } catch (e) {
         console.error("Failed to load exam scores", e);
       }
+
+      // Update active user display badge
+      const activeUser = getCurrentUsername();
+      if (activeUser && activeUser !== 'anonymous') {
+        const usernameLabel = document.getElementById('usernameLabel');
+        const activeUserDisplay = document.getElementById('activeUserDisplay');
+        const switchAccountBtn = document.getElementById('switchAccountBtn');
+        if (usernameLabel) usernameLabel.textContent = activeUser;
+        if (activeUserDisplay) activeUserDisplay.style.display = 'block';
+        if (switchAccountBtn) switchAccountBtn.style.display = 'block';
+      }
     }
 
     document.addEventListener("DOMContentLoaded", async () => {
@@ -421,6 +438,16 @@
         document.getElementById('loginOverlay').remove();
         initHub();
       });
+
+      // 5. Handle Switch Account button click
+      const switchAccountBtn = document.getElementById('switchAccountBtn');
+      if (switchAccountBtn) {
+        switchAccountBtn.addEventListener('click', () => {
+          sessionStorage.removeItem('ddia_active_user');
+          localStorage.removeItem('ddia_active_user');
+          window.location.reload();
+        });
+      }
 
       // Export Progress: Exports the underlying sqlite DB Uint8Array as file
       document.getElementById('exportStateBtn').addEventListener('click', async () => {

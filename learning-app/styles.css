@@ -1452,6 +1452,16 @@ body {
   border-color: var(--accent-indigo);
   color: var(--accent-purple);
 }
+.filter-btn.reset-quiz-btn {
+  background: rgba(244, 63, 94, 0.05);
+  border-color: rgba(244, 63, 94, 0.2);
+  color: var(--accent-rose);
+}
+.filter-btn.reset-quiz-btn:hover {
+  background: rgba(244, 63, 94, 0.15);
+  border-color: var(--accent-rose);
+  color: #fff;
+}
 
 /* ── Write-In Question Styling ── */
 .quiz-writein-container {

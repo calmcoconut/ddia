@@ -481,6 +481,66 @@
       }
     });
 
+    test("Shared Core: Quiz Reset Functionality", "Verify setupQuizFilters() correctly appends the Reset Quiz button, and clicking it resets state & UI", () => {
+      const container = document.createElement('div');
+      container.innerHTML = `
+        <div class="quiz-filter-btns">
+          <button class="filter-btn active" data-filter="all">All</button>
+          <button class="filter-btn" data-filter="mc">Multiple Choice</button>
+        </div>
+        <div id="quizContainer"></div>
+        <div id="quizResults" class="hidden"></div>
+      `;
+      document.body.appendChild(container);
+
+      // Save dummy state to reset
+      saveState({
+        quizGraded: true,
+        quizSelections: { 0: 1 },
+        writeInAnswers: { 1: "sample response" },
+        aiGrades: { 1: { score: 4 } }
+      });
+
+      // Mock confirm dialog to return true
+      const originalConfirm = window.confirm;
+      window.confirm = () => true;
+
+      // Mock QUIZ_QUESTIONS global
+      const originalQuestions = window.QUIZ_QUESTIONS;
+      window.QUIZ_QUESTIONS = [
+        { type: "mc", q: "Q1", options: ["A", "B"], correct: 1, explanation: "Exp", section: "Sec" },
+        { type: "write", q: "Q2", hint: "Hint", section: "Sec" }
+      ];
+
+      try {
+        // Run setup
+        setupQuizFilters();
+
+        const resetBtn = document.getElementById('resetQuizBtn');
+        assert(resetBtn !== null, "Reset Quiz button should be created and added to DOM");
+        assertEquals(resetBtn.textContent, "Reset Quiz", "Reset button text should be correct");
+
+        // Act - click reset
+        resetBtn.click();
+
+        // Assert - State was reset
+        const state = loadState();
+        assertEquals(state.quizGraded, false, "quizGraded should be reset to false");
+        assertEquals(Object.keys(state.quizSelections).length, 0, "quizSelections should be empty object");
+        assertEquals(Object.keys(state.writeInAnswers).length, 0, "writeInAnswers should be empty object");
+        assertEquals(Object.keys(state.aiGrades).length, 0, "aiGrades should be empty object");
+
+        // Filter active class should reset to 'all'
+        const allFilterBtn = container.querySelector('[data-filter="all"]');
+        assert(allFilterBtn.classList.contains('active'), "The 'All' filter button should be active");
+
+      } finally {
+        window.confirm = originalConfirm;
+        window.QUIZ_QUESTIONS = originalQuestions;
+        document.body.removeChild(container);
+      }
+    });
+
     test("API Error Handling Resilience", "Should gracefully handle backend 429 rate limit or 500 server errors during grading", async () => {
       // Mock window.fetch
       const originalFetch = window.fetch;
