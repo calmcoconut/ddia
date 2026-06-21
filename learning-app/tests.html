@@ -293,11 +293,14 @@
       assertEquals(stateKey, "ddia_ch1_learning", "Chapter 1 key must be ddia_ch1_learning (unpadded)");
     });
 
-    test("Database Persistence", "Should correctly write SQLite binary to localStorage as base64 on saveState", () => {
+    test("Database Persistence", "Should correctly write SQLite binary to localStorage as base64 on saveState", async () => {
       localStorage.removeItem("ddia_sqlite_db");
       
       const testVal = { quizSelections: { 9: 2 } };
       saveState(testVal, "ddia_persistence_test_key");
+      
+      // Wait for the debounced persistDb (1000ms) to fire
+      await new Promise(resolve => setTimeout(resolve, 1100));
       
       const savedBinary = localStorage.getItem("ddia_sqlite_db");
       assert(savedBinary !== null, "ddia_sqlite_db should be present in localStorage after saveState");
