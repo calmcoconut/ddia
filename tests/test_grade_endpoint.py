@@ -42,6 +42,7 @@ VALID_PAYLOAD = {
 
 # ── Smoke Tests (no real API call) ──────────────────────────────────────────
 
+@pytest.mark.smoketest
 class TestEndpointContract:
     """Validate request/response shape without a live Gemini call."""
 
@@ -137,6 +138,7 @@ class TestEndpointContract:
 
 # ── Live Integration Test (opt-in, skipped without real key) ────────────────
 
+@pytest.mark.live
 @pytest.mark.skipif(
     not os.environ.get("LLM_KEY") or os.environ.get("LLM_PROVIDER", "gemini").lower() != "gemini",
     reason="Set LLM_KEY and LLM_PROVIDER=gemini to run live integration test"
@@ -162,6 +164,7 @@ class TestLiveGrading:
         print("--> Finished test_live_grade_returns_valid_score", flush=True)
 
 
+@pytest.mark.live
 @pytest.mark.skipif(
     not os.environ.get("LLM_KEY") or os.environ.get("LLM_PROVIDER", "").lower() != "openai",
     reason="Set LLM_KEY and LLM_PROVIDER=openai to run live OpenAI integration test"
@@ -187,6 +190,7 @@ class TestLiveOpenAIGrading:
         print("--> Finished test_live_openai_grade_returns_valid_score", flush=True)
 
 
+@pytest.mark.live
 @pytest.mark.skipif(
     not os.environ.get("LLM_KEY") or os.environ.get("LLM_PROVIDER", "").lower() != "claude",
     reason="Set LLM_KEY and LLM_PROVIDER=claude to run live Claude integration test"
@@ -212,6 +216,7 @@ class TestLiveClaudeGrading:
         print("--> Finished test_live_claude_grade_returns_valid_score", flush=True)
 
 
+@pytest.mark.smoketest
 class TestLogging:
     """Verify that grading requests are written to the log."""
 
@@ -316,6 +321,7 @@ class TestLogging:
         print("--> Finished test_api_error_is_logged_to_error_level", flush=True)
 
 
+@pytest.mark.smoketest
 def test_book_context_extraction_integration():
     """Verify that chapter numbers are parsed correctly, and full chapter text is retrieved."""
     print("\n--> Starting test_book_context_extraction_integration", flush=True)
@@ -332,6 +338,7 @@ def test_book_context_extraction_integration():
     print("--> Finished test_book_context_extraction_integration", flush=True)
 
 
+@pytest.mark.smoketest
 def test_grade_responses_sqlite_loading_support(tmp_path):
     """Verify that grade_responses can detect and load progress from an exported SQLite database."""
     print("\n--> Starting test_grade_responses_sqlite_loading_support", flush=True)
@@ -380,6 +387,7 @@ def test_grade_responses_sqlite_loading_support(tmp_path):
     print("--> Finished test_grade_responses_sqlite_loading_support", flush=True)
 
 
+@pytest.mark.smoketest
 class TestLLMGraderAdapter:
     """Unit tests validating dynamic LLMGrader client adapter logic with mock wrappers."""
 
