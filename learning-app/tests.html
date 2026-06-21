@@ -633,6 +633,57 @@
       } finally {
         document.body.removeChild(container);
       }
+
+      // 3. Test centralized logoutUser(null, true) execution (TDD Verification)
+      sessionStorage.setItem('ddia_active_user', 'alex_test');
+      localStorage.setItem('ddia_active_user', 'alex_test');
+      assertEquals(sessionStorage.getItem('ddia_active_user'), 'alex_test', "Setup: active user session must exist");
+
+      // Execute Centralized Logout with dryRun = true
+      logoutUser(null, true);
+
+      assertEquals(sessionStorage.getItem('ddia_active_user'), null, "Post-logout: sessionStorage should be cleared");
+      assertEquals(localStorage.getItem('ddia_active_user'), null, "Post-logout: localStorage should be cleared");
+
+      // 4. Test click delegation on both GUI buttons using a logoutUser spy
+      let logoutCalledWith = null;
+      const originalLogout = window.logoutUser;
+      
+      // Override logoutUser with a spy
+      window.logoutUser = (url) => {
+        logoutCalledWith = url || "default_reload";
+      };
+
+      try {
+        // Spy-test 1: Click the Hamburger Menu Switch Account Button (already injected by db.js)
+        const burgerBtn = document.getElementById('hamburgerSwitchAccountBtn');
+        assert(burgerBtn !== null, "Hamburger button should be present");
+        
+        // Trigger click event
+        burgerBtn.click();
+        assertEquals(logoutCalledWith, "./index.html", "Clicking hamburger Switch Account button should delegate to logoutUser with correct index redirect");
+
+        // Reset spy
+        logoutCalledWith = null;
+
+        // Spy-test 2: Click the Ribbon Header Switch Account Button (replicated interaction)
+        const ribbonBtn = document.createElement('button');
+        ribbonBtn.id = 'tempSwitchAccountBtn';
+        ribbonBtn.addEventListener('click', () => {
+          logoutUser(); // Calls our spied logoutUser
+        });
+        document.body.appendChild(ribbonBtn);
+
+        try {
+          ribbonBtn.click();
+          assertEquals(logoutCalledWith, "default_reload", "Clicking ribbon header Switch Account button should delegate to logoutUser with default reload");
+        } finally {
+          document.body.removeChild(ribbonBtn);
+        }
+      } finally {
+        // Restore original logoutUser function
+        window.logoutUser = originalLogout;
+      }
     });
 
     // ── Test Runner Logic ──────────────────────────────

@@ -425,7 +425,7 @@
       if (cachedUser) {
         getOrCreateUser(cachedUser);
         const overlay = document.getElementById('loginOverlay');
-        if (overlay) overlay.remove();
+        if (overlay) overlay.classList.add('hidden');
         initHub();
       }
 
@@ -436,7 +436,8 @@
 
         getOrCreateUser(username);
         await migrateFromLocalStorage(username);
-        document.getElementById('loginOverlay').remove();
+        const overlay = document.getElementById('loginOverlay');
+        if (overlay) overlay.classList.add('hidden');
         initHub();
       });
 
@@ -444,9 +445,7 @@
       const switchAccountBtn = document.getElementById('switchAccountBtn');
       if (switchAccountBtn) {
         switchAccountBtn.addEventListener('click', () => {
-          sessionStorage.removeItem('ddia_active_user');
-          localStorage.removeItem('ddia_active_user');
-          window.location.reload();
+          logoutUser();
         });
       }
 

@@ -220,6 +220,31 @@ function exportToAnki(flashcards, title) {
 }
 window.exportToAnki = exportToAnki;
 
+// Centralized logout and account switching logic
+function logoutUser(redirectUrl, dryRun = false) {
+    sessionStorage.removeItem('ddia_active_user');
+    localStorage.removeItem('ddia_active_user');
+    if (dryRun) return;
+    
+    if (redirectUrl) {
+        window.location.href = redirectUrl;
+    } else {
+        const overlay = document.getElementById('loginOverlay');
+        if (overlay) {
+            overlay.classList.remove('hidden');
+            const display = document.getElementById('activeUserDisplay');
+            const btn = document.getElementById('switchAccountBtn');
+            const input = document.getElementById('usernameInput');
+            if (display) display.style.display = 'none';
+            if (btn) btn.style.display = 'none';
+            if (input) input.value = '';
+        } else {
+            window.location.href = 'index.html';
+        }
+    }
+}
+window.logoutUser = logoutUser;
+
 // Hamburger Menu Injection
 const chaptersInfo = [
   { num: 1, dir: "ch01", title: "Trade-Offs in Data Systems Architecture" },
@@ -327,9 +352,7 @@ function injectHamburgerMenu() {
     const burgerSwitchBtn = document.getElementById('hamburgerSwitchAccountBtn');
     if (burgerSwitchBtn) {
         burgerSwitchBtn.addEventListener('click', () => {
-            sessionStorage.removeItem('ddia_active_user');
-            localStorage.removeItem('ddia_active_user');
-            window.location.href = prefix + 'index.html';
+            logoutUser(prefix + 'index.html');
         });
     }
 
