@@ -167,3 +167,122 @@ window.listUsers = listUsers;
 window.getOrCreateUser = getOrCreateUser;
 window.loadState = loadState;
 window.saveState = saveState;
+
+// Hamburger Menu Injection
+const chaptersInfo = [
+  { num: 1, dir: "ch01", title: "Trade-Offs in Data Systems Architecture" },
+  { num: 2, dir: "ch02", title: "Defining Nonfunctional Requirements" },
+  { num: 3, dir: "ch03", title: "Data Models and Query Languages" },
+  { num: 4, dir: "ch04", title: "Storage and Retrieval" },
+  { num: 5, dir: "ch05", title: "Encoding and Evolution" },
+  { num: 6, dir: "ch06", title: "Replication" },
+  { num: 7, dir: "ch07", title: "Sharding" },
+  { num: 8, dir: "ch08", title: "Transactions" },
+  { num: 9, dir: "ch09", title: "The Trouble with Distributed Systems" },
+  { num: 10, dir: "ch10", title: "Consistency and Consensus" },
+  { num: 11, dir: "ch11", title: "Batch Processing" },
+  { num: 12, dir: "ch12", title: "Stream Processing" },
+  { num: 13, dir: "ch13", title: "A Philosophy of Streaming Systems" },
+  { num: 14, dir: "ch14", title: "Doing the Right Thing" }
+];
+
+function injectHamburgerMenu() {
+    // Determine path prefix
+    const isSubPage = window.location.pathname.includes('/ch0') || 
+                      window.location.pathname.includes('/ch1') || 
+                      window.location.pathname.includes('/exams/');
+    const prefix = isSubPage ? '../' : './';
+    
+    // Create toggle button
+    const toggleBtn = document.createElement('button');
+    toggleBtn.id = 'hamburgerMenuBtn';
+    toggleBtn.className = 'hamburger-menu-btn';
+    toggleBtn.setAttribute('aria-label', 'Toggle navigation menu');
+    toggleBtn.innerHTML = '<span></span><span></span><span></span>';
+    
+    // Create drawer
+    const drawer = document.createElement('div');
+    drawer.id = 'navDrawer';
+    drawer.className = 'nav-drawer';
+    
+    // Create overlay
+    const overlay = document.createElement('div');
+    overlay.id = 'navDrawerOverlay';
+    overlay.className = 'nav-drawer-overlay';
+    
+    // Determine active states
+    const currentPath = window.location.pathname;
+    const isHome = !isSubPage;
+    
+    // Build drawer HTML
+    let chaptersHtml = '';
+    chaptersInfo.forEach(ch => {
+        const isActive = currentPath.includes(`/${ch.dir}/`);
+        chaptersHtml += `
+            <a href="${prefix}${ch.dir}/index.html" class="nav-drawer-link ${isActive ? 'active' : ''}">
+                <span style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent-indigo); margin-right: 0.5rem; min-width: 1.5rem;">CH${ch.num}</span>
+                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${ch.title}</span>
+            </a>
+        `;
+    });
+    
+    // Check if we are on midterm or final
+    const isMidterm = window.location.search.includes('type=midterm') || currentPath.includes('midterm');
+    const isFinal = window.location.search.includes('type=final') || currentPath.includes('final');
+
+    drawer.innerHTML = `
+        <div class="nav-drawer-header">
+            <h3>DDIA Study Hub</h3>
+        </div>
+        <div class="nav-drawer-content">
+            <a href="${prefix}index.html" class="nav-drawer-link ${isHome ? 'active' : ''}">
+                <span style="margin-right: 0.5rem;">🏠</span> Homepage Dashboard
+            </a>
+            <div class="nav-drawer-divider">Chapters</div>
+            <div style="display: flex; flex-direction: column; gap: 0.35rem;">
+                ${chaptersHtml}
+            </div>
+            <div class="nav-drawer-divider">Assessments</div>
+            <a href="${prefix}exams/index.html?type=midterm" class="nav-drawer-link ${isMidterm ? 'active' : ''}">
+                <span style="margin-right: 0.5rem;">⏱️</span> Midterm Exam
+            </a>
+            <a href="${prefix}exams/index.html?type=final" class="nav-drawer-link ${isFinal ? 'active' : ''}">
+                <span style="margin-right: 0.5rem;">🏆</span> Final Exam
+            </a>
+        </div>
+    `;
+    
+    // Append elements to body
+    document.body.appendChild(toggleBtn);
+    document.body.appendChild(drawer);
+    document.body.appendChild(overlay);
+    
+    // Toggle action
+    const toggle = () => {
+        toggleBtn.classList.toggle('open');
+        drawer.classList.toggle('open');
+        overlay.classList.toggle('open');
+    };
+    
+    toggleBtn.addEventListener('click', toggle);
+    overlay.addEventListener('click', toggle);
+
+    // Make logo-area clickable to homepage
+    const logoArea = document.querySelector('.logo-area');
+    if (logoArea) {
+        logoArea.style.cursor = 'pointer';
+        logoArea.style.transition = 'opacity 0.2s ease';
+        logoArea.addEventListener('mouseenter', () => logoArea.style.opacity = '0.85');
+        logoArea.addEventListener('mouseleave', () => logoArea.style.opacity = '1');
+        logoArea.addEventListener('click', () => {
+            window.location.href = prefix + 'index.html';
+        });
+    }
+}
+
+// Run injection when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', injectHamburgerMenu);
+} else {
+    injectHamburgerMenu();
+}

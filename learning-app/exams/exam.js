@@ -783,8 +783,10 @@ async function init() {
       gradeExamBtn.disabled = true;
       
       const statusEl = document.getElementById('examGradingStatus');
-      statusEl.textContent = 'Contacting Gemini API for grading...';
+      statusEl.textContent = 'Preparing to grade write-in questions...';
       statusEl.className = 'save-confirmation'; // show it (remove hidden)
+      statusEl.style.color = 'var(--text-secondary)';
+      statusEl.style.background = 'var(--bg-elevated)';
       
       try {
         const examQuestionsToGrade = [];
@@ -792,7 +794,7 @@ async function init() {
           if (q.type === 'write') {
             const studentAns = examState.writeIns[idx] || '';
             examQuestionsToGrade.push({
-              idx: idx.toString(),
+              idx: idx,
               q: q.q,
               modelAnswer: q.modelAnswer,
               studentAnswer: studentAns,
@@ -802,38 +804,86 @@ async function init() {
           }
         });
 
-        if (examQuestionsToGrade.length === 0) {
+        const totalToGrade = examQuestionsToGrade.length;
+        if (totalToGrade === 0) {
           throw new Error('No write-in questions to grade.');
         }
 
-        const response = await fetch('/grade', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            chapterKey: getStorageKey(),
-            username: sessionStorage.getItem('ddia_active_user') || 'anonymous',
-            isExam: true,
-            questions: examQuestionsToGrade
-          })
-        });
+        // Set up progress bar UI in results modal dynamically
+        let progressContainer = document.getElementById('examGradingProgressContainer');
+        if (!progressContainer) {
+          progressContainer = document.createElement('div');
+          progressContainer.id = 'examGradingProgressContainer';
+          progressContainer.className = 'grading-progress-container';
+          progressContainer.style.marginTop = '1rem';
+          progressContainer.style.width = '100%';
+          progressContainer.style.textAlign = 'left';
+          progressContainer.innerHTML = `
+            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.4rem;">
+              <span id="examGradingProgressStatus">Grading write-in responses...</span>
+              <span id="examGradingProgressPercent">0%</span>
+            </div>
+            <div style="width: 100%; height: 8px; background: rgba(99, 102, 241, 0.1); border-radius: 4px; overflow: hidden;">
+              <div id="examGradingProgressBarFill" style="width: 0%; height: 100%; background: var(--gradient-primary); border-radius: 4px; transition: width 0.3s ease;"></div>
+            </div>
+          `;
+          // Insert after statusEl
+          statusEl.parentNode.insertBefore(progressContainer, statusEl.nextSibling);
+        }
+        progressContainer.classList.remove('hidden');
 
-        if (!response.ok) {
-          const err = await response.json();
-          throw new Error(err.error || `HTTP error! status: ${response.status}`);
+        const fillEl = document.getElementById('examGradingProgressBarFill');
+        const percentEl = document.getElementById('examGradingProgressPercent');
+
+        fillEl.style.width = '0%';
+        percentEl.textContent = '0%';
+
+        const grades = {};
+        let currentCount = 0;
+
+        for (const item of examQuestionsToGrade) {
+          currentCount++;
+          statusEl.textContent = `Grading question ${currentCount} of ${totalToGrade}: "${item.q.substring(0, 30)}..."`;
+          
+          const response = await fetch('/grade', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              chapterKey: getStorageKey(),
+              username: sessionStorage.getItem('ddia_active_user') || 'anonymous',
+              isExam: true,
+              questions: [item]
+            })
+          });
+
+          if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.error || `HTTP error! status: ${response.status}`);
+          }
+
+          const data = await response.json();
+          if (data && data.grades) {
+            Object.assign(grades, data.grades);
+          }
+
+          const pct = Math.round((currentCount / totalToGrade) * 100);
+          fillEl.style.width = `${pct}%`;
+          percentEl.textContent = `${pct}%`;
         }
 
-        const data = await response.json();
-        
-        examState.aiGrades = data.grades;
+        examState.aiGrades = { ...(examState.aiGrades || {}), ...grades };
         saveExamState(examState);
         
         statusEl.textContent = '✓ Grading completed successfully!';
         statusEl.style.color = 'var(--accent-emerald)';
         statusEl.style.background = 'rgba(16, 185, 129, 0.1)';
         
-        // Refresh modal display and active question to reflect grading
+        setTimeout(() => {
+          progressContainer.classList.add('hidden');
+        }, 3000);
+
         showResultsModal();
         renderActiveQuestion();
         
