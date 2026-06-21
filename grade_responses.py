@@ -371,12 +371,6 @@ def main():
 
     if args.provider:
         provider = args.provider.strip().lower()
-        if provider == "gemini":
-            api_key = os.environ.get("GEMINI_API_KEY")
-        elif provider == "openai":
-            api_key = os.environ.get("OPENAI_API_KEY")
-        elif provider == "claude":
-            api_key = os.environ.get("ANTHROPIC_API_KEY")
 
     if args.model:
         model_name = args.model.strip()
@@ -461,7 +455,7 @@ def main():
     )
 
     report_markdown = (
-        f"# Designing Data-Intensive Applications — AI Evaluation Report\n"
+        "# Designing Data-Intensive Applications — AI Evaluation Report\n"
     )
     report_markdown += f"Evaluated using provider: `{model.provider}` and model: `{model.model_name}`\n\n---\n\n"
 

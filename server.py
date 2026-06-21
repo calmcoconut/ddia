@@ -46,9 +46,8 @@ def grade():
     provider, api_key, model_name = get_llm_config()
     
     if not api_key:
-        log.error(f"{provider.upper()}_API_KEY missing", extra={"request_id": request_id})
-        var_name = "OPENAI_KEY" if provider == "openai" else ("CLAUDE_KEY" if provider == "claude" else "GEMINI_KEY")
-        return jsonify({"error": f"API Key ({var_name}) not set on server"}), 500
+        log.error("LLM_KEY missing", extra={"request_id": request_id})
+        return jsonify({"error": "API Key (LLM_KEY) not set on server"}), 500
 
     try:
         model = LLMGrader(provider, api_key, model_name)
