@@ -5,6 +5,7 @@ import json
 import re
 import argparse
 import subprocess
+import sqlite3
 
 # Verify imports
 try:
@@ -373,7 +374,6 @@ def main():
 
     if is_sqlite:
         try:
-            import sqlite3
             print(f"Detected SQLite database format for progress file: {args.state}")
             conn = sqlite3.connect(args.state)
             cursor = conn.cursor()
