@@ -1351,3 +1351,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.location.href = '../index.html';
   }
 });
+
+// Wire up Anki export button
+document.getElementById('exportAnkiBtn')?.addEventListener('click', () => {
+  if (typeof exportToAnki === 'function') {
+    exportToAnki(FLASHCARDS, document.title);
+  }
+});

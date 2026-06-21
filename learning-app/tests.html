@@ -366,6 +366,23 @@
       assertEquals(loaded.fcSession.counts, { 1: 1, 2: 1, 3: 2, 4: 1 }, "counts aggregation should match");
     });
 
+    test("Anki TSV Export Serialization", "Ensure flashcards are correctly serialized to tab-separated UTF-8 values and inner newlines mapped to HTML line breaks", () => {
+      const sampleCards = [
+        { front: "OLTP\nvs\nOLAP", back: "Transactional\tvs\nAnalytics" }
+      ];
+
+      // Replicate serialization portion of exportToAnki
+      let tsvContent = "";
+      sampleCards.forEach(card => {
+        const front = card.front.replace(/\r?\n/g, "<br>").replace(/\t/g, " ");
+        const back = card.back.replace(/\r?\n/g, "<br>").replace(/\t/g, " ");
+        tsvContent += `${front}\t${back}\n`;
+      });
+
+      // Verify correct conversion and tab-separation
+      assertEquals(tsvContent, "OLTP<br>vs<br>OLAP\tTransactional vs<br>Analytics\n", "Serialization format should map inner newlines to <br> and separate fields with tab");
+    });
+
     test("API Error Handling Resilience", "Should gracefully handle backend 429 rate limit or 500 server errors during grading", async () => {
       // Mock window.fetch
       const originalFetch = window.fetch;

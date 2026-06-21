@@ -188,6 +188,38 @@ window.saveState = saveState;
 window.dbLoadState = loadState;
 window.dbSaveState = saveState;
 
+// Format and download flashcards as Anki tab-separated text import file
+function exportToAnki(flashcards, title) {
+    if (!flashcards || flashcards.length === 0) {
+        alert("No flashcards found to export.");
+        return;
+    }
+    
+    let tsvContent = "";
+    flashcards.forEach(card => {
+        // Replace inner newlines with HTML <br> tags as expected by Anki
+        const front = card.front.replace(/\r?\n/g, "<br>").replace(/\t/g, " ");
+        const back = card.back.replace(/\r?\n/g, "<br>").replace(/\t/g, " ");
+        tsvContent += `${front}\t${back}\n`;
+    });
+    
+    const blob = new Blob([tsvContent], { type: "text/tab-separated-values;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    
+    const downloadAnchor = document.createElement("a");
+    downloadAnchor.href = url;
+    
+    // Create safe alphanumeric filename from the page title
+    const safeTitle = title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    downloadAnchor.download = `${safeTitle}_anki_deck.txt`;
+    
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    document.body.removeChild(downloadAnchor);
+    URL.revokeObjectURL(url);
+}
+window.exportToAnki = exportToAnki;
+
 // Hamburger Menu Injection
 const chaptersInfo = [
   { num: 1, dir: "ch01", title: "Trade-Offs in Data Systems Architecture" },
