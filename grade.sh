@@ -16,7 +16,7 @@ fi
 # 2. Upgrade pip and install/verify dependencies inside the venv
 echo "Verifying dependencies inside virtual environment..."
 "$PYTHON_BIN" -m pip install --upgrade -q pip
-"$PYTHON_BIN" -m pip install -q google-generativeai flask pytest
+"$PYTHON_BIN" -m pip install -q google-generativeai openai anthropic flask pytest
 
 # 3. Handle commands
 COMMAND=${1:-"grade"}

@@ -24,17 +24,22 @@ Start the Flask server using the launch script:
 Go to: 👉 http://localhost:8080/index.html
 
 ### 2. Configure AI Grading (Optional)
-To use AI grading for open-ended questions, create a `.env` file at the root:
+To use AI grading for open-ended questions, create a `.env` file at the root. We support Google Gemini, OpenAI, and Anthropic Claude:
 ```env
-GEMINI_KEY="your_api_key_here"
-GEMINI_MODEL="gemini-3.5-flash"
+LLM_PROVIDER="gemini"        # gemini, openai, or claude
+LLM_KEY="your_api_key_here"  # API key for the chosen provider
+LLM_MODEL="gemini-3.5-flash" # optional: overrides provider's default model (e.g. gpt-4o, claude-3-5-sonnet-latest)
 ```
+*(Note: The Web UI will automatically detect the configuration in your `.env` file and use these parameters when you trigger AI grading from the browser).*
 
 ### 3. CLI Grading (Optional)
 You can also run AI grading directly in your terminal:
 ```bash
 # Exports your progress first from the UI, then run:
 ./grade.sh
+
+# You can override the provider and model via CLI arguments:
+./grade.sh --provider openai --model gpt-4o-mini
 ```
 
 ### 4. Reset Progress

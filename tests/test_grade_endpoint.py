@@ -16,34 +16,18 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-# Load .env variables
-if os.path.exists(".env"):
-    try:
-        with open(".env", "r") as f:
-            for line in f:
-                line_clean = line.strip()
-                if line_clean.startswith("GEMINI_KEY="):
-                    val = line_clean.split("=", 1)[1].strip()
-                    if (val.startswith('"') and val.endswith('"')) or (val.startswith("'") and val.endswith("'")):
-                        val = val[1:-1].strip()
-                    os.environ["GEMINI_API_KEY"] = val
-                elif line_clean.startswith("GEMINI_MODEL="):
-                    val = line_clean.split("=", 1)[1].strip()
-                    if (val.startswith('"') and val.endswith('"')) or (val.startswith("'") and val.endswith("'")):
-                        val = val[1:-1].strip()
-                    os.environ["GEMINI_MODEL"] = val
-    except Exception:
-        pass
+from grade_responses import load_env
+load_env()
 
-if os.environ.get("GEMINI_API_KEY"):
-    os.environ["GEMINI_API_KEY"] = os.environ["GEMINI_API_KEY"].strip()
+if os.environ.get("LLM_KEY"):
+    os.environ["LLM_KEY"] = os.environ["LLM_KEY"].strip()
 
 # ── Fixtures ────────────────────────────────────────────────────────────────
 
 @pytest.fixture
 def client():
     """Create a Flask test client with a fake API key."""
-    os.environ.setdefault("GEMINI_API_KEY", "test-key-placeholder")
+    os.environ.setdefault("LLM_KEY", "test-key-placeholder")
     from server import app
     app.config["TESTING"] = True
     with app.test_client() as c:
@@ -89,10 +73,14 @@ class TestEndpointContract:
         print("\n--> Starting test_empty_write_ins_returns_zero_grades", flush=True)
         import server
         
-        # Patch the model's generate_content to fail, ensuring no live API call is made
+        # Patch the model's generate_json to fail, ensuring no live API call is made
         def fail_on_api_call(*args, **kwargs):
             raise AssertionError("Should not make API call for empty responses")
-        monkeypatch.setattr(server.model, "generate_content", fail_on_api_call)
+        
+        if hasattr(server.model, "generate_json"):
+            monkeypatch.setattr(server.model, "generate_json", fail_on_api_call)
+        else:
+            monkeypatch.setattr(server.model, "generate_content", fail_on_api_call)
 
         print("--> Sending POST request with empty write-ins...", flush=True)
         res = client.post("/grade", json={
@@ -150,13 +138,20 @@ class TestEndpointContract:
 # ── Live Integration Test (opt-in, skipped without real key) ────────────────
 
 @pytest.mark.skipif(
-    not os.environ.get("GEMINI_API_KEY") or "placeholder" in os.environ.get("GEMINI_API_KEY", ""),
-    reason="Set GEMINI_API_KEY to run live integration test"
+    not os.environ.get("LLM_KEY") or os.environ.get("LLM_PROVIDER", "gemini").lower() != "gemini",
+    reason="Set LLM_KEY and LLM_PROVIDER=gemini to run live integration test"
 )
 class TestLiveGrading:
-    def test_live_grade_returns_valid_score(self, client):
+    def test_live_grade_returns_valid_score(self, client, monkeypatch):
         """Real Gemini call — validates end-to-end round trip."""
         print("\n--> Starting test_live_grade_returns_valid_score", flush=True)
+        import server
+        from grade_responses import get_llm_config
+        # Temporarily force provider to gemini for this test
+        monkeypatch.setenv("LLM_PROVIDER", "gemini")
+        provider, api_key, model_name = get_llm_config()
+        monkeypatch.setattr(server, "get_llm_config", lambda: (provider, api_key, model_name))
+        
         print("--> Sending live request to Gemini API (through Flask server)...", flush=True)
         res = client.post("/grade", json=VALID_PAYLOAD)
         print(f"--> Received response status {res.status_code}", flush=True)
@@ -165,6 +160,56 @@ class TestLiveGrading:
         assert 1 <= grade["score"] <= 5
         assert len(grade["feedback"]) > 10
         print("--> Finished test_live_grade_returns_valid_score", flush=True)
+
+
+@pytest.mark.skipif(
+    not os.environ.get("LLM_KEY") or os.environ.get("LLM_PROVIDER", "").lower() != "openai",
+    reason="Set LLM_KEY and LLM_PROVIDER=openai to run live OpenAI integration test"
+)
+class TestLiveOpenAIGrading:
+    def test_live_openai_grade_returns_valid_score(self, client, monkeypatch):
+        """Real OpenAI call — validates end-to-end round trip."""
+        print("\n--> Starting test_live_openai_grade_returns_valid_score", flush=True)
+        import server
+        from grade_responses import get_llm_config
+        # Temporarily force provider to openai for this test
+        monkeypatch.setenv("LLM_PROVIDER", "openai")
+        provider, api_key, model_name = get_llm_config()
+        monkeypatch.setattr(server, "get_llm_config", lambda: (provider, api_key, model_name))
+        
+        print("--> Sending live request to OpenAI API (through Flask server)...", flush=True)
+        res = client.post("/grade", json=VALID_PAYLOAD)
+        print(f"--> Received response status {res.status_code}", flush=True)
+        assert res.status_code == 200
+        grade = res.get_json()["grades"]["2"]
+        assert 1 <= grade["score"] <= 5
+        assert len(grade["feedback"]) > 10
+        print("--> Finished test_live_openai_grade_returns_valid_score", flush=True)
+
+
+@pytest.mark.skipif(
+    not os.environ.get("LLM_KEY") or os.environ.get("LLM_PROVIDER", "").lower() != "claude",
+    reason="Set LLM_KEY and LLM_PROVIDER=claude to run live Claude integration test"
+)
+class TestLiveClaudeGrading:
+    def test_live_claude_grade_returns_valid_score(self, client, monkeypatch):
+        """Real Claude call — validates end-to-end round trip."""
+        print("\n--> Starting test_live_claude_grade_returns_valid_score", flush=True)
+        import server
+        from grade_responses import get_llm_config
+        # Temporarily force provider to claude for this test
+        monkeypatch.setenv("LLM_PROVIDER", "claude")
+        provider, api_key, model_name = get_llm_config()
+        monkeypatch.setattr(server, "get_llm_config", lambda: (provider, api_key, model_name))
+        
+        print("--> Sending live request to Claude API (through Flask server)...", flush=True)
+        res = client.post("/grade", json=VALID_PAYLOAD)
+        print(f"--> Received response status {res.status_code}", flush=True)
+        assert res.status_code == 200
+        grade = res.get_json()["grades"]["2"]
+        assert 1 <= grade["score"] <= 5
+        assert len(grade["feedback"]) > 10
+        print("--> Finished test_live_claude_grade_returns_valid_score", flush=True)
 
 
 class TestLogging:
@@ -333,4 +378,118 @@ def test_grade_responses_sqlite_loading_support(tmp_path):
     assert "ddia_ch1_learning" in loaded_state
     assert loaded_state["ddia_ch1_learning"]["writeInAnswers"]["2"] == "Schema-on-read offers analyst flexibility."
     print("--> Finished test_grade_responses_sqlite_loading_support", flush=True)
+
+
+class TestLLMGraderAdapter:
+    """Unit tests validating dynamic LLMGrader client adapter logic with mock wrappers."""
+
+    def test_grader_gemini_mock(self, monkeypatch):
+        from grade_responses import LLMGrader
+        
+        # Create fake model response class
+        class FakeResponse:
+            def __init__(self, text):
+                self.text = text
+
+        class FakeGenerativeModel:
+            def __init__(self, model_name):
+                self.model_name = model_name
+
+            def generate_content(self, prompt, generation_config=None, request_options=None):
+                return FakeResponse('{"score": 5, "feedback": "excellent"}')
+
+        # Patch google.generativeai GenerativeModel constructor
+        import grade_responses
+        monkeypatch.setattr(grade_responses.genai, "GenerativeModel", FakeGenerativeModel)
+
+        grader = LLMGrader(provider="gemini", api_key="fake-gemini-key", model_name="gemini-3.5-flash")
+        res = grader.generate_json("Test Prompt")
+        assert "excellent" in res
+
+    def test_grader_openai_mock(self, monkeypatch):
+        from grade_responses import LLMGrader
+        
+        # Mock OpenAI library and client
+        class FakeMessage:
+            def __init__(self, content):
+                self.content = content
+
+        class FakeChoice:
+            def __init__(self, message):
+                self.message = message
+
+        class FakeCompletion:
+            def __init__(self, choices):
+                self.choices = choices
+
+        class FakeCompletions:
+            def create(self, **kwargs):
+                return FakeCompletion([FakeChoice(FakeMessage('{"score": 4, "feedback": "good"}'))])
+
+        class FakeChat:
+            def __init__(self):
+                self.completions = FakeCompletions()
+
+        class FakeOpenAIClient:
+            def __init__(self, api_key):
+                self.api_key = api_key
+                self.chat = FakeChat()
+
+        import grade_responses
+        class DummyOpenaiModule:
+            OpenAI = FakeOpenAIClient
+
+        monkeypatch.setattr(grade_responses, "openai", DummyOpenaiModule)
+        
+        grader = LLMGrader(provider="openai", api_key="fake-openai-key", model_name="gpt-4o")
+        res = grader.generate_json("Test Prompt")
+        assert "good" in res
+
+    def test_grader_claude_mock(self, monkeypatch):
+        from grade_responses import LLMGrader
+
+        # Mock Anthropic library and client
+        class FakeTextMessage:
+            def __init__(self, text):
+                self.text = text
+
+        class FakeMessageResponse:
+            def __init__(self, content):
+                self.content = content
+
+        class FakeMessages:
+            def create(self, **kwargs):
+                return FakeMessageResponse([FakeTextMessage('{"score": 3, "feedback": "fair"}')])
+
+        class FakeAnthropicClient:
+            def __init__(self, api_key):
+                self.api_key = api_key
+                self.messages = FakeMessages()
+
+        import grade_responses
+        class DummyAnthropicModule:
+            Anthropic = FakeAnthropicClient
+
+        monkeypatch.setattr(grade_responses, "anthropic", DummyAnthropicModule)
+
+        grader = LLMGrader(provider="claude", api_key="fake-claude-key", model_name="claude-3-5-sonnet-latest")
+        res = grader.generate_json("Test Prompt")
+        assert "fair" in res
+
+    def test_llm_config_general_vars(self, monkeypatch):
+        from grade_responses import get_llm_config
+        
+        # Setup general variables in environment
+        monkeypatch.setenv("LLM_PROVIDER", "openai")
+        monkeypatch.setenv("LLM_KEY", "general-key-123")
+        monkeypatch.setenv("LLM_MODEL", "gpt-4-custom")
+        
+        # Remove any provider-specific overrides from environment for clean test
+        monkeypatch.delenv("OPENAI_KEY", raising=False)
+        monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+        
+        provider, api_key, model_name = get_llm_config()
+        assert provider == "openai"
+        assert api_key == "general-key-123"
+        assert model_name == "gpt-4-custom"
 

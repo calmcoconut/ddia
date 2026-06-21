@@ -8,42 +8,23 @@ import os
 import time
 import uuid
 import re
-import google.generativeai as genai
 from logger_setup import configure_logging
-from grade_responses import grade_question, CHAPTERS_LIST, load_questions_from_app_js
+from grade_responses import grade_question, CHAPTERS_LIST, load_questions_from_app_js, load_env, get_llm_config, LLMGrader
 
 log = configure_logging()
 
 app = Flask(__name__, static_folder="learning-app", static_url_path="")
 
-# Load .env variables
-if os.path.exists(".env"):
-    try:
-        with open(".env", "r") as f:
-            for line in f:
-                line_clean = line.strip()
-                if line_clean.startswith("GEMINI_KEY="):
-                    val = line_clean.split("=", 1)[1].strip()
-                    if (val.startswith('"') and val.endswith('"')) or (val.startswith("'") and val.endswith("'")):
-                        val = val[1:-1].strip()
-                    os.environ["GEMINI_API_KEY"] = val
-                elif line_clean.startswith("GEMINI_MODEL="):
-                    val = line_clean.split("=", 1)[1].strip()
-                    if (val.startswith('"') and val.endswith('"')) or (val.startswith("'") and val.endswith("'")):
-                        val = val[1:-1].strip()
-                    os.environ["GEMINI_MODEL"] = val
-    except Exception as exc:
-        log.error("error_reading_env_file", extra={"error": str(exc)}, exc_info=True)
+# Load .env variables dynamically
+load_env()
+provider, api_key, model_name = get_llm_config()
 
-# Configure Gemini
-api_key = os.environ.get("GEMINI_API_KEY")
-if api_key:
-    api_key = api_key.strip()
-    os.environ["GEMINI_API_KEY"] = api_key
-    genai.configure(api_key=api_key)
-
-model_name = os.environ.get("GEMINI_MODEL", "gemini-3.5-flash").strip()
-model = genai.GenerativeModel(model_name)
+# Initialize the model client
+try:
+    model = LLMGrader(provider, api_key, model_name)
+except Exception as exc:
+    log.error("llm_grader_init_failed", extra={"error": str(exc)}, exc_info=True)
+    model = None
 
 @app.route("/")
 def index():
@@ -59,11 +40,20 @@ def grade():
     request_id = str(uuid.uuid4())[:8]   # short ID for log correlation
     start_time = time.monotonic()
 
-    # Re-evaluate in case env was set dynamically or loaded
-    api_key = os.environ.get("GEMINI_API_KEY")
+    # Re-evaluate configuration in case .env was updated/loaded dynamically
+    load_env()
+    provider, api_key, model_name = get_llm_config()
+    
     if not api_key:
-        log.error("GEMINI_API_KEY missing", extra={"request_id": request_id})
-        return jsonify({"error": "GEMINI_API_KEY not set on server"}), 500
+        log.error(f"{provider.upper()}_API_KEY missing", extra={"request_id": request_id})
+        var_name = "OPENAI_KEY" if provider == "openai" else ("CLAUDE_KEY" if provider == "claude" else "GEMINI_KEY")
+        return jsonify({"error": f"API Key ({var_name}) not set on server"}), 500
+
+    try:
+        model = LLMGrader(provider, api_key, model_name)
+    except Exception as exc:
+        log.error("llm_grader_init_failed", extra={"request_id": request_id, "error": str(exc)}, exc_info=True)
+        return jsonify({"error": f"Failed to initialize LLM grader: {str(exc)}"}), 500
 
     payload    = request.get_json(force=True)
     ch_key     = payload.get("chapterKey", "")
@@ -95,7 +85,7 @@ def grade():
             try:
                 grade_result = grade_question(model, q_text, model_ans, student_ans, context)
             except Exception as exc:
-                log.error("gemini_api_error", extra={
+                log.error("llm_api_error", extra={
                     "request_id": request_id,
                     "q_idx":      q_idx_str,
                     "error":      str(exc),
@@ -176,7 +166,7 @@ def grade():
         try:
             grade_result = grade_question(model, q["q"], q["modelAnswer"], student_ans, context)
         except Exception as exc:
-            log.error("gemini_api_error", extra={
+            log.error("llm_api_error", extra={
                 "request_id": request_id,
                 "q_idx":      q_idx_str,
                 "error":      str(exc),
@@ -216,9 +206,6 @@ def grade():
 
 if __name__ == "__main__":
     import sys
-    # Ensure genai is configured if the model is recreated/run
-    if os.environ.get("GEMINI_API_KEY"):
-        genai.configure(api_key=os.environ.get("GEMINI_API_KEY").strip())
     
     port = 8080
     if len(sys.argv) > 1:

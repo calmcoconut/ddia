@@ -10,13 +10,17 @@ import subprocess
 try:
     import google.generativeai as genai
 except ImportError:
-    if __name__ == "__main__":
-        print("Error: The 'google-generativeai' library is required to run this script.")
-        print("Please install it by running:")
-        print("  pip install google-generativeai")
-        sys.exit(1)
-    else:
-        genai = None
+    genai = None
+
+try:
+    import openai
+except ImportError:
+    openai = None
+
+try:
+    import anthropic
+except ImportError:
+    anthropic = None
 
 try:
     from bs4 import BeautifulSoup
@@ -28,24 +32,118 @@ except ImportError:
     BeautifulSoup = None
     HAS_BS4 = False
 
-# Load .env variables
-if os.path.exists(".env"):
-    try:
-        with open(".env", "r") as f:
-            for line in f:
-                line_clean = line.strip()
-                if line_clean.startswith("GEMINI_KEY="):
-                    val = line_clean.split("=", 1)[1].strip()
-                    if (val.startswith('"') and val.endswith('"')) or (val.startswith("'") and val.endswith("'")):
-                        val = val[1:-1].strip()
-                    os.environ["GEMINI_API_KEY"] = val
-                elif line_clean.startswith("GEMINI_MODEL="):
-                    val = line_clean.split("=", 1)[1].strip()
-                    if (val.startswith('"') and val.endswith('"')) or (val.startswith("'") and val.endswith("'")):
-                        val = val[1:-1].strip()
-                    os.environ["GEMINI_MODEL"] = val
-    except Exception:
-        pass
+def load_env():
+    """Load env variables from .env if it exists, mapping them to os.environ."""
+    if os.path.exists(".env"):
+        try:
+            with open(".env", "r") as f:
+                for line in f:
+                    line_clean = line.strip()
+                    if not line_clean or line_clean.startswith("#"):
+                        continue
+                    if "=" in line_clean:
+                        key, val = line_clean.split("=", 1)
+                        key = key.strip()
+                        val = val.strip()
+                        if (val.startswith('"') and val.endswith('"')) or (val.startswith("'") and val.endswith("'")):
+                            val = val[1:-1].strip()
+                        os.environ[key] = val
+        except Exception:
+            pass
+
+# Load environment variables immediately on module import
+load_env()
+
+def get_llm_config():
+    """
+    Determines the LLM provider, API key, and model choice based on environment variables.
+    Supports LLM_PROVIDER, LLM_KEY, and LLM_MODEL.
+    Returns: (provider, api_key, model_name)
+    """
+    provider = os.environ.get("LLM_PROVIDER", "").strip().lower()
+    if not provider:
+        provider = "gemini"
+
+    if provider in ("anthropic", "claude"):
+        provider = "claude"
+
+    api_key = os.environ.get("LLM_KEY")
+    model_name = os.environ.get("LLM_MODEL")
+
+    if not model_name:
+        if provider == "gemini":
+            model_name = "gemini-3.5-flash"
+        elif provider == "openai":
+            model_name = "gpt-4o"
+        elif provider == "claude":
+            model_name = "claude-3-5-sonnet-latest"
+
+    if api_key:
+        api_key = api_key.strip()
+    if model_name:
+        model_name = model_name.strip()
+        
+    return provider, api_key, model_name
+
+class LLMGrader:
+    def __init__(self, provider, api_key, model_name):
+        self.provider = provider
+        self.api_key = api_key
+        self.model_name = model_name
+        self._client = None
+        
+        if not self.api_key:
+            var_name = "LLM_KEY"
+            raise ValueError(
+                f"API Key for provider '{self.provider}' is not set. "
+                f"Please set '{var_name}' in your .env file or environment."
+            )
+            
+        self._init_client()
+
+    def _init_client(self):
+        if self.provider == "gemini":
+            if genai is None:
+                raise ImportError("The 'google-generativeai' library is required for Gemini grading. Please install it by running:\n  pip install google-generativeai")
+            genai.configure(api_key=self.api_key)
+            self._client = genai.GenerativeModel(self.model_name)
+        elif self.provider == "openai":
+            if openai is None:
+                raise ImportError("The 'openai' library is required for OpenAI grading. Please install it by running:\n  pip install openai")
+            self._client = openai.OpenAI(api_key=self.api_key)
+        elif self.provider == "claude":
+            if anthropic is None:
+                raise ImportError("The 'anthropic' library is required for Claude grading. Please install it by running:\n  pip install anthropic")
+            self._client = anthropic.Anthropic(api_key=self.api_key)
+        else:
+            raise ValueError(f"Unsupported LLM provider: {self.provider}")
+
+    def generate_json(self, prompt):
+        if self.provider == "gemini":
+            response = self._client.generate_content(
+                prompt,
+                generation_config={"response_mime_type": "application/json"},
+                request_options={"timeout": 300.0}
+            )
+            return response.text
+        elif self.provider == "openai":
+            response = self._client.chat.completions.create(
+                model=self.model_name,
+                messages=[{"role": "user", "content": prompt}],
+                response_format={"type": "json_object"},
+                timeout=300.0
+            )
+            return response.choices[0].message.content
+        elif self.provider == "claude":
+            response = self._client.messages.create(
+                model=self.model_name,
+                max_tokens=4000,
+                messages=[{"role": "user", "content": prompt}],
+                timeout=300.0
+            )
+            return response.content[0].text
+        else:
+            raise ValueError(f"Unsupported LLM provider: {self.provider}")
 
 # Chapter list matching index.html
 CHAPTERS_LIST = {
@@ -66,7 +164,7 @@ CHAPTERS_LIST = {
 }
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Evaluate DDIA write-in answers using the Gemini API.")
+    parser = argparse.ArgumentParser(description="Evaluate DDIA write-in answers using Gemini, OpenAI, or Claude.")
     parser.add_argument(
         "--state", 
         default="ddia_progress.json",
@@ -77,11 +175,15 @@ def parse_args():
         default="ddia_grades_report.md",
         help="Path to save the generated grading report (default: ddia_grades_report.md)"
     )
-    default_model = os.environ.get("GEMINI_MODEL", "gemini-3.5-flash").strip()
+    parser.add_argument(
+        "--provider",
+        default=None,
+        help="LLM provider to use: gemini, openai, or claude (default: auto-detected from env)"
+    )
     parser.add_argument(
         "--model", 
-        default=default_model,
-        help=f"Gemini model to use for evaluation (default: {default_model})"
+        default=None,
+        help="Model to use for evaluation (defaults to provider's configured model or default model)"
     )
     return parser.parse_args()
 
@@ -209,12 +311,7 @@ Provide your grading in the following structured JSON format:
 Output ONLY the JSON object. Do not wrap it in markdown code blocks or add preamble.
 """
     try:
-        response = model.generate_content(
-            prompt,
-            generation_config={"response_mime_type": "application/json"},
-            request_options={"timeout": 300.0}
-        )
-        text = response.text.strip()
+        text = model.generate_json(prompt).strip()
         # Clean markdown wrappers if returned
         if text.startswith("```json"):
             text = text[7:]
@@ -222,7 +319,7 @@ Output ONLY the JSON object. Do not wrap it in markdown code blocks or add pream
             text = text[:-3]
         return json.loads(text.strip())
     except Exception as e:
-        print(f"Error calling Gemini API: {e}")
+        print(f"Error calling LLM API: {e}")
         return {
             "score": 0,
             "strengths": "Error",
@@ -235,18 +332,26 @@ def main():
     
 
 
-    # Check API key
-    api_key = os.environ.get("GEMINI_API_KEY")
-    if not api_key:
-        print("Error: GEMINI_API_KEY environment variable is not set.")
-        print("Please set it in your terminal by running:")
-        print("  export GEMINI_API_KEY=\"your-api-key-here\"")
+    # Resolve provider, api_key, model_name
+    provider, api_key, model_name = get_llm_config()
+
+    if args.provider:
+        provider = args.provider.strip().lower()
+        if provider == "gemini":
+            api_key = os.environ.get("GEMINI_API_KEY")
+        elif provider == "openai":
+            api_key = os.environ.get("OPENAI_API_KEY")
+        elif provider == "claude":
+            api_key = os.environ.get("ANTHROPIC_API_KEY")
+
+    if args.model:
+        model_name = args.model.strip()
+
+    try:
+        model = LLMGrader(provider, api_key, model_name)
+    except (ValueError, ImportError) as e:
+        print(f"Error: {e}")
         sys.exit(1)
-        
-    api_key = api_key.strip()
-    os.environ["GEMINI_API_KEY"] = api_key
-    genai.configure(api_key=api_key)
-    model = genai.GenerativeModel(args.model)
     
     # Check state file
     if not os.path.exists(args.state):
@@ -311,10 +416,10 @@ def main():
             sys.exit(1)
         
     print(f"Successfully loaded progress from {args.state}.")
-    print("Connecting to Gemini API for evaluation...\n")
+    print(f"Connecting to {model.provider.capitalize()} API for evaluation using `{model.model_name}`...\n")
     
     report_markdown = f"# Designing Data-Intensive Applications — AI Evaluation Report\n"
-    report_markdown += f"Evaluated using model: `{args.model}`\n\n---\n\n"
+    report_markdown += f"Evaluated using provider: `{model.provider}` and model: `{model.model_name}`\n\n---\n\n"
     
     # 1. Process Chapter Quizzes
     chapter_keys = [k for k in state.keys() if k.startswith("ddia_ch") and k.endswith("_learning")]
