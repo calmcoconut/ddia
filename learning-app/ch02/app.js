@@ -842,32 +842,92 @@ async function gradeWriteIns() {
     }
   });
 
-  if (Object.keys(answered).length === 0) {
+  const totalToGrade = Object.keys(answered).length;
+  if (totalToGrade === 0) {
     alert('Please answer at least one write-in question before grading.');
     return;
   }
 
-  const response = await fetch('/grade', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      chapterKey: STATE_KEY,
-      writeIns:   answered,
-      username:   getCurrentUsername()
-    })
-  });
-  if (!response.ok) {
-    const err = await response.json();
-    throw new Error(err.error || `HTTP error! status: ${response.status}`);
+  // Set up progress bar UI dynamically
+  let progressContainer = document.getElementById('gradingProgressContainer');
+  if (!progressContainer) {
+    progressContainer = document.createElement('div');
+    progressContainer.id = 'gradingProgressContainer';
+    progressContainer.className = 'grading-progress-container';
+    progressContainer.style.marginTop = '1rem';
+    progressContainer.style.width = '100%';
+    progressContainer.style.textAlign = 'left';
+    progressContainer.innerHTML = `
+      <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.4rem;">
+        <span id="gradingProgressStatus">Grading write-in responses...</span>
+        <span id="gradingProgressPercent">0%</span>
+      </div>
+      <div style="width: 100%; height: 8px; background: rgba(99, 102, 241, 0.1); border-radius: 4px; overflow: hidden;">
+        <div id="gradingProgressBarFill" style="width: 0%; height: 100%; background: var(--gradient-primary); border-radius: 4px; transition: width 0.3s ease;"></div>
+      </div>
+    `;
+    const resultsActions = document.querySelector('.results-actions');
+    if (resultsActions) {
+      resultsActions.parentNode.insertBefore(progressContainer, resultsActions);
+    }
   }
-  const data = await response.json();
+  progressContainer.classList.remove('hidden');
+
+  const statusEl = document.getElementById('gradingProgressStatus');
+  const fillEl = document.getElementById('gradingProgressBarFill');
+  const percentEl = document.getElementById('gradingProgressPercent');
+
+  statusEl.textContent = `Preparing to grade 1 of ${totalToGrade} questions...`;
+  fillEl.style.width = '0%';
+  percentEl.textContent = '0%';
+
+  const grades = {};
+  let currentCount = 0;
+
+  for (const idxStr of Object.keys(answered)) {
+    currentCount++;
+    const idx = parseInt(idxStr);
+    statusEl.textContent = `Grading question ${currentCount} of ${totalToGrade}: "${QUIZ_QUESTIONS[idx].q.substring(0, 30)}..."`;
+    
+    const response = await fetch('/grade', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        chapterKey: STATE_KEY,
+        writeIns: { [idxStr]: answered[idxStr] },
+        username: getCurrentUsername()
+      })
+    });
+    
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error || `HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    if (data && data.grades && data.grades[idxStr]) {
+      grades[idxStr] = data.grades[idxStr];
+    }
+
+    const pct = Math.round((currentCount / totalToGrade) * 100);
+    fillEl.style.width = `${pct}%`;
+    percentEl.textContent = `${pct}%`;
+  }
+
+  statusEl.textContent = `All questions graded successfully!`;
+  
   const currentState = loadState();
-  currentState.aiGrades = data.grades;
+  currentState.aiGrades = { ...(currentState.aiGrades || {}), ...grades };
   saveState(currentState);
-  renderAiGrades(data.grades);
-  return data;
+  renderAiGrades(currentState.aiGrades);
+
+  setTimeout(() => {
+    progressContainer.classList.add('hidden');
+  }, 3000);
+
+  return { grades: currentState.aiGrades };
 }
 
 function renderAiGrades(grades) {
@@ -913,10 +973,7 @@ function setupLLMGrading() {
       gradeBtn.textContent = 'Grading...';
       gradeBtn.disabled = true;
       try {
-        const data = await gradeWriteIns();
-        if (data && data.grades) {
-          alert('Grading completed successfully!');
-        }
+        await gradeWriteIns();
       } catch (err) {
         console.error('Error during grading:', err);
         alert('Grading failed: ' + err.message);
