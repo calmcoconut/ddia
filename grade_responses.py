@@ -193,8 +193,7 @@ _QUESTIONS_CACHE = {}
 
 def load_questions_from_app_js(dir_name):
     """
-    Invokes Node.js to evaluate the QUIZ_QUESTIONS array in the chapter's app.js.
-    This guarantees 100% accurate parsing matching the browser's behavior.
+    Parses the QUIZ_QUESTIONS array from the chapter's app.js file securely.
     """
     if dir_name in _QUESTIONS_CACHE:
         return _QUESTIONS_CACHE[dir_name]
@@ -203,36 +202,56 @@ def load_questions_from_app_js(dir_name):
     if not os.path.exists(js_path):
         print(f"Warning: File {js_path} does not exist. Skipping.")
         return []
-    
-    node_cmd = (
-        f"const fs = require('fs'); "
-        f"const content = fs.readFileSync('{js_path}', 'utf8'); "
-        f"const start = content.indexOf('const QUIZ_QUESTIONS = ['); "
-        f"const end = content.indexOf('const FLASHCARDS = ['); "
-        f"if (start === -1 || end === -1) throw new Error('Markers not found'); "
-        f"const data = content.substring(start + 'const QUIZ_QUESTIONS = ['.length - 1, end); "
-        f"console.log(JSON.stringify(eval(data)));"
-    )
-    
+
     try:
-        res = subprocess.run(
-            ["node", "-e", node_cmd], 
-            capture_output=True, 
-            text=True, 
-            check=True
-        )
-        # Cache the result to avoid repeated subprocess calls
-        questions = json.loads(res.stdout)
+        with open(js_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+
+        start = content.find('const QUIZ_QUESTIONS = [')
+        end = content.find('const FLASHCARDS = [')
+        if start == -1 or end == -1:
+            raise ValueError('Markers not found')
+
+        data = content[start + len('const QUIZ_QUESTIONS = ') : end].strip()
+        if data.endswith(';'):
+            data = data[:-1]
+
+        # Parse the JS object-like string to JSON
+        pattern = r'("(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\')|([a-zA-Z_][a-zA-Z0-9_]*)\s*:'
+
+        def replacer(match):
+            if match.group(1) is not None:
+                s = match.group(1)
+                if s.startswith("'"):
+                    inner = s[1:-1]
+                    inner = inner.replace("\\'", "'").replace('"', '\\"')
+                    return f'"{inner}"'
+                return s
+            else:
+                return f'"{match.group(2)}":'
+
+        json_str = re.sub(pattern, replacer, data)
+
+        # Remove trailing commas before closing braces/brackets only if they are not inside strings.
+        # We ensure it's not inside a string by checking that the number of quotes following it is even.
+        json_str = re.sub(r',\s*([}\]])(?=(?:[^"]*"[^"]*")*[^"]*$)', r'\1', json_str)
+
+        questions = json.loads(json_str)
         _QUESTIONS_CACHE[dir_name] = questions
         return questions
     except Exception as e:
         print(f"Error parsing questions for {dir_name}: {e}")
         return []
 
+_CHAPTER_TEXT_CACHE = {}
+
 def extract_book_chapter_text(ch_num):
     if not HAS_BS4:
         return ""
     
+    if ch_num in _CHAPTER_TEXT_CACHE:
+        return _CHAPTER_TEXT_CACHE[ch_num]
+
     # Locate matching HTML file in chapters/
     base_dir = os.path.dirname(os.path.abspath(__file__))
     chapters_dir = os.path.join(base_dir, "chapters")
@@ -248,8 +267,13 @@ def extract_book_chapter_text(ch_num):
     html_file = files[0]
     try:
         with open(html_file, "r", encoding="utf-8") as f:
+            # Add comment explaining optimization
+            # Performance optimization: cache the parsed HTML text per chapter to
+            # avoid expensive synchronous File I/O and BeautifulSoup parsing in loops.
             soup = BeautifulSoup(f.read(), "html.parser")
-            return soup.get_text(separator="\n", strip=True)
+            result = soup.get_text(separator="\n", strip=True)
+            _CHAPTER_TEXT_CACHE[ch_num] = result
+            return result
     except Exception:
         return ""
 
