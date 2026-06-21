@@ -189,11 +189,16 @@ def parse_args():
     )
     return parser.parse_args()
 
+_QUESTIONS_CACHE = {}
+
 def load_questions_from_app_js(dir_name):
     """
     Invokes Node.js to evaluate the QUIZ_QUESTIONS array in the chapter's app.js.
     This guarantees 100% accurate parsing matching the browser's behavior.
     """
+    if dir_name in _QUESTIONS_CACHE:
+        return _QUESTIONS_CACHE[dir_name]
+
     js_path = os.path.join("learning-app", dir_name, "app.js")
     if not os.path.exists(js_path):
         print(f"Warning: File {js_path} does not exist. Skipping.")
@@ -216,7 +221,10 @@ def load_questions_from_app_js(dir_name):
             text=True, 
             check=True
         )
-        return json.loads(res.stdout)
+        # Cache the result to avoid repeated subprocess calls
+        questions = json.loads(res.stdout)
+        _QUESTIONS_CACHE[dir_name] = questions
+        return questions
     except Exception as e:
         print(f"Error parsing questions for {dir_name}: {e}")
         return []
