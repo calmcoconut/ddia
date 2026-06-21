@@ -10,10 +10,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is the N+1 query problem commonly encountered when using Object-Relational Mapping (ORM) frameworks?",
     options: [
-      "Executing a query that returns N rows, and then performing N additional database queries to resolve a relationship for each row.",
-      "A database deadlock that happens when N transactions try to acquire the same locks.",
-      "An optimization technique that caches N queries in memory and aggregates them into a single final query.",
-      "A query that runs N times slower than handwritten SQL due to gRPC network serialization overhead."
+      "Executing a single query that returns N database records, followed by N separate queries to resolve an associated relationship for each record.",
+      "A concurrency deadlock state that occurs when N independent transactions attempt to acquire write locks on the same set of index partitions.",
+      "A caching optimization pattern that buffers N distinct queries in memory and consolidates them into a single batch query on the server.",
+      "A latency penalty where database queries run N times slower than native SQL commands because of serialization overhead in network APIs."
     ],
     correct: 0,
     explanation: "The N+1 query problem occurs when an application fetches a list of records (1 query) and then loops through them, executing a separate query for each record (N queries) to load a related object (e.g., author of a comment).",
@@ -23,10 +23,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "For what type of relationships is the document (JSON) model most naturally suited, according to the chapter?",
     options: [
-      "Highly interconnected many-to-many relationships",
-      "Hierarchical one-to-many tree structures where relationships between documents are rare",
-      "Relational tables that require strict multi-row ACID transactions",
-      "Ad-hoc multiway joins with dimension tables in business intelligence"
+      "Highly interconnected many-to-many relationships where records frequently reference entities in other tables",
+      "Hierarchical one-to-many tree structures where data is self-contained and inter-document links are uncommon",
+      "Relational table structures that enforce data consistency across multiple rows using ACID transactions",
+      "Complex analytical workloads requiring ad-hoc joins across wide dimension tables in data warehouses"
     ],
     correct: 1,
     explanation: "JSON documents naturally represent tree-like, hierarchical one-to-many relationships (e.g., jobs list and education under a single user profile) where all data is nested and read together.",
@@ -43,10 +43,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is the primary advantage of normalizing database tables by storing a geographical region as a unique ID (e.g., 'region_id') instead of a raw text string?",
     options: [
-      "It increases write performance because IDs can be inserted in parallel.",
-      "It allows for schema-on-read processing when querying the regions table.",
-      "It ensures consistent spelling, eases global updates, avoids name ambiguity, and supports localization.",
-      "It eliminates the need for any SQL joins when displaying the user's profile."
+      "It significantly increases database write performance because numeric region IDs can be inserted in parallel without lock contention.",
+      "It enables schema-on-read processing, allowing the database engine to interpret different region data structures on the fly at query time.",
+      "It prevents spelling discrepancies, simplifies bulk updates, avoids naming ambiguities, and naturally supports translation and localization.",
+      "It eliminates the need for running complex relational JOIN operations when retrieving and displaying user information on the frontend UI."
     ],
     correct: 2,
     explanation: "Storing an ID (normalized) ensures that user-meaningful information is in only one place, making updates easy, ensuring consistent naming, avoiding ambiguity, and allowing translation/localization without changing user records.",
@@ -56,10 +56,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is the key difference between schema-on-write and schema-on-read?",
     options: [
-      "Schema-on-write is used for OLAP systems, while schema-on-read is used for OLTP transaction systems.",
-      "Schema-on-write databases do not support indexing, whereas schema-on-read databases index every field automatically.",
-      "Schema-on-write databases enforce database schemas on insertion, whereas schema-on-read databases structure the data during query execution.",
-      "Schema-on-write allows developers to insert arbitrary JSON, while schema-on-read requires strict SQL tables."
+      "Schema-on-write is optimized for analytical data warehouses, whereas schema-on-read is restricted to transactional relational databases.",
+      "Schema-on-write systems disable column indexing entirely, whereas schema-on-read engines index every single nested attribute automatically.",
+      "Schema-on-write databases validate and enforce structure upon data insertion, whereas schema-on-read databases interpret structure during queries.",
+      "Schema-on-write allows applications to store arbitrary, unvalidated JSON, whereas schema-on-read requires defining strict relational tables."
     ],
     correct: 2,
     explanation: "Schema-on-write databases (like traditional relational DBs) ensure data conforms to a schema before writing. Schema-on-read (like document databases) accepts any structure and parses it when read.",
@@ -76,10 +76,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is the concept of 'data locality' in document databases, and how does it affect read performance?",
     options: [
-      "It stores data in servers that are geographically closest to the user.",
-      "It stores all related data in a single nested document, allowing a complete record to be fetched in a single disk read.",
-      "It compresses JSON documents to locate them on the fastest sector of an SSD.",
-      "It replicates data across three separate database nodes for regional availability."
+      "It deploys database instances on virtual servers that are geographically positioned closest to the physical location of the active users.",
+      "It groups all related attributes into a single nested document, allowing the application to retrieve the entire record in one disk read.",
+      "It applies compression algorithms to JSON files to ensure they are physically allocated on the fastest blocks of a solid-state drive.",
+      "It replicates data automatically across multiple physical servers in a cluster to guarantee local availability when partitions occur."
     ],
     correct: 1,
     explanation: "If your application frequently reads the entire record (e.g., a profile), having it in a single document provides data locality, fetching it in one operation rather than running multiple joins or lookups.",
@@ -89,10 +89,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Which of the following represents a convergence of relational and document databases in recent years?",
     options: [
-      "Relational databases adding support for JSON columns, and document databases adding support for joins in query APIs.",
-      "Both models switching entirely to Cypher as their primary query language.",
-      "The complete elimination of SQL in modern relational database systems.",
-      "Relational databases abandoning ACID transactions to copy NoSQL architectures."
+      "Relational systems adding support for JSON columns, and document databases incorporating join operators and multi-document transactions.",
+      "Both database types deprecating their respective query engines to adopt Cypher as the unified industry standard language for queries.",
+      "Relational database platforms completely phasing out SQL query parsing in favor of imperative javascript map-reduce collections.",
+      "Relational engines abandoning ACID transaction guarantees in order to replicate the eventually consistent nature of NoSQL databases."
     ],
     correct: 0,
     explanation: "Modern relational databases (like PostgreSQL, MySQL) have added support for storing and indexing JSON documents, while document databases (like MongoDB) have added lookup/join operators and transaction support.",
@@ -109,10 +109,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "In a data warehouse star schema, what is the purpose of the central 'fact table'?",
     options: [
-      "To store metadata, rules, and configuration settings for the data pipeline.",
-      "To log individual events that occurred in the past, containing numeric attributes and foreign keys.",
-      "To store human-readable descriptions of products, customers, and stores.",
-      "To store the database schemas for all the snowflake dimension tables."
+      "To store system metadata, ingestion rules, and configuration parameters for the analytical ETL pipelines.",
+      "To log individual transaction events, containing specific numeric metric attributes and relational foreign keys.",
+      "To maintain long-term, human-readable descriptions and details of products, customers, stores, and regions.",
+      "To manage and synchronize the database schemas and constraints for all secondary snowflake dimension tables."
     ],
     correct: 1,
     explanation: "The fact table contains rows representing discrete events (like sales transactions, page clicks) with numeric values (price, cost) and foreign keys mapping to dimension tables.",
@@ -122,10 +122,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "How does a snowflake schema differ from a star schema?",
     options: [
-      "A snowflake schema uses graph database vertices, whereas a star schema uses document collections.",
-      "A snowflake schema is fully denormalized, whereas a star schema is fully normalized.",
-      "A snowflake schema normalizes dimensions into subdimension tables, whereas a star schema denormalizes dimensions into a single table.",
-      "A snowflake schema does not contain a central fact table."
+      "A snowflake schema represents data using graph vertices and edges, whereas a star schema groups everything into isolated document collections.",
+      "A snowflake schema keeps all data tables completely denormalized, whereas a star schema enforces third normal form across all dimension fields.",
+      "A snowflake schema normalizes dimension tables into subdimensions, whereas a star schema denormalizes dimensions directly into single tables.",
+      "A snowflake schema distributes event transactions across multiple source tables and does not utilize a centralized analytical fact table."
     ],
     correct: 2,
     explanation: "In a snowflake schema, dimensions are broken down further into subdimensions (e.g., normalizing product categories into a category table rather than storing category strings directly in the product dimension table).",
@@ -142,10 +142,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What do dimension tables in dimensional modeling represent?",
     options: [
-      "The numeric metrics, totals, and aggregates computed from transaction events.",
-      "The 'who, what, where, when, why, and how' context of events in the fact table.",
-      "The physical file offsets of column-oriented blocks on disk.",
-      "The list of users who have read-write access to the analytics reports."
+      "The numeric metrics, cost values, and aggregate totals computed from incoming event streams.",
+      "The contextual details ('who, what, where, when, and why') describing events in the fact table.",
+      "The physical file offsets and block metadata of column-oriented tables stored on database disks.",
+      "The access control lists containing users authorized to run query reports on the warehouse."
     ],
     correct: 1,
     explanation: "Dimension tables represent the entities participating in the events (e.g., who bought it, what product was sold, where it was bought, when it occurred).",
@@ -155,10 +155,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is the 'One Big Table' (OBT) design pattern in data warehousing?",
     options: [
-      "Creating a single large relational table by pre-joining all facts and dimensions to eliminate joins during queries.",
-      "Putting all corporate spreadsheets into a single, global Excel file.",
-      "Hosting the entire data warehouse on a single CPU core to prevent resource contention.",
-      "A database migration strategy that merges multiple databases into a single database server."
+      "Consolidating all analytical data into a single wide table by pre-joining facts and dimensions to eliminate query-time joins.",
+      "Merging all individual spreadsheets and CSV files across the organization into a single global spreadsheet hosted on a cloud drive.",
+      "Restricting the execution of the analytical database to a single dedicated CPU core node to prevent thread and memory contention.",
+      "A database replication strategy that permanently consolidates multiple regional transactional servers into a single primary cluster."
     ],
     correct: 0,
     explanation: "One Big Table (OBT) goes beyond star schemas by precomputing joins and storing all events and dimension metadata in a single, extremely wide table. While this trades disk space for query speed by eliminating joins, it has a significant maintenance downside: OBT schemas are extremely brittle when source schemas change. Since everything is flattened, a single column rename in a source table requires a full rewrite of the entire wide OBT.",
@@ -175,10 +175,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "In a Property Graph database (like Neo4j), what does a vertex consist of?",
     options: [
-      "A single subject-predicate-object triple represented in XML format.",
-      "A unique identifier, a set of outgoing edges, a set of incoming edges, and a collection of key-value properties.",
-      "Only a string name and a geographic coordinate reference.",
-      "An array of pointers pointing to the next vertex in a linear linked list."
+      "A single RDF triple statement consisting of a subject, a predicate, and an object formatted using semantic XML schemas.",
+      "A unique identifier, a collection of incoming edges, a collection of outgoing edges, and a map of key-value properties.",
+      "A simple string label and a geographic location coordinate reference without support for key-value property assignments.",
+      "A sequence of low-level memory pointers referencing the preceding and succeeding vertices in a contiguous linked list."
     ],
     correct: 1,
     explanation: "In a property graph, a vertex (node) consists of a unique ID, a set of incoming and outgoing edges, and a set of properties (key-value pairs) describing it.",
@@ -188,10 +188,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "How are relationships represented in a Cypher query?",
     options: [
-      "Using SQL JOIN statements with foreign keys.",
-      "Using ASCII-art style arrows, such as (node1) -[:RELATION]-> (node2).",
-      "Using imperative for-loops that traverse list pointers.",
-      "Using XML tag nested elements, such as <relation>node2</relation>."
+      "By writing standard SQL JOIN clauses matching primary keys to foreign keys.",
+      "By utilizing visual ASCII-art arrows, such as (node1) -[:RELATION]-> (node2).",
+      "By executing procedural for-loops to traverse lists of memory address pointers.",
+      "By structuring nested XML tags and sub-elements, like <relation>node2</relation>."
     ],
     correct: 1,
     explanation: "Cypher uses a highly visual ASCII-art style arrow syntax to match patterns of vertices and edges (e.g., `(person) -[:BORN_IN]-> (location)`).",
@@ -208,10 +208,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "In a Triple-Store database, what are the three components of a triple?",
     options: [
-      "Table, Column, Value",
-      "Vertex, Edge, Property",
-      "Subject, Predicate, Object",
-      "Document, Key, Field"
+      "Table, Column, and Value",
+      "Vertex, Edge, and Property",
+      "Subject, Predicate, and Object",
+      "Document, Key, and Field"
     ],
     correct: 2,
     explanation: "Triple-stores store all information in statements of three parts: Subject, Predicate, Object (e.g., `Lucy, born_in, Idaho`).",
@@ -221,10 +221,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "How is the Resource Description Framework (RDF) data model practically applied in modern web systems, given that the original vision of the Semantic Web did not succeed?",
     options: [
-      "It is used for backend relational table partitioning inside SQL-LD database clusters.",
-      "It is the main format for encrypting high-performance client-side browser caches.",
-      "It is used to represent open-access knowledge graphs like Wikidata, Schema.org search markup, and Facebook's Open Graph metadata.",
-      "It serves as a core communication protocol for high-performance gRPC microservices."
+      "It serves as the default underlying layout for table partitioning inside high-throughput relational SQL database clusters.",
+      "It functions as the primary serialization format used to compress and encrypt high-performance client-side browser caches.",
+      "It is used to define open knowledge graphs like Wikidata, Schema.org metadata for search engines, and Open Graph link previews.",
+      "It acts as the core communication protocol and schema definition language for RPC-based microservice network communication."
     ],
     correct: 2,
     explanation: "Although the global Semantic Web vision did not succeed, RDF triples are widely used today to represent knowledge graphs (like Wikidata), standardized web markup (Schema.org) for search engine optimization, and rich link preview metadata (Facebook's Open Graph protocol).",
@@ -248,10 +248,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Why is GraphQL intentionally designed to be more restrictive than query languages like SQL or Cypher?",
     options: [
-      "To limit compile times when building client applications.",
-      "Because GraphQL queries come from untrusted client devices, so restricting recursive queries and search conditions prevents DoS attacks.",
-      "GraphQL is only designed for column-oriented databases that do not support index lookups.",
-      "To force developers to write business logic inside the database rather than on the application server."
+      "To minimize compile-time overhead and package bundle sizes when compiling frontend React, iOS, or Android client applications.",
+      "Because GraphQL queries originate from untrusted client devices, so limiting complex recursive paths protects against DoS attacks.",
+      "Because GraphQL is built exclusively for column-oriented analytical datastores that do not support standard index-based lookups.",
+      "To enforce a programming paradigm where developers implement business logic in database procedures rather than application servers."
     ],
     correct: 1,
     explanation: "GraphQL queries come from untrusted clients (browsers, mobile apps). If it allowed recursive queries or arbitrary search conditions, a client could run expensive queries that exhaust server resources, causing a denial of service (DoS). Furthermore, because of GraphQL's nested resolver execution model, recursive or overly deep queries can easily trigger severe N+1 query amplification, producing thousands of underlying database calls (a problem commonly solved with DataLoader/batching patterns). Restricting these capabilities prevents resource exhaustion.",
@@ -268,10 +268,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is the core principle of Event Sourcing?",
     options: [
-      "Converting all user queries into real-time pub/sub notifications.",
-      "Representing the state of an application as an append-only log of immutable events.",
-      "Running background cron jobs to delete old events from the database.",
-      "Ensuring that no database updates take more than 5 milliseconds."
+      "Converting all user read queries into real-time pub/sub notification triggers at the API layer.",
+      "Representing application state transitions as an append-only sequence of immutable system events.",
+      "Running automated background cron jobs to purge historical transaction events from database disks.",
+      "Configuring the storage engine to ensure database writes execute in under five milliseconds."
     ],
     correct: 1,
     explanation: "Event Sourcing stores all changes to application state as a sequence of immutable events appended to a log. This log acts as the system of record.",
@@ -281,10 +281,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "In CQRS (Command Query Responsibility Segregation), what is the relationship between the read model and the write model?",
     options: [
-      "They must use the same relational schema to prevent data consistency issues.",
-      "The write model receives commands and appends to the log, while separate read-optimized materialized views are updated from that log.",
-      "The read model is only in memory and cannot be recomputed if lost.",
-      "The write model is automatically disabled when the read model experiences high load."
+      "They are required to share the exact same relational database schema to prevent eventual consistency anomalies across nodes.",
+      "The write model appends command events to a log, while separate read-optimized materialized views are updated from that log.",
+      "The read model is maintained exclusively in ephemeral cache memory and cannot be reconstructed if a server node crashes.",
+      "The write path is automatically disabled by the storage controller when the read path experiences transient spikes in load."
     ],
     correct: 1,
     explanation: "CQRS separates writing (commands that append to the log) from reading (materialized views or projections optimized for specific queries, updated asynchronously from the log).",
@@ -308,10 +308,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is one-hot encoding in the context of data preparation for machine learning?",
     options: [
-      "Compressing float variables into 8-bit integers to fit in GPU memory.",
-      "Converting a categorical variable into multiple columns of 0s and 1s, where each column represents a single category.",
-      "Encrypting user identity data using a disposable key before storing it in a matrix.",
-      "An optimization that moves the most active rows of a matrix to CPU cache."
+      "Compressing high-precision floating-point variables into eight-bit integers to fit massive matrix models into GPU memory.",
+      "Converting a categorical variable into multiple binary columns of 0s and 1s, where each column represents one unique category.",
+      "Encrypting user identity and profiling columns using a single-use key before exporting the dataset to a machine learning matrix.",
+      "A database performance optimization that automatically pre-loads the most frequently queried rows of a matrix into CPU cache."
     ],
     correct: 1,
     explanation: "One-hot encoding represents categorical data as a vector of binary values (0 or 1), creating a column for each possible category value, which is the format expected by many ML algorithms.",

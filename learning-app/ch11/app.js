@@ -9,10 +9,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is a key characteristic of offline systems (batch processing)?",
     options: [
-      "They process events in real-time as they occur, requiring sub-second response times",
-      "They require sub-second response times for interactive user actions",
-      "They take read-only inputs and generate outputs from scratch without mutating inputs",
-      "They rely on write-intensive online transactions (OLTP) on the primary system"
+      "They process stream events sequentially as they arrive, maintaining active state in local memory",
+      "They execute interactive request-response queries, requiring sub-second latencies for end users",
+      "They take immutable, read-only inputs and generate outputs from scratch without mutating inputs",
+      "They execute write-intensive online transactions (OLTP) that modify the database state in-place"
     ],
     correct: 2,
     explanation: "Batch processing jobs (offline systems) treat inputs as read-only and generate outputs from scratch every time they run. They do not mutate data in-place like read/write transactions.",
@@ -22,10 +22,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "In web server access log analysis, how does the Unix command line 'sort | uniq -c | sort -r -n | head -n 5' operate?",
     options: [
-      "It counts unique entries by keeping a large hash table in memory",
+      "It scans the log file and counts occurrences of each URL by maintaining a dynamically resized hash table in memory",
       "It sorts the keys alphabetically so that identical entries are adjacent, counts them, and then sorts the counts numerically",
-      "It shuffles the log records randomly to pick a representative sample of URLs",
-      "It uses a distributed database query to count URLs in parallel across nodes"
+      "It shuffles all log lines using a random permutation to generate a statistically representative sample of top URLs",
+      "It partitions the log files across multiple local disk drives to perform parallel aggregation on separate CPU cores"
     ],
     correct: 1,
     explanation: "Unix pipes use sorting to bring identical lines together so that 'uniq -c' can count adjacent matching lines without keeping a hash table of all distinct keys in memory.",
@@ -42,10 +42,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "How do the block sizes of distributed filesystems (like HDFS) compare to local filesystems (like ext4)?",
     options: [
-      "DFS blocks are smaller (typically 512 bytes) to minimize storage slack space",
-      "DFS blocks are exactly the same size (4,096 bytes) for OS compatibility",
-      "DFS blocks are much larger (e.g., 128 MB) to reduce metadata tracking overhead",
-      "DFS blocks are infinitely variable and have no default sizes"
+      "DFS blocks are smaller (typically 512 bytes) to minimize internal storage fragmentation and slack space",
+      "DFS blocks are exactly the same size (4,096 bytes) to align with standard operating system page caches",
+      "DFS blocks are much larger (e.g., 128 MB) to reduce metadata tracking overhead and disk seek penalties",
+      "DFS blocks are dynamically sized per record to prevent any unused space from being allocated on the disk"
     ],
     correct: 2,
     explanation: "HDFS defaults to 128 MB blocks, which is much larger than the 4 KB blocks of local filesystems like ext4. This reduces the amount of metadata the NameNode needs to track, and lowers disk seek overhead.",
@@ -62,10 +62,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is the role of the NameNode in HDFS?",
     options: [
-      "It stores the actual raw data blocks of files",
-      "It maintains file metadata, directory structures, and block locations in the cluster",
-      "It schedules the CPU and memory resources for MapReduce tasks",
-      "It serves as a caching proxy for client reads"
+      "It stores the actual raw data blocks of files across a shared-nothing network of commodity server disks",
+      "It maintains file metadata, directory structures, and block locations in the cluster via an in-memory database",
+      "It schedules CPU, memory, and disk resources for executing individual MapReduce tasks across worker nodes",
+      "It serves as a caching proxy for client reads to reduce network traffic to local data storage daemons"
     ],
     correct: 1,
     explanation: "The HDFS NameNode is a centralized metadata server that keeps track of the file hierarchy, block locations, and replication status. DataNodes store the actual blocks.",
@@ -75,10 +75,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is a major limitation of object stores (like S3) compared to distributed filesystems (like HDFS)?",
     options: [
-      "Objects cannot exceed 1 MB in size",
-      "They do not support network encryption or credentials",
-      "They do not support atomic directory renames or file appends (objects are immutable)",
-      "They are only accessible within the same physical rack"
+      "They restrict individual objects from exceeding a maximum size limit of 1 MB for all read operations",
+      "They lack standard support for network-level transport encryption or identity-based access controls",
+      "They do not support atomic directory renames or file appends because objects must be treated as immutable",
+      "They require clients to be located within the same physical server rack to perform data retrieval actions"
     ],
     correct: 2,
     explanation: "Objects in S3 are immutable. Updating requires rewriting the entire object. S3 also lacks real directories (slashes are just keys), making directory renames non-atomic and slow (requiring copy-and-delete for each object).",
@@ -95,10 +95,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "In cluster resource managers like YARN and Kubernetes, what daemon runs on each node to manage tasks?",
     options: [
-      "NameNode or FoundationDB",
-      "ApplicationMaster or Operator",
-      "NodeManager or kubelet",
-      "ZooKeeper or etcd"
+      "The NameNode or FoundationDB process which tracks block metadata and transaction commits",
+      "The ApplicationMaster or Operator which coordinates resource requests for a specific job",
+      "The NodeManager or kubelet process which starts, monitors, and stops individual containers",
+      "The ZooKeeper or etcd service which manages cluster state synchronization and configuration"
     ],
     correct: 2,
     explanation: "Task executors like YARN's NodeManager or Kubernetes's kubelet run on each cluster node to start, monitor, and report the status of individual tasks.",
@@ -108,10 +108,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Why is gang scheduling in resource allocation considered a double-edged sword?",
     options: [
-      "It speeds up execution but causes data corruption in columns",
-      "It reserves resources until all tasks can start, preventing starvation but reducing utilization and causing deadlocks",
-      "It runs tasks one-by-one, maximizing CPU usage but causing memory leaks",
-      "It requires specialized cloud hardware that is not supported by Kubernetes"
+      "It executes tasks sequentially to prevent network congestion, which simplifies debugging but increases total job latency and queue wait times",
+      "It reserves resources until all tasks can start, preventing partial execution starvation but reducing cluster utilization and causing deadlocks",
+      "It dynamically allocates additional RAM to struggling tasks to prevent out-of-memory errors, but causes severe CPU starvation on neighbor nodes",
+      "It runs tasks in randomized priority batches to optimize cache locality, but requires specialized bare-metal hardware that lacks Kubernetes support"
     ],
     correct: 1,
     explanation: "Gang scheduling avoids running a job partially by waiting until all requested cores are available. However, this causes nodes to sit idle while waiting, reducing cluster utilization and risking deadlocks.",
@@ -128,10 +128,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Which of the following is an implicit step in MapReduce that the user does not need to write?",
     options: [
-      "The mapper function that extracts key-value pairs",
-      "The reducer function that aggregates counts",
-      "The sorting and grouping of mapper outputs by key before they reach the reducer",
-      "The CSV parsing of input files"
+      "The custom mapper logic that extracts and formats specific key-value pairs from raw records",
+      "The custom reducer logic that aggregates and reduces list values associated with each key",
+      "The sorting and grouping of mapper outputs by key before they are transferred to the reducer",
+      "The format-specific parsing of incoming raw files like JSON, CSV, or Apache Avro records"
     ],
     correct: 2,
     explanation: "Sorting is a built-in step in MapReduce. The framework guarantees that the mapper's output keys are sorted and grouped before being passed to the reducer.",
@@ -148,10 +148,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is a DAG in the context of dataflow engines?",
     options: [
-      "Data Access Gateway",
-      "Directed Acyclic Graph of operators, representing the flow of data",
-      "Distributed Aggregation Group",
-      "Dynamic Allocation Grid"
+      "Data Access Gateway, representing the secure network boundary for database queries",
+      "Directed Acyclic Graph of operators, representing the structured flow of data",
+      "Distributed Aggregation Group, representing the clustered nodes processing reductions",
+      "Dynamic Allocation Grid, representing the execution slots assigned by the scheduler"
     ],
     correct: 1,
     explanation: "A Directed Acyclic Graph (DAG) represents the workflow of a dataflow engine, where vertices are processing operators (maps, filters, joins) and edges represent the flow of data between them.",
@@ -161,10 +161,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is pipelining in dataflow engines?",
     options: [
-      "Executing tasks in a single-threaded queue",
+      "Executing multiple tasks sequentially in a single-threaded queue to prevent CPU cache misses and lock contention",
       "Passing intermediate data to downstream operators as soon as it is ready, without waiting for the entire stage to finish",
-      "Running database transactions in isolation",
-      "Storing data in a columnar format"
+      "Running concurrent database write transactions in strict isolation to prevent dirty reads and write skew anomalies",
+      "Storing and compressing dataset attributes in a columnar format to speed up analytical read queries on big data"
     ],
     correct: 1,
     explanation: "Pipelining allows downstream tasks to start processing records immediately as they are output by upstream tasks, rather than waiting for the entire upstream stage to complete and write to disk.",
@@ -181,10 +181,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "In a sort-merge join between user clickstream logs and a user profiles database, what is typically used as the join key?",
     options: [
-      "The page URL that the user visited",
-      "The timestamp of the activity event",
-      "The user ID present in both datasets",
-      "The user's date of birth"
+      "The specific page URL that the user visited during the session",
+      "The high-resolution timestamp of the recorded activity event",
+      "The unique user ID that is present in both input datasets",
+      "The user's date of birth retrieved from their registration profile"
     ],
     correct: 2,
     explanation: "The user ID is the common key in both datasets. Both datasets are mapped and partitioned/sorted by user ID so that all logs and profiles for a specific user ID land on the same reducer.",
@@ -194,10 +194,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is the purpose of secondary sort in a MapReduce reduce-side join?",
     options: [
-      "To sort the outputs of the reducer before writing to S3",
-      "To ensure that the reducer receives the user's profile record before any of their activity events",
-      "To sort the keys alphabetically in the mapper",
-      "To double-check that no duplicate keys exist"
+      "To sort the final aggregated outputs of each individual reducer task alphabetically before writing them out to HDFS or S3",
+      "To guarantee that the reducer receives the user's profile record (dimension) before any of their activity events (facts)",
+      "To pre-sort the intermediate keys alphabetically in the mapper memory buffers before transmitting them over the network",
+      "To run a validation check during the shuffle phase that prevents duplicate keys from being processed by different reducers"
     ],
     correct: 1,
     explanation: "Secondary sort arranges records so that the join dimension record (e.g., user profile) arrives at the reducer before the fact records (e.g., click events). This allows the reducer to cache the profile once in memory and join it with events streamingly.",
@@ -214,10 +214,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What does it mean for a join to be a 'reduce-side join'?",
     options: [
-      "The mappers perform the join locally before sorting",
+      "The mapper tasks perform the key lookup and join records locally in memory before executing the sorting phase",
       "The join logic is executed in the reducer after mappers partition and sort the datasets by the join key",
-      "The join is executed in the database warehouse via SQL only",
-      "The dataset is reduced in size before being joined in memory"
+      "The join is executed entirely within a data warehouse cluster using declarative SQL commands and indexes",
+      "The input dataset is filtered and reduced in overall size using local aggregators before joining in memory"
     ],
     correct: 1,
     explanation: "In a reduce-side join, the mappers only extract and output the join keys and values. The actual matching and merging of records from both datasets are done by the reducers after the shuffle.",
@@ -234,10 +234,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Why did SQL become the standard language for writing batch processing jobs in modern systems?",
     options: [
-      "It is the only language that can run on distributed systems",
+      "It is the only query language whose compilers are structurally designed to run on partitioned, distributed systems",
       "It allows cost-based query optimizers to automatically determine the most efficient execution plan (like join orders)",
-      "It requires more code, which makes it easier to debug than MapReduce",
-      "It eliminates the need for any storage systems like HDFS or S3"
+      "It requires more verbose and explicit code statements, which makes debugging much simpler than custom MapReduce jobs",
+      "It provides a built-in virtual memory layer that completely eliminates the need for external storage like HDFS or S3"
     ],
     correct: 1,
     explanation: "SQL provides a declarative interface. This allows the query engine's optimizer to analyze the schema, table sizes, and join conditions to choose the best physical join algorithms and execute them efficiently.",
@@ -247,10 +247,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "How does Spark's DataFrame execution model differ from Pandas' local model?",
     options: [
-      "Spark runs code immediately, while Pandas runs it asynchronously",
+      "Spark executes operations eagerly to return immediate feedback to the console, whereas Pandas schedules updates asynchronously via a queue",
       "Spark translates method calls into a query plan and optimizes it before executing, while Pandas executes operations immediately in memory",
-      "Spark only supports SQL queries, while Pandas supports Python functions",
-      "Spark does not support joins or aggregations, while Pandas does"
+      "Spark exclusively supports declarative SQL queries on flat files, whereas Pandas allows executing custom python lambda functions in parallel",
+      "Spark operates strictly on unstructured stream data without joining tables, whereas Pandas is designed for complex relational aggregations"
     ],
     correct: 1,
     explanation: "Pandas executes DataFrame operations immediately when called. Spark DataFrame APIs build up a logical query plan, compile and optimize it using Spark Catalyst, and then execute it across the cluster when an action is triggered.",
@@ -267,10 +267,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Which model is commonly used to batch process graph data where calculations traverse edges iteratively?",
     options: [
-      "Map-side joins",
-      "Bulk Synchronous Parallel (BSP) / Pregel model",
-      "External mergesort on local disk",
-      "Data contracts mesh model"
+      "Map-side joins, which join datasets using local hash tables in mappers",
+      "Bulk Synchronous Parallel (BSP) / Pregel, using iterative step barriers",
+      "External mergesort on local disk, which sorts records in memory chunks",
+      "Data contracts mesh, which coordinates APIs and schemas between domains"
     ],
     correct: 1,
     explanation: "The Bulk Synchronous Parallel (BSP) or Pregel model is popular for graph algorithms. Nodes send messages along edges, perform local computation, and sync at synchronization barriers (supersteps).",
@@ -287,10 +287,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What does 'human fault tolerance' (or time travel) refer to in batch processing?",
     options: [
-      "The ability of a human to write code without any bugs",
-      "The ability to roll back buggy code and re-run jobs on read-only inputs to fix corrupted outputs",
-      "The ability of a system to predict human errors before they occur",
-      "The process of recovering files deleted from a local trash can"
+      "The design patterns that enable human developers to write complex processing code without introducing bugs",
+      "The ability to roll back buggy code and re-run jobs on read-only inputs to fix corrupted database outputs",
+      "The ability of a machine learning scheduler to predict human operator errors before they physically occur",
+      "The automated process of restoring accidentally deleted input files from a local or distributed trash bin"
     ],
     correct: 1,
     explanation: "Because batch jobs treat inputs as read-only and produce outputs from scratch, a bug in the code can be corrected by simply fixing the code and re-running the job over the same inputs. This is not possible in databases with mutable transactions.",
@@ -307,10 +307,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is a primary role of a message broker (like Kafka) when serving derived data from batch systems?",
     options: [
-      "It acts as a relational database that stores indices",
-      "It compiles SQL queries into Spark tasks",
+      "It operates as a relational database that stores indexes and serves low-latency read queries directly to users",
+      "It compiles declarative SQL queries into optimized physical Spark executor tasks across the compute cluster",
       "It acts as a buffer and security boundary, allowing downstream databases to ingest data at a controlled rate",
-      "It stores the metadata of HDFS files"
+      "It manages and persists the filesystem metadata of HDFS blocks to ensure fast block location lookups by clients"
     ],
     correct: 2,
     explanation: "Message brokers act as a buffer. Batch jobs can dump data quickly into a Kafka topic, and downstream production systems can read from it at their own pace without being overwhelmed.",
