@@ -5,6 +5,8 @@ import json
 import re
 import argparse
 import subprocess
+import glob
+import sqlite3
 
 # Verify imports
 try:
@@ -227,7 +229,6 @@ def extract_book_chapter_text(ch_num):
     base_dir = os.path.dirname(os.path.abspath(__file__))
     chapters_dir = os.path.join(base_dir, "chapters")
     
-    import glob
     pattern = os.path.join(chapters_dir, f"*_chapter_{ch_num}_*.html")
     files = glob.glob(pattern)
     if not files:
@@ -373,7 +374,6 @@ def main():
 
     if is_sqlite:
         try:
-            import sqlite3
             print(f"Detected SQLite database format for progress file: {args.state}")
             conn = sqlite3.connect(args.state)
             cursor = conn.cursor()
