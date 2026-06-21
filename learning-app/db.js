@@ -93,7 +93,6 @@ async function initDb() {
         window._db = _db; // expose globally
     } catch (e) {
         console.error("Failed to initialize SQLite Database", e);
-        // Fallback to in-memory only database if anything goes wrong
         if (typeof initSqlJs !== 'undefined') {
             try {
                 const SQL = await initSqlJs({
