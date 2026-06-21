@@ -8,6 +8,7 @@ import os
 import time
 import uuid
 import re
+import concurrent.futures
 from logger_setup import configure_logging
 from grade_responses import grade_question, CHAPTERS_LIST, load_questions_from_app_js, load_env, get_llm_config, LLMGrader
 
@@ -71,7 +72,8 @@ def grade():
         })
 
         results = {}
-        for item in exam_questions:
+
+        def process_exam_question(item):
             q_idx_str = str(item.get("idx"))
             student_ans = item.get("studentAnswer", "")
             q_text = item.get("q", "")
@@ -107,7 +109,19 @@ def grade():
                 "feedback":     grade_result["feedback"],
                 "latency_ms":   elapsed_ms,
             })
-            results[q_idx_str] = grade_result
+            return q_idx_str, grade_result
+
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            future_to_idx = {executor.submit(process_exam_question, item): item for item in exam_questions}
+            for future in concurrent.futures.as_completed(future_to_idx):
+                try:
+                    q_idx_str, grade_result = future.result()
+                    results[q_idx_str] = grade_result
+                except Exception as exc:
+                    log.error("thread_execution_error", extra={
+                        "request_id": request_id,
+                        "error": str(exc)
+                    }, exc_info=True)
 
         total_ms = round((time.monotonic() - start_time) * 1000)
         log.info("grade_request_complete", extra={
@@ -145,7 +159,8 @@ def grade():
         return jsonify({"error": f"Invalid chapter key: {ch_key}"}), 400
 
     results = {}
-    for q_idx_str, student_ans in answered.items():
+
+    def process_chapter_question(q_idx_str, student_ans):
         q_start = time.monotonic()
         try:
             q_idx = int(q_idx_str)
@@ -155,7 +170,7 @@ def grade():
                 "request_id": request_id,
                 "q_idx_str": q_idx_str
             })
-            continue
+            return None
 
         q_section = q.get('section', 'General')
         q_hint = q.get('hint', '')
@@ -190,7 +205,21 @@ def grade():
             "latency_ms":   elapsed_ms,
         })
 
-        results[q_idx_str] = grade_result
+        return q_idx_str, grade_result
+
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        future_to_idx = {executor.submit(process_chapter_question, q_idx_str, student_ans): q_idx_str for q_idx_str, student_ans in answered.items()}
+        for future in concurrent.futures.as_completed(future_to_idx):
+            try:
+                res = future.result()
+                if res:
+                    q_idx_str, grade_result = res
+                    results[q_idx_str] = grade_result
+            except Exception as exc:
+                log.error("thread_execution_error", extra={
+                    "request_id": request_id,
+                    "error": str(exc)
+                }, exc_info=True)
 
     total_ms = round((time.monotonic() - start_time) * 1000)
     log.info("grade_request_complete", extra={
