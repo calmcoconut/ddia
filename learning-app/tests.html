@@ -170,6 +170,16 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
   <!-- Load our actual db.js -->
   <script src="db.js"></script>
+  <!-- Mock globals & load shared-app.js core for unit testing -->
+  <script>
+    sessionStorage.setItem('ddia_active_user', 'patrick');
+    window.QUIZ_QUESTIONS = [];
+    window.STATE_KEY = "ddia_test_shared_app_key";
+    window.CONFIDENCE_LABELS = ["Label 1", "Label 2"];
+    window.FLASHCARDS = [];
+    window.SCHEDULE_ITEMS = [];
+  </script>
+  <script src="shared-app.js"></script>
 </head>
 <body>
 
@@ -381,6 +391,94 @@
 
       // Verify correct conversion and tab-separation
       assertEquals(tsvContent, "OLTP<br>vs<br>OLAP\tTransactional vs<br>Analytics\n", "Serialization format should map inner newlines to <br> and separate fields with tab");
+    });
+
+    test("Shared Core: Array Shuffling", "Verify shuffleArray() does not mutate original array and maintains elements", () => {
+      const original = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+      const shuffled = shuffleArray(original);
+      assert(shuffled !== original, "Should return a new array instance");
+      assertEquals(shuffled.length, original.length, "Should maintain the same element count");
+      original.forEach(item => {
+        assert(shuffled.includes(item), `Should still contain element ${item}`);
+      });
+    });
+
+    test("Shared Core: Smooth Phase Transitions", "Verify switchPhase() successfully updates active classes on DOM nodes", () => {
+      const container = document.createElement('div');
+      container.innerHTML = `
+        <div id="phase-p1" class="phase-section"></div>
+        <div id="phase-p2" class="phase-section active"></div>
+        <button id="nav-p1" class="nav-btn"></button>
+        <button id="nav-p2" class="nav-btn active"></button>
+      `;
+      document.body.appendChild(container);
+
+      try {
+        const p1Sec = document.getElementById('phase-p1');
+        const p2Sec = document.getElementById('phase-p2');
+        const p1Btn = document.getElementById('nav-p1');
+        const p2Btn = document.getElementById('nav-p2');
+
+        switchPhase('p1');
+
+        assert(p1Sec.classList.contains('active'), "Phase 1 section should be active");
+        assert(!p2Sec.classList.contains('active'), "Phase 2 section should be inactive");
+        assert(p1Btn.classList.contains('active'), "Phase 1 button should be active");
+        assert(!p2Btn.classList.contains('active'), "Phase 2 button should be inactive");
+      } finally {
+        document.body.removeChild(container);
+      }
+    });
+
+    test("Shared Core: Dynamic Confidence Comparison Renderer", "Verify renderConfidenceComparison() dynamically populates comparison container based on CONFIDENCE_LABELS length", () => {
+      const container = document.createElement('div');
+      container.id = 'confidenceComparison';
+      document.body.appendChild(container);
+
+      const oldLabels = window.CONFIDENCE_LABELS;
+      window.CONFIDENCE_LABELS = ["Topic A", "Topic B", "Topic C"];
+
+      try {
+        renderConfidenceComparison();
+
+        const rows = container.querySelectorAll('.conf-compare-item');
+        assertEquals(rows.length, 3, "Should create exactly 3 rows matching CONFIDENCE_LABELS.length");
+        
+        const firstLabel = rows[0].querySelector('.conf-compare-label');
+        assertEquals(firstLabel.textContent, "Topic A", "Should correctly populate first label text");
+      } finally {
+        window.CONFIDENCE_LABELS = oldLabels;
+        document.body.removeChild(container);
+      }
+    });
+
+    test("Shared Core: Dynamic Scenario Boundaries", "Verify goToScenario() respects active boundaries and button disable state", () => {
+      const container = document.createElement('div');
+      container.innerHTML = `
+        <div id="scenarioDots"></div>
+        <button id="scenarioPrev"></button>
+        <button id="scenarioNext"></button>
+        <div class="scenario-card" data-scenario="0"></div>
+        <div class="scenario-card" data-scenario="1"></div>
+      `;
+      document.body.appendChild(container);
+
+      try {
+        renderScenarioDots();
+        const dots = container.querySelectorAll('.scenario-dot');
+        assertEquals(dots.length, 2, "Should create exactly 2 dots matching .scenario-card elements");
+
+        goToScenario(1);
+        const activeCard = container.querySelector('.scenario-card.active');
+        assertEquals(activeCard.dataset.scenario, "1", "Scenario 1 should be active");
+
+        const prevBtn = document.getElementById('scenarioPrev');
+        const nextBtn = document.getElementById('scenarioNext');
+        assert(nextBtn.disabled === true, "Next button should be disabled at boundary limit");
+        assert(prevBtn.disabled === false, "Prev button should remain enabled");
+      } finally {
+        document.body.removeChild(container);
+      }
     });
 
     test("API Error Handling Resilience", "Should gracefully handle backend 429 rate limit or 500 server errors during grading", async () => {
