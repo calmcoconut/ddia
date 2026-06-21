@@ -236,10 +236,15 @@ def load_questions_from_app_js(dir_name):
         print(f"Error parsing questions for {dir_name}: {e}")
         return []
 
+_CHAPTER_TEXT_CACHE = {}
+
 def extract_book_chapter_text(ch_num):
     if not HAS_BS4:
         return ""
     
+    if ch_num in _CHAPTER_TEXT_CACHE:
+        return _CHAPTER_TEXT_CACHE[ch_num]
+
     # Locate matching HTML file in chapters/
     base_dir = os.path.dirname(os.path.abspath(__file__))
     chapters_dir = os.path.join(base_dir, "chapters")
@@ -255,8 +260,13 @@ def extract_book_chapter_text(ch_num):
     html_file = files[0]
     try:
         with open(html_file, "r", encoding="utf-8") as f:
+            # Add comment explaining optimization
+            # Performance optimization: cache the parsed HTML text per chapter to
+            # avoid expensive synchronous File I/O and BeautifulSoup parsing in loops.
             soup = BeautifulSoup(f.read(), "html.parser")
-            return soup.get_text(separator="\n", strip=True)
+            result = soup.get_text(separator="\n", strip=True)
+            _CHAPTER_TEXT_CACHE[ch_num] = result
+            return result
     except Exception:
         return ""
 
