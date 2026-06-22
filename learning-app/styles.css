@@ -1737,6 +1737,28 @@ body {
   text-align: center;
   padding: 0 0.5rem;
 }
+.results-llm-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 4px solid var(--accent-amber);
+  box-shadow: 0 0 30px rgba(245, 158, 11, 0.2);
+}
+.llm-score {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: var(--accent-amber);
+}
+.llm-label {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 0 0.5rem;
+}
 .score-label {
   display: block;
   font-size: 0.75rem;

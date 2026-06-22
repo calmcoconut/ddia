@@ -882,6 +882,34 @@
         document.body.removeChild(container);
       }
     });
+    test("LLM Grading Badge Generation", "Verify renderAiGrades calculates total and max scores and injects the llmBadge into the DOM", () => {
+      const container = document.createElement('div');
+      container.innerHTML = `
+        <div class="results-header"></div>
+        <div class="quiz-question" data-q-index="1"></div>
+        <div class="quiz-question" data-q-index="2"></div>
+      `;
+      document.body.appendChild(container);
+
+      try {
+        const mockGrades = {
+          "1": { score: 4, strengths: "Good", weaknesses: "None", feedback: "Nice" },
+          "2": { score: 5, strengths: "Perfect", weaknesses: "None", feedback: "Excellent" }
+        };
+
+        renderAiGrades(mockGrades);
+
+        const badge = document.getElementById('llmBadge');
+        assert(badge !== null, "LLM badge should be dynamically created");
+        
+        const scoreText = document.getElementById('llmScoreText');
+        assert(scoreText !== null, "Score text element should exist");
+        
+        assertEquals(scoreText.textContent.trim(), "9 / 10", "Badge should display correctly aggregated LLM scores (9 / 10)");
+      } finally {
+        document.body.removeChild(container);
+      }
+    });
 
     // ── Test Runner Logic ──────────────────────────────
 

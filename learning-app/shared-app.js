@@ -640,9 +640,16 @@ async function gradeWriteIns() {
 
 function renderAiGrades(grades) {
   if (!grades) return;
+
+  let totalScore = 0;
+  let maxScore = 0;
+
   Object.keys(grades).forEach(idxStr => {
     const idx = parseInt(idxStr);
     const grade = grades[idxStr];
+    totalScore += grade.score;
+    maxScore += 5;
+
     const questionDiv = document.querySelector(`.quiz-question[data-q-index="${idx}"]`);
     if (!questionDiv) return;
     
@@ -671,6 +678,24 @@ function renderAiGrades(grades) {
     
     questionDiv.appendChild(feedbackDiv);
   });
+
+  if (maxScore > 0) {
+    const header = document.querySelector('.results-header');
+    if (header) {
+      let badge = document.getElementById('llmBadge');
+      if (!badge) {
+        badge = document.createElement('div');
+        badge.id = 'llmBadge';
+        badge.className = 'results-llm-badge';
+        badge.innerHTML = `
+          <span class="llm-score" id="llmScoreText"></span>
+          <span class="llm-label">LLM Grading Score</span>
+        `;
+        header.appendChild(badge);
+      }
+      document.getElementById('llmScoreText').textContent = `${totalScore} / ${maxScore}`;
+    }
+  }
 }
 
 function setupLLMGrading() {
