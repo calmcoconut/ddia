@@ -2461,3 +2461,7 @@ body {
   outline: 2px solid var(--accent-indigo);
   outline-offset: 2px;
 }
+
+.empty-state {
+  font-size: 1.5rem !important;
+}
