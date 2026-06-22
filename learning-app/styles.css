@@ -2444,3 +2444,15 @@ body {
 }
 
 
+
+/* Accessibility enhancements: Focus styles for interactive elements */
+.quiz-option:focus-visible,
+.mc-btn:focus-visible,
+.btn-scenario-nav:focus-visible,
+.slider:focus-visible,
+.filter-btn:focus-visible,
+.hub-card-btn:focus-visible,
+.timer-btn:focus-visible {
+  outline: 2px solid var(--accent-indigo);
+  outline-offset: 2px;
+}
