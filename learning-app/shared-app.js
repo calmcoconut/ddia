@@ -404,7 +404,7 @@ function renderQuiz() {
     showQuizResultsPanel(loadState());
     const cachedState = loadState();
     if (cachedState.aiGrades) {
-      renderAiGrades(cachedState.aiGrades);
+      renderAiGrades(cachedState.aiGrades, cachedState.aiSummary);
     }
   } else {
     // Render submit row
@@ -624,12 +624,37 @@ async function gradeWriteIns() {
     if (percentEl) percentEl.textContent = `${pct}%`;
   }
 
-  if (statusEl) statusEl.textContent = `All questions graded successfully!`;
-  
   const currentState = loadState();
   currentState.aiGrades = { ...(currentState.aiGrades || {}), ...grades };
+  
+  if (statusEl) statusEl.textContent = `All questions graded successfully! Generating overall AI summary...`;
+  
+  let summaryObj = null;
+  try {
+    const summaryResponse = await fetch('/grade_summary', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chapterKey: STATE_KEY,
+        grades: currentState.aiGrades,
+        username: typeof getCurrentUsername !== 'undefined' ? getCurrentUsername() : 'anonymous'
+      })
+    });
+    if (summaryResponse.ok) {
+      summaryObj = await summaryResponse.json();
+    } else {
+      summaryObj = { summary: "Failed to fetch summary from server." };
+    }
+  } catch (err) {
+    summaryObj = { summary: `Error fetching summary: ${err.message}` };
+  }
+  
+  currentState.aiSummary = summaryObj;
   saveState(currentState);
-  renderAiGrades(currentState.aiGrades);
+  
+  if (statusEl) statusEl.textContent = `Summary generated!`;
+  
+  renderAiGrades(currentState.aiGrades, currentState.aiSummary);
 
   setTimeout(() => {
     progressContainer.classList.add('hidden');
@@ -638,7 +663,7 @@ async function gradeWriteIns() {
   return { grades: currentState.aiGrades };
 }
 
-function renderAiGrades(grades) {
+function renderAiGrades(grades, summary = null) {
   if (!grades) return;
 
   let totalScore = 0;
@@ -694,6 +719,31 @@ function renderAiGrades(grades) {
         header.appendChild(badge);
       }
       document.getElementById('llmScoreText').textContent = `${totalScore} / ${maxScore}`;
+    }
+
+    if (summary) {
+      const resultsContainer = document.getElementById('quizResults');
+      if (resultsContainer) {
+        let summaryPanel = document.getElementById('aiSummaryPanel');
+        if (!summaryPanel) {
+          summaryPanel = document.createElement('div');
+          summaryPanel.id = 'aiSummaryPanel';
+          summaryPanel.className = 'ai-summary-panel';
+          resultsContainer.appendChild(summaryPanel);
+        }
+        
+        const formatText = (text) => text ? text.replace(/\n/g, '<br>') : '';
+        let html = `<h3 class="summary-title">🌟 AI Grading Summary</h3>`;
+        if (summary.strengths) {
+          html += `<div class="summary-content"><strong>What went well:</strong><br>${formatText(summary.strengths)}</div><br>`;
+        }
+        if (summary.weaknesses) {
+          html += `<div class="summary-content"><strong>What could have been better:</strong><br>${formatText(summary.weaknesses)}</div><br>`;
+        }
+        html += `<div class="summary-content"><strong>TL;DR Summary:</strong><br>${formatText(summary.summary)}</div>`;
+        
+        summaryPanel.innerHTML = html;
+      }
     }
   }
 }

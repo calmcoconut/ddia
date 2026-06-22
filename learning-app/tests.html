@@ -911,6 +911,34 @@
       }
     });
 
+    test("LLM Summary Panel Generation", "Verify renderAiGrades injects the aiSummaryPanel when summary text is provided", () => {
+      const container = document.createElement('div');
+      container.innerHTML = `
+        <div class="results-header"></div>
+        <div id="quizResults"></div>
+      `;
+      document.body.appendChild(container);
+
+      try {
+        const mockGrades = {
+          "1": { score: 4, strengths: "Good", weaknesses: "None", feedback: "Nice" }
+        };
+        const mockSummary = { strengths: "Good memory", weaknesses: "Caching", summary: "You did great. Needs improvement on caching." };
+
+        renderAiGrades(mockGrades, mockSummary);
+
+        const panel = document.getElementById('aiSummaryPanel');
+        assert(panel !== null, "AI Summary Panel should be created when summary is provided");
+        
+        const contents = panel.querySelectorAll('.summary-content');
+        assert(contents.length > 0, "Summary content elements should exist");
+        assert(panel.innerHTML.includes("You did great."), "Summary content should match provided text");
+        assert(panel.innerHTML.includes("Good memory"), "Strengths should match provided text");
+      } finally {
+        document.body.removeChild(container);
+      }
+    });
+
     // ── Test Runner Logic ──────────────────────────────
 
     async function runAllTests() {

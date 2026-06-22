@@ -1771,6 +1771,31 @@ body {
   gap: 1rem;
   margin-top: 1.5rem;
 }
+.ai-summary-panel {
+  background: linear-gradient(145deg, rgba(30, 41, 59, 0.6), rgba(15, 23, 42, 0.8));
+  border: 1px solid var(--accent-indigo);
+  border-radius: 12px;
+  padding: 1.5rem 2rem;
+  margin: 2rem auto;
+  max-width: 800px;
+  box-shadow: 0 8px 32px rgba(99, 102, 241, 0.15);
+  backdrop-filter: blur(10px);
+}
+.summary-title {
+  color: var(--accent-indigo);
+  font-size: 1.4rem;
+  margin-top: 0;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.summary-content {
+  color: var(--text-primary);
+  line-height: 1.6;
+  font-size: 1rem;
+}
+
 
 @media (max-width: 768px) {
   .header-content { flex-direction: column; align-items: flex-start; }

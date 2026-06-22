@@ -309,7 +309,7 @@ def parse_llm_json(text):
     if there's surrounding text.
     """
     text_stripped = text.strip()
-    
+
     # Try finding markdown code block first
     if "```json" in text_stripped:
         try:
@@ -328,7 +328,7 @@ def parse_llm_json(text):
         return json.loads(candidate, strict=False)
     except Exception:
         pass
-        
+
     # Fallback to direct load
     return json.loads(text_stripped, strict=False)
 
@@ -392,6 +392,53 @@ Provide your response in the following JSON format. Do not wrap it in markdown c
             "strengths": "Error",
             "weaknesses": "API failed to evaluate response.",
             "feedback": str(e),
+        }
+
+
+def generate_summary(model, chapter_title, grades_dict):
+    """
+    Generates an overall feedback summary for the student's performance on a chapter.
+    Returns a dictionary with a 'summary' string.
+    """
+    prompt = f"""You are a senior database systems tutor.
+The student just completed a quiz on "{chapter_title}" from "Designing Data-Intensive Applications".
+
+Here is the feedback they received on their individual answers:
+{json.dumps(grades_dict)}
+
+Please provide a personalized, encouraging summary of their overall performance.
+Highlight BOTH their main areas of strength AND specific areas they need to improve or review based on the total results.
+Write in a supportive, conversational tone as a senior engineer mentoring a junior.
+
+### RESPONSE FORMAT (MUST BE VALID JSON):
+Provide your response in the following JSON format. Do not wrap it in markdown code blocks or add any text outside the JSON.
+{{
+  "went_well": "<bulleted list or paragraph of what went well>",
+  "could_be_better": "<bulleted list or paragraph of what could have been better>",
+  "tldr_summary": "<a tl;dr summary>"
+}}
+"""
+    try:
+        text = model.generate_json(prompt).strip()
+        result = parse_llm_json(text)
+        if "tldr_summary" not in result:
+            result["tldr_summary"] = "Could not generate summary."
+        if "went_well" not in result:
+            result["went_well"] = ""
+        if "could_be_better" not in result:
+            result["could_be_better"] = ""
+
+        # Backward compatibility / fallback map
+        result["summary"] = result["tldr_summary"]
+        result["strengths"] = result["went_well"]
+        result["weaknesses"] = result["could_be_better"]
+        return result
+    except Exception as e:
+        print(f"Error calling LLM API for summary: {e}")
+        return {
+            "summary": f"Failed to generate summary: {str(e)}",
+            "strengths": "",
+            "weaknesses": "",
         }
 
 
