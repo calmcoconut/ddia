@@ -1764,7 +1764,7 @@ body {
   font-weight: 800;
   color: var(--accent-cyan);
 }
-.writein-label {
+.results-writein-badge .writein-label {
   position: absolute;
   bottom: -2.2rem;
   left: 50%;
@@ -1792,7 +1792,7 @@ body {
   font-weight: 800;
   color: var(--accent-amber);
 }
-.llm-label {
+.results-llm-badge .llm-label {
   position: absolute;
   bottom: -2.2rem;
   left: 50%;

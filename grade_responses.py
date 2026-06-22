@@ -469,21 +469,40 @@ def generate_summary(model, chapter_title, grades_dict, raise_on_error=False):
     Generates an overall feedback summary for the student's performance on a chapter.
     Returns a dictionary with a 'summary' string.
     """
+    ch_num = None
+    try:
+        ch_match = re.search(r"\d+", chapter_title)
+        if ch_match:
+            ch_num = int(ch_match.group())
+    except Exception:
+        pass
+
+    book_chapter_text = ""
+    if ch_num:
+        book_chapter_text = extract_book_chapter_text(ch_num)
+
+    prompt_chapter_context = ""
+    if book_chapter_text:
+        prompt_chapter_context = (
+            f"\n\nTEXTBOOK CHAPTER {ch_num} FULL CONTENT:\n{book_chapter_text}\n"
+        )
+
     prompt = f"""You are a senior database systems tutor.
-The student just completed a quiz on "{chapter_title}" from "Designing Data-Intensive Applications".
+The student just completed a quiz on "{chapter_title}" from "Designing Data-Intensive Applications".{prompt_chapter_context}
 
 Here is the feedback they received on their individual answers:
 {json.dumps(grades_dict)}
 
 Please provide a personalized, encouraging summary of their overall performance.
 Highlight BOTH their main areas of strength AND specific areas they need to improve or review based on the total results.
+Specifically, pinpoint the exact sections of the chapter from the textbook content provided above that they should focus on or review (e.g. "Section: Storage Engines" or "Section: SSTables and LSM-Trees").
 Write in a supportive, conversational tone as a senior engineer mentoring a junior.
 
 ### RESPONSE FORMAT (MUST BE VALID JSON):
 Provide your response in the following JSON format. Do not wrap it in markdown code blocks or add any text outside the JSON.
 {{
   "went_well": "<bulleted list or paragraph of what went well>",
-  "could_be_better": "<bulleted list or paragraph of what could have been better>",
+  "could_be_better": "<bulleted list or paragraph of what could have been better, explicitly naming and pinpointing the specific chapter sections they should focus on>",
   "tldr_summary": "<a tl;dr summary>"
 }}
 """

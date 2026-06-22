@@ -939,6 +939,31 @@
       }
     });
 
+    test("LLM Summary Panel Error Handling", "Verify renderAiGrades handles error summary objects gracefully", () => {
+      const container = document.createElement('div');
+      container.innerHTML = `
+        <div class="results-header"></div>
+        <div id="quizResults"></div>
+      `;
+      document.body.appendChild(container);
+
+      try {
+        const mockGrades = {
+          "1": { score: 4, strengths: "Good", weaknesses: "None", feedback: "Nice" }
+        };
+        const mockSummary = { summary: "Error fetching summary: Failed to fetch" };
+
+        renderAiGrades(mockGrades, mockSummary);
+
+        const panel = document.getElementById('aiSummaryPanel');
+        assert(panel !== null, "AI Summary Panel should be created even for error summary");
+        assert(panel.innerHTML.includes("Error fetching summary: Failed to fetch"), "Error message should be rendered in the panel");
+        assert(!panel.innerHTML.includes("What went well"), "Should not show 'What went well' section on errors");
+      } finally {
+        document.body.removeChild(container);
+      }
+    });
+
     // ── Test Runner Logic ──────────────────────────────
 
     async function runAllTests() {

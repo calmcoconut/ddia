@@ -201,12 +201,12 @@ class TestEndpointContract:
     def test_api_error_returns_500_early(self, client, monkeypatch):
         """Test that a grading failure in the chapter path returns 500 immediately."""
         print("\n--> Starting test_api_error_returns_500_early", flush=True)
-        import server
+        import grade_responses
 
         def fail_on_api_call(*args, **kwargs):
             raise RuntimeError("Rate limit or auth error from LLM API")
 
-        monkeypatch.setattr(server, "grade_question", fail_on_api_call)
+        monkeypatch.setattr(grade_responses.LLMGrader, "generate_json", fail_on_api_call)
 
         payload = {
             "chapterKey": "ddia_ch1_learning",
@@ -224,12 +224,12 @@ class TestEndpointContract:
     def test_exam_api_error_returns_500_early(self, client, monkeypatch):
         """Test that a grading failure in the exam path returns 500 immediately."""
         print("\n--> Starting test_exam_api_error_returns_500_early", flush=True)
-        import server
+        import grade_responses
 
         def fail_on_api_call(*args, **kwargs):
             raise RuntimeError("API quota exceeded")
 
-        monkeypatch.setattr(server, "grade_question", fail_on_api_call)
+        monkeypatch.setattr(grade_responses.LLMGrader, "generate_json", fail_on_api_call)
 
         payload = {
             "isExam": True,
@@ -263,12 +263,12 @@ class TestEndpointContract:
     def test_grade_summary_api_error_returns_500(self, client, monkeypatch):
         """Test that an API error during summary generation returns a 500 status code."""
         print("\n--> Starting test_grade_summary_api_error_returns_500", flush=True)
-        import server
+        import grade_responses
 
         def fail_on_summary_call(*args, **kwargs):
             raise RuntimeError("LLM API summary service unavailable")
 
-        monkeypatch.setattr(server, "generate_summary", fail_on_summary_call)
+        monkeypatch.setattr(grade_responses.LLMGrader, "generate_json", fail_on_summary_call)
 
         payload = {
             "chapterKey": "ddia_ch1_learning",
@@ -736,6 +736,33 @@ class TestLLMGraderAdapter:
         assert provider == "openai"
         assert api_key == "general-key-123"
         assert model_name == "gpt-4-custom"
+
+    def test_generate_summary_injects_chapter_content(self, monkeypatch):
+        """Verify that generate_summary fetches and injects the textbook chapter content in the prompt."""
+        from grade_responses import generate_summary, LLMGrader
+
+        captured_prompt = None
+
+        class MockLLMGrader:
+            def __init__(self):
+                self.provider = "gemini"
+                self.api_key = "fake"
+                self.model_name = "gemini-3.5-flash"
+
+            def generate_json(self, prompt):
+                nonlocal captured_prompt
+                captured_prompt = prompt
+                return '{"went_well": "excellent", "could_be_better": "none", "tldr_summary": "perfect"}'
+
+        mock_model = MockLLMGrader()
+
+        # Call generate_summary for Chapter 1
+        result = generate_summary(mock_model, "Chapter 1: Trade-Offs in Data Systems Architecture", {})
+
+        assert captured_prompt is not None
+        assert "TEXTBOOK CHAPTER 1 FULL CONTENT:" in captured_prompt
+        assert "Thomas Sowell" in captured_prompt  # specific quote from chapter 1 text
+        assert result["summary"] == "perfect"
 
 
 # ── parse_llm_json Robustness Tests (TDD for malformed LLM output) ───────────
