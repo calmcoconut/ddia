@@ -302,6 +302,37 @@ def parse_context_desc(context_desc):
     return ch_num, section_name
 
 
+def parse_llm_json(text):
+    """
+    Robustly parses a JSON string returned by an LLM.
+    Handles markdown backticks and attempts to find a JSON block between curly braces
+    if there's surrounding text.
+    """
+    text_stripped = text.strip()
+    
+    # Try finding markdown code block first
+    if "```json" in text_stripped:
+        try:
+            start_idx = text_stripped.index("```json") + 7
+            end_idx = text_stripped.index("```", start_idx)
+            candidate = text_stripped[start_idx:end_idx].strip()
+            return json.loads(candidate, strict=False)
+        except Exception:
+            pass
+
+    # Try finding between first { and last }
+    try:
+        start_idx = text_stripped.index("{")
+        end_idx = text_stripped.rindex("}") + 1
+        candidate = text_stripped[start_idx:end_idx].strip()
+        return json.loads(candidate, strict=False)
+    except Exception:
+        pass
+        
+    # Fallback to direct load
+    return json.loads(text_stripped, strict=False)
+
+
 def grade_question(model, q_text, model_answer, student_answer, context_desc=""):
     if not student_answer or not student_answer.strip():
         return {
@@ -353,12 +384,7 @@ Provide your response in the following JSON format. Do not wrap it in markdown c
 """
     try:
         text = model.generate_json(prompt).strip()
-        # Clean markdown wrappers if returned
-        if text.startswith("```json"):
-            text = text[7:]
-        if text.endswith("```"):
-            text = text[:-3]
-        return json.loads(text.strip())
+        return parse_llm_json(text)
     except Exception as e:
         print(f"Error calling LLM API: {e}")
         return {

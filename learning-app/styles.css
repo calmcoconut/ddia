@@ -735,6 +735,76 @@ body {
   gap: 1.25rem;
 }
 
+/* Case Study Context Box */
+.quiz-case-study {
+  padding: 1.5rem;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.03) 0%, rgba(139, 92, 246, 0.03) 100%);
+  border: 1px solid var(--border-subtle);
+  border-left: 4px solid var(--accent-indigo);
+  border-radius: var(--radius-md);
+  margin-bottom: 0.25rem;
+}
+.case-study-banner {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  color: var(--accent-indigo);
+  margin-bottom: 0.5rem;
+  opacity: 0.8;
+}
+.case-study-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+.case-study-icon {
+  font-size: 1.2rem;
+}
+.case-study-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+.case-study-content {
+  font-size: 0.85rem;
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+.case-study-content p {
+  margin: 0 0 0.75rem 0;
+}
+.case-study-content p:last-of-type {
+  margin-bottom: 0;
+}
+.case-study-content ol, .case-study-content ul {
+  margin: 0 0 0.75rem 1.25rem;
+  padding: 0;
+}
+.case-study-content li {
+  margin-bottom: 0.4rem;
+}
+.case-study-content li:last-child {
+  margin-bottom: 0;
+}
+.case-study-content pre {
+  background: rgba(0, 0, 0, 0.2);
+  padding: 0.6rem 0.8rem;
+  border-radius: var(--radius-sm);
+  overflow-x: auto;
+  margin: 0.6rem 0;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  line-height: 1.4;
+}
+.case-study-content code {
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+}
+
 .quiz-question {
   padding: 1.25rem;
   background: var(--bg-elevated);

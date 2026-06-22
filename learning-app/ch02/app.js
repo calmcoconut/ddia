@@ -16,7 +16,12 @@ const QUIZ_QUESTIONS = [
     ],
     correct: 1,
     explanation: "When a user follows many accounts, the database must scan and merge the recent posts of all those accounts, then sort them by timestamp. At high throughput (e.g., millions of timeline reads per second), this is too slow and resource-intensive.",
-    section: "Case Study: Social Network Home Timelines"
+    section: "Case Study: Social Network Home Timelines",
+    caseStudy: {
+      id: "twitter_timeline",
+      title: "Twitter Home Timelines",
+      text: "<p><em>Use the following case study details to answer Questions 1–3:</em></p><p>Twitter's timeline delivery has two primary operations:</p><ol><li><strong>Post tweet:</strong> A user can publish a new message to their followers (average 4.6k requests/sec, peak 12k requests/sec).</li><li><strong>Home timeline:</strong> A user can view tweets posted by the people they follow (average 300k requests/sec).</li></ol><p>Handling the write volume is straightforward, but the primary challenge is <strong>fan-out</strong>: coordinating timeline delivery across large follower counts.</p><ul><li><strong>Approach 1 (Query on read):</strong> A user's tweet is inserted into a global table. To read a timeline, the system queries:<pre><code>SELECT tweets.*, users.* FROM tweets<br>  JOIN users ON tweets.user_id = users.id<br>  JOIN follows ON follows.invitee_id = users.id<br>  WHERE follows.follower_id = ?<br>  ORDER BY tweets.timestamp DESC LIMIT 100</code></pre>This requires complex relational joins and is expensive to run on every request.</li><li><strong>Approach 2 (Materialize on write):</strong> Each user has a precomputed home timeline cache. When a user posts a tweet, it is inserted into the caches of all their followers. Reading a timeline is a single cache lookup, but writing a tweet triggers massive write loads for high-follower (celebrity) accounts.</li></ul>"
+    }
   },
   {
     type: "mc",
@@ -29,14 +34,24 @@ const QUIZ_QUESTIONS = [
     ],
     correct: 2,
     explanation: "Materialization stores the precomputed timeline in a cache (like Redis). Read requests are fast because they just load from the cache. However, when a post is made, it must be written to the timeline of every follower (fan-out), shifting the load from read-time to write-time.",
-    section: "Case Study: Social Network Home Timelines"
+    section: "Case Study: Social Network Home Timelines",
+    caseStudy: {
+      id: "twitter_timeline",
+      title: "Twitter Home Timelines",
+      text: "<p><em>Use the following case study details to answer Questions 1–3:</em></p><p>Twitter's timeline delivery has two primary operations:</p><ol><li><strong>Post tweet:</strong> A user can publish a new message to their followers (average 4.6k requests/sec, peak 12k requests/sec).</li><li><strong>Home timeline:</strong> A user can view tweets posted by the people they follow (average 300k requests/sec).</li></ol><p>Handling the write volume is straightforward, but the primary challenge is <strong>fan-out</strong>: coordinating timeline delivery across large follower counts.</p><ul><li><strong>Approach 1 (Query on read):</strong> A user's tweet is inserted into a global table. To read a timeline, the system queries:<pre><code>SELECT tweets.*, users.* FROM tweets<br>  JOIN users ON tweets.user_id = users.id<br>  JOIN follows ON follows.invitee_id = users.id<br>  WHERE follows.follower_id = ?<br>  ORDER BY tweets.timestamp DESC LIMIT 100</code></pre>This requires complex relational joins and is expensive to run on every request.</li><li><strong>Approach 2 (Materialize on write):</strong> Each user has a precomputed home timeline cache. When a user posts a tweet, it is inserted into the caches of all their followers. Reading a timeline is a single cache lookup, but writing a tweet triggers massive write loads for high-follower (celebrity) accounts.</li></ul>"
+    }
   },
   {
     type: "write",
     q: "Explain the concept of 'fan-out' in message/timeline delivery, and discuss how celebrity accounts make a pure materialized timeline approach fail.",
     hint: "Mention downstream requests per write, the write load for users with millions of followers, and how to combine approaches.",
     modelAnswer: "Fan-out describes the factor by which one initial write request results in multiple downstream write requests. In a materialized timeline system, if a user with 50 followers posts, we do 50 writes. However, if a celebrity with 100 million followers posts, a pure materialized approach requires writing that post to 100 million timeline caches immediately, creating a massive write spike that can exhaust resources. To solve this, celebrity posts are stored separately and merged with the user's materialized timeline only at read time.",
-    section: "Case Study: Social Network Home Timelines"
+    section: "Case Study: Social Network Home Timelines",
+    caseStudy: {
+      id: "twitter_timeline",
+      title: "Twitter Home Timelines",
+      text: "<p><em>Use the following case study details to answer Questions 1–3:</em></p><p>Twitter's timeline delivery has two primary operations:</p><ol><li><strong>Post tweet:</strong> A user can publish a new message to their followers (average 4.6k requests/sec, peak 12k requests/sec).</li><li><strong>Home timeline:</strong> A user can view tweets posted by the people they follow (average 300k requests/sec).</li></ol><p>Handling the write volume is straightforward, but the primary challenge is <strong>fan-out</strong>: coordinating timeline delivery across large follower counts.</p><ul><li><strong>Approach 1 (Query on read):</strong> A user's tweet is inserted into a global table. To read a timeline, the system queries:<pre><code>SELECT tweets.*, users.* FROM tweets<br>  JOIN users ON tweets.user_id = users.id<br>  JOIN follows ON follows.invitee_id = users.id<br>  WHERE follows.follower_id = ?<br>  ORDER BY tweets.timestamp DESC LIMIT 100</code></pre>This requires complex relational joins and is expensive to run on every request.</li><li><strong>Approach 2 (Materialize on write):</strong> Each user has a precomputed home timeline cache. When a user posts a tweet, it is inserted into the caches of all their followers. Reading a timeline is a single cache lookup, but writing a tweet triggers massive write loads for high-follower (celebrity) accounts.</li></ul>"
+    }
   },
   {
     type: "mc",

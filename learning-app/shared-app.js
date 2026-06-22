@@ -238,6 +238,7 @@ function renderQuiz() {
   const writeIns = state.writeInAnswers || {};
   const graded = state.quizGraded || false;
 
+  const renderedCaseStudies = new Set();
   let renderedCount = 0;
 
   QUIZ_QUESTIONS.forEach((q, idx) => {
@@ -252,6 +253,26 @@ function renderQuiz() {
     if (currentFilter === 'unanswered' && isAnswered) return;
 
     renderedCount++;
+
+    if (q.caseStudy) {
+      const csId = q.caseStudy.id || q.caseStudy.title;
+      if (!renderedCaseStudies.has(csId)) {
+        renderedCaseStudies.add(csId);
+        const csDiv = document.createElement('div');
+        csDiv.className = 'quiz-case-study';
+        csDiv.innerHTML = `
+          <div class="case-study-banner">Case Study Context</div>
+          <div class="case-study-header">
+            <span class="case-study-icon">📖</span>
+            <h3 class="case-study-title">${q.caseStudy.title}</h3>
+          </div>
+          <div class="case-study-content">
+            ${q.caseStudy.text}
+          </div>
+        `;
+        container.appendChild(csDiv);
+      }
+    }
 
     const div = document.createElement('div');
     div.className = `quiz-question ${isMc ? 'type-mc' : 'type-write'}`;
