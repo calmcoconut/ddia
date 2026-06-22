@@ -1710,11 +1710,42 @@ body {
 .results-header {
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
   gap: 3rem;
-  margin-bottom: 2rem;
+  margin-bottom: 3rem;
   flex-wrap: wrap;
 }
+
+.results-score-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.writein-score-circle {
+  border-color: var(--accent-cyan) !important;
+  box-shadow: 0 0 30px rgba(6, 182, 212, 0.2) !important;
+}
+
+.llm-score-circle {
+  border-color: var(--accent-amber) !important;
+  box-shadow: 0 0 30px rgba(245, 158, 11, 0.2) !important;
+}
+
+.writein-score-circle .score-num {
+  background: none !important;
+  -webkit-text-fill-color: var(--accent-cyan) !important;
+  color: var(--accent-cyan) !important;
+}
+
+.llm-score-circle .score-num {
+  background: none !important;
+  -webkit-text-fill-color: var(--accent-amber) !important;
+  color: var(--accent-amber) !important;
+}
+
+/* Fallbacks for original class names to keep legacy compatibility/tests happy */
 .results-writein-badge {
   display: flex;
   flex-direction: column;
@@ -1725,6 +1756,8 @@ body {
   border-radius: 50%;
   border: 4px solid var(--accent-cyan);
   box-shadow: 0 0 30px rgba(6, 182, 212, 0.2);
+  position: relative;
+  margin-bottom: 2rem;
 }
 .writein-count {
   font-size: 2.5rem;
@@ -1732,10 +1765,14 @@ body {
   color: var(--accent-cyan);
 }
 .writein-label {
-  font-size: 0.65rem;
+  position: absolute;
+  bottom: -2.2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.75rem;
   color: var(--text-muted);
+  white-space: nowrap;
   text-align: center;
-  padding: 0 0.5rem;
 }
 .results-llm-badge {
   display: flex;
@@ -1747,6 +1784,8 @@ body {
   border-radius: 50%;
   border: 4px solid var(--accent-amber);
   box-shadow: 0 0 30px rgba(245, 158, 11, 0.2);
+  position: relative;
+  margin-bottom: 2rem;
 }
 .llm-score {
   font-size: 2.2rem;
@@ -1754,16 +1793,23 @@ body {
   color: var(--accent-amber);
 }
 .llm-label {
-  font-size: 0.65rem;
+  position: absolute;
+  bottom: -2.2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.75rem;
   color: var(--text-muted);
+  white-space: nowrap;
   text-align: center;
-  padding: 0 0.5rem;
 }
 .score-label {
   display: block;
   font-size: 0.75rem;
   color: var(--text-muted);
-  margin-top: 0.5rem;
+  margin-top: 0.75rem;
+  text-align: center;
+  max-width: 140px;
+  line-height: 1.3;
 }
 .results-actions {
   display: flex;

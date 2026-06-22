@@ -260,6 +260,36 @@ class TestEndpointContract:
         assert "API quota exceeded" in data["error"]
         print("--> Finished test_exam_api_error_returns_500_early", flush=True)
 
+    def test_grade_summary_api_error_returns_500(self, client, monkeypatch):
+        """Test that an API error during summary generation returns a 500 status code."""
+        print("\n--> Starting test_grade_summary_api_error_returns_500", flush=True)
+        import server
+
+        def fail_on_summary_call(*args, **kwargs):
+            raise RuntimeError("LLM API summary service unavailable")
+
+        monkeypatch.setattr(server, "generate_summary", fail_on_summary_call)
+
+        payload = {
+            "chapterKey": "ddia_ch1_learning",
+            "grades": {
+                "2": {
+                    "score": 4,
+                    "strengths": "Good",
+                    "weaknesses": "None",
+                    "feedback": "Nice",
+                }
+            },
+        }
+
+        res = client.post("/grade_summary", json=payload)
+        print(f"--> Received response status {res.status_code}", flush=True)
+        assert res.status_code == 500
+        data = res.get_json()
+        assert "error" in data
+        assert "LLM API summary service unavailable" in data["error"]
+        print("--> Finished test_grade_summary_api_error_returns_500", flush=True)
+
 
 # ── Live Integration Test (opt-in, skipped without real key) ────────────────
 

@@ -464,7 +464,7 @@ Provide your response in the following JSON format. Do not wrap it in markdown c
         }
 
 
-def generate_summary(model, chapter_title, grades_dict):
+def generate_summary(model, chapter_title, grades_dict, raise_on_error=False):
     """
     Generates an overall feedback summary for the student's performance on a chapter.
     Returns a dictionary with a 'summary' string.
@@ -489,6 +489,17 @@ Provide your response in the following JSON format. Do not wrap it in markdown c
 """
     try:
         text = model.generate_json(prompt).strip()
+    except Exception as e:
+        print(f"Error calling LLM API for summary: {e}")
+        if raise_on_error:
+            raise
+        return {
+            "summary": f"Failed to generate summary: {str(e)}",
+            "strengths": "",
+            "weaknesses": "",
+        }
+
+    try:
         result = parse_llm_json(text)
         if "tldr_summary" not in result:
             result["tldr_summary"] = "Could not generate summary."
@@ -503,9 +514,9 @@ Provide your response in the following JSON format. Do not wrap it in markdown c
         result["weaknesses"] = result["could_be_better"]
         return result
     except Exception as e:
-        print(f"Error calling LLM API for summary: {e}")
+        print(f"Error parsing LLM response for summary: {e}")
         return {
-            "summary": f"Failed to generate summary: {str(e)}",
+            "summary": f"Failed to parse summary: {str(e)}",
             "strengths": "",
             "weaknesses": "",
         }

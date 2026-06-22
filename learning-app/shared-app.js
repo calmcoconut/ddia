@@ -447,6 +447,38 @@ function gradeQuiz() {
 }
 
 function showQuizResultsPanel(state) {
+  // Restructure results-header for uniform results circles if not already done
+  const header = document.querySelector('.results-header');
+  if (header) {
+    const mcContainer = header.querySelector('.results-score');
+    if (mcContainer) {
+      mcContainer.className = 'results-score-item mc-score-item';
+    }
+    const writeInBadge = header.querySelector('.results-writein-badge');
+    if (writeInBadge) {
+      const writeInContainer = document.createElement('div');
+      writeInContainer.className = 'results-score-item writein-score-item';
+
+      const writeInCircle = document.createElement('div');
+      writeInCircle.className = 'score-circle writein-score-circle';
+
+      const countSpan = document.getElementById('writeinCount') || writeInBadge.querySelector('.writein-count');
+      if (countSpan) {
+        countSpan.className = 'score-num';
+        writeInCircle.appendChild(countSpan);
+      }
+
+      writeInContainer.appendChild(writeInCircle);
+
+      const labelSpan = document.createElement('span');
+      labelSpan.className = 'score-label';
+      labelSpan.textContent = 'Write-in responses saved';
+      writeInContainer.appendChild(labelSpan);
+
+      writeInBadge.replaceWith(writeInContainer);
+    }
+  }
+
   const selections = state.quizSelections || {};
   const writeIns = state.writeInAnswers || {};
 
@@ -711,14 +743,27 @@ function renderAiGrades(grades, summary = null) {
       if (!badge) {
         badge = document.createElement('div');
         badge.id = 'llmBadge';
-        badge.className = 'results-llm-badge';
+        badge.className = 'results-score-item llm-score-item';
         badge.innerHTML = `
-          <span class="llm-score" id="llmScoreText"></span>
-          <span class="llm-label">LLM Grading Score</span>
+          <div class="score-circle llm-score-circle">
+            <span class="llm-score" id="llmScoreText" style="display: flex; flex-direction: column; align-items: center;"><span class="score-num" id="llmScoreNum"></span><span class="score-denom" id="llmScoreDenom"></span></span>
+          </div>
+          <span class="score-label llm-label">LLM Grading Score</span>
         `;
         header.appendChild(badge);
       }
-      document.getElementById('llmScoreText').textContent = `${totalScore} / ${maxScore}`;
+      
+      const numEl = document.getElementById('llmScoreNum');
+      const denomEl = document.getElementById('llmScoreDenom');
+      if (numEl && denomEl) {
+        numEl.textContent = totalScore;
+        denomEl.textContent = ` / ${maxScore}`;
+      } else {
+        const scoreTextEl = document.getElementById('llmScoreText');
+        if (scoreTextEl) {
+          scoreTextEl.textContent = `${totalScore} / ${maxScore}`;
+        }
+      }
     }
 
     if (summary) {

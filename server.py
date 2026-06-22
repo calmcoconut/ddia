@@ -363,7 +363,7 @@ def grade_summary():
     )
 
     try:
-        summary_result = generate_summary(model, chapter_title, grades_dict)
+        summary_result = generate_summary(model, chapter_title, grades_dict, raise_on_error=True)
     except Exception as exc:
         log.error(
             "llm_api_error_summary",
@@ -373,7 +373,7 @@ def grade_summary():
             },
             exc_info=True,
         )
-        summary_result = {"summary": "Failed to generate summary."}
+        return jsonify({"error": f"Failed to generate summary: {str(exc)}"}), 500
 
     elapsed_ms = round((time.monotonic() - start_time) * 1000)
     log.info(
