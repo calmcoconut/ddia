@@ -321,29 +321,35 @@ def grade_question(model, q_text, model_answer, student_answer, context_desc="")
     else:
         prompt_context = context_desc
 
-    prompt = f"""You are a senior database systems tutor grading a graduate-level student response to a questions on Designing Data-Intensive Applications by Martin Kleppmann.
+    prompt = f"""You are a world-class senior database systems tutor grading a student response to a question from "Designing Data-Intensive Applications" by Martin Kleppmann.
+Your goal is to provide insightful, highly pedagogical, and encouraging feedback that helps the student build a deep, intuitive understanding of database systems architecture.
 
 CONTEXT: {prompt_context}
 QUESTION: {q_text}
 MODEL ANSWER (RUBRIC): {model_answer}
 STUDENT RESPONSE: {student_answer}
 
-Grade the student's response on a scale of 1 to 5:
-- 1: Completely incorrect, irrelevant, or empty.
-- 2: Severe misunderstandings, or misses the core architectural concepts entirely.
-- 3: Demonstrates partial understanding, but misses critical details, key terminology, or essential trade-offs.
-- 4: Strong answer. Correctly identifies core concepts and terminology with minor omissions or slightly lacking depth.
-- 5: Excellent, rigorous response. Fully explains the architecture, correct trade-offs, and design implications.
+### GRADING PRINCIPLES:
+1. **Prioritize Conceptual Understanding over Rote Terminology**: If the student explains the underlying concept or architectural trade-off correctly, do NOT penalize their score heavily for omitting specific vocabulary/buzzwords (like the exact name of a principle). Instead, reward their intuition, and gently introduce the formal term in the feedback.
+2. **Evaluate Core Engineering over Formatting Constraints**: If the question asks for a specific format (e.g., "a code review comment to a junior engineer"), prioritize the database concepts first. If the student gets the database engineering right but misses the format, grade them primarily on the engineering, and use the feedback to show how to frame it in the requested scenario.
+3. **Encouraging and Mentoring Voice**: Write the strengths and feedback in a supportive, conversational, and highly engaging tone. Avoid dry, checklist-like evaluations. Make the student feel like they are having a 1-on-1 session with a senior architect.
+4. **Deepen the Discussion with a Follow-Up Question**: Always conclude the "feedback" section with a highly relevant, thought-provoking follow-up question related to the trade-off. This question should prompt active recall or explore a related edge-case.
 
-Provide your grading in the following structured JSON format:
+### SCORING RUBRIC (1 to 5):
+- **1**: Irrelevant, empty, or completely incorrect.
+- **2**: Severe misunderstandings, or misses the core architectural concepts entirely.
+- **3**: Demonstrates partial understanding but contains notable conceptual gaps, incorrect trade-offs, or major omissions of core design implications.
+- **4**: Strong answer. Correctly identifies and explains the core concepts and trade-offs, but lacks slightly in technical depth or misses minor architectural nuances.
+- **5**: Excellent, rigorous response. Accurately explains the architecture, correct trade-offs, and design implications with proper technical depth.
+
+### RESPONSE FORMAT (MUST BE VALID JSON):
+Provide your response in the following JSON format. Do not wrap it in markdown code blocks or add any text outside the JSON.
 {{
   "score": <integer from 1 to 5>,
-  "strengths": "<brief description of what they got right, citing specific details from the response and textbook content if applicable>",
-  "weaknesses": "<description of missing trade-offs, conceptual errors, or details in comparison to the model answer and textbook content>",
-  "feedback": "<constructive guidance and corrected explanation targeting their specific gaps, clarifying the concepts using terminology from the textbook content>"
+  "strengths": "<Explain the strengths of their response. Address the correct parts of their mental model and validate why their reasoning is sound. Include positive reinforcement.>",
+  "weaknesses": "<Point out missing trade-offs, conceptual gaps, or potential operational risks they overlooked. Do not complain about missing exact terminology or formatting; focus on the architectural concepts.>",
+  "feedback": "<A conversational, supportive paragraph explaining the key conceptual gaps, bridging the student's answer to the rubric, and clarifying the database design trade-offs. Conclude the feedback with a specific, engaging follow-up question to probe their understanding further (e.g., 'To think about further: how would you handle...?')>"
 }}
-
-Output ONLY the JSON object. Do not wrap it in markdown code blocks or add preamble.
 """
     try:
         text = model.generate_json(prompt).strip()
@@ -454,9 +460,7 @@ def main():
         f"Connecting to {model.provider.capitalize()} API for evaluation using `{model.model_name}`...\n"
     )
 
-    report_markdown = (
-        "# Designing Data-Intensive Applications — AI Evaluation Report\n"
-    )
+    report_markdown = "# Designing Data-Intensive Applications — AI Evaluation Report\n"
     report_markdown += f"Evaluated using provider: `{model.provider}` and model: `{model.model_name}`\n\n---\n\n"
 
     # 1. Process Chapter Quizzes
