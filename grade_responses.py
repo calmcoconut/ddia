@@ -302,11 +302,31 @@ def parse_context_desc(context_desc):
     return ch_num, section_name
 
 
+def _extract_field(text, key):
+    """
+    Extracts a JSON string value for `key` from raw LLM output using regex.
+    Falls back gracefully when JSON is malformed due to unescaped quotes/newlines.
+    """
+    # Match: "key": "...anything until the closing quote before a comma/newline/brace..."
+    # We use a lazy match stopping at the last unescaped quote followed by , or }
+    pattern = rf'"{re.escape(key)}"\s*:\s*"(.*?)"(?=\s*[,\n\r}}])'
+    m = re.search(pattern, text, re.DOTALL)
+    if m:
+        return m.group(1).replace("\\n", "\n").replace('\\"', '"')
+    # Also handle integer values (e.g. score)
+    pattern_int = rf'"{re.escape(key)}"\s*:\s*(\d+)'
+    m2 = re.search(pattern_int, text)
+    if m2:
+        return int(m2.group(1))
+    return None
+
+
 def parse_llm_json(text):
     """
     Robustly parses a JSON string returned by an LLM.
     Handles markdown backticks and attempts to find a JSON block between curly braces
-    if there's surrounding text.
+    if there's surrounding text. Falls back to regex field extraction when JSON is
+    structurally broken (e.g. unescaped quotes inside values causing parse errors).
     """
     text_stripped = text.strip()
 
@@ -326,10 +346,45 @@ def parse_llm_json(text):
         end_idx = text_stripped.rindex("}") + 1
         candidate = text_stripped[start_idx:end_idx].strip()
         return json.loads(candidate, strict=False)
+    except json.JSONDecodeError:
+        # JSON is structurally broken — fall through to regex extraction
+        candidate = (
+            text_stripped[text_stripped.index("{") : text_stripped.rindex("}") + 1]
+            if "{" in text_stripped
+            else text_stripped
+        )
     except Exception:
-        pass
+        candidate = text_stripped
 
-    # Fallback to direct load
+    # Regex field-level extraction fallback
+    # Detect which fields are present and extract them individually
+    known_str_fields = [
+        "strengths",
+        "weaknesses",
+        "feedback",
+        "summary",
+        "went_well",
+        "could_be_better",
+        "tldr_summary",
+    ]
+    result = {}
+    score_val = _extract_field(candidate, "score")
+    if score_val is not None:
+        try:
+            result["score"] = int(score_val)
+        except (ValueError, TypeError):
+            pass
+    for field in known_str_fields:
+        val = _extract_field(candidate, field)
+        if val is not None:
+            result[field] = val
+    if result:
+        print(
+            f"parse_llm_json: used regex fallback, extracted fields: {list(result.keys())}"
+        )
+        return result
+
+    # Last resort: direct parse (will re-raise)
     return json.loads(text_stripped, strict=False)
 
 

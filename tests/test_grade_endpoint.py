@@ -644,3 +644,137 @@ class TestLLMGraderAdapter:
         assert provider == "openai"
         assert api_key == "general-key-123"
         assert model_name == "gpt-4-custom"
+
+
+# ── parse_llm_json Robustness Tests (TDD for malformed LLM output) ───────────
+#
+# These tests document the exact failure mode seen in production:
+#   "Expecting ',' delimiter: line 6 column 3 (char 1984)"
+# This happens when the LLM writes unescaped double-quotes inside a JSON string
+# value, breaking the parser midway through a long response.
+
+
+@pytest.mark.smoketest
+class TestParseLlmJson:
+    """Unit tests for parse_llm_json covering clean JSON, markdown-wrapped JSON,
+    and malformed JSON produced by LLMs (unescaped quotes, literal newlines, etc.)."""
+
+    def setup_method(self):
+        from grade_responses import parse_llm_json
+
+        self.parse = parse_llm_json
+
+    def test_clean_json_is_parsed(self):
+        """Normal well-formed JSON is parsed correctly."""
+        raw = '{"score": 4, "strengths": "Good.", "weaknesses": "Minor gaps.", "feedback": "Nice work."}'
+        result = self.parse(raw)
+        assert result["score"] == 4
+        assert result["strengths"] == "Good."
+
+    def test_markdown_wrapped_json_is_parsed(self):
+        """LLM sometimes wraps JSON in ```json ... ``` — this must be stripped."""
+        raw = '```json\n{"score": 3, "strengths": "OK", "weaknesses": "Gaps", "feedback": "See below."}\n```'
+        result = self.parse(raw)
+        assert result["score"] == 3
+
+    def test_json_with_surrounding_text_is_parsed(self):
+        """LLM sometimes adds prose before/after the JSON block."""
+        raw = 'Here is my evaluation:\n{"score": 5, "strengths": "Excellent", "weaknesses": "", "feedback": "Perfect."}\nHope this helps!'
+        result = self.parse(raw)
+        assert result["score"] == 5
+
+    def test_unescaped_quote_inside_value_does_not_raise(self):
+        """
+        REGRESSION TEST — matches the production error:
+        "Expecting ',' delimiter: line 6 column 3 (char 1984)"
+
+        The LLM wrote an unescaped double-quote inside a string value, e.g.:
+            "feedback": "You said "data lake" which is correct..."
+        This breaks json.loads but our regex fallback should still extract the fields.
+        """
+        # Simulate LLM output with an unescaped quote inside the feedback string
+        raw = (
+            "{\n"
+            '  "score": 4,\n'
+            '  "strengths": "Good understanding of the core concept.",\n'
+            '  "weaknesses": "Missed the write amplification trade-off.",\n'
+            '  "feedback": "You mentioned the "schema-on-read" pattern which is spot on. '
+            'To think further: how would you handle schema evolution?"\n'
+            "}"
+        )
+        # This MUST NOT raise and MUST return the score
+        result = self.parse(raw)
+        assert result.get("score") == 4, (
+            "score should be extracted even when feedback contains an unescaped quote"
+        )
+        assert "strengths" in result
+        assert "weaknesses" in result
+
+    def test_literal_newline_inside_value_does_not_raise(self):
+        """
+        json.loads strict=False handles literal newlines in strings,
+        but let's document this explicitly.
+        """
+        raw = '{"score": 3, "strengths": "Good.\nClear explanation.", "weaknesses": "Gaps.", "feedback": "Nice."}'
+        result = self.parse(raw)
+        assert result["score"] == 3
+
+    def test_very_long_feedback_with_unescaped_quote_near_char_1984(self):
+        """
+        Stress test: feedback ~2000 chars with an unescaped quote near position 1984
+        (the exact production failure). Ensures the regex fallback handles long payloads.
+        """
+        long_feedback = (
+            ("A" * 900)
+            + ' this concept is called "write amplification" and it is critical. '
+            + ("B" * 900)
+        )
+        raw = (
+            f"{{\n"
+            f'  "score": 4,\n'
+            f'  "strengths": "Great work on the core concepts.",\n'
+            f'  "weaknesses": "Minor gaps in trade-off analysis.",\n'
+            f'  "feedback": "{long_feedback}"\n'
+            f"}}"
+        )
+        result = self.parse(raw)
+        assert result.get("score") == 4
+
+    def test_completely_missing_braces_raises(self):
+        """If there is no JSON structure at all, parse_llm_json should raise."""
+        raw = "I cannot grade this response. Please try again."
+        with pytest.raises(Exception):
+            self.parse(raw)
+
+    def test_grade_question_returns_graceful_error_dict_on_bad_json(self, monkeypatch):
+        """
+        End-to-end: if the LLM returns malformed JSON for grade_question,
+        the result dict should NOT contain 'Error' in strengths.
+        Instead it should extract whatever fields it can, or at minimum not crash.
+        """
+        from grade_responses import grade_question, LLMGrader
+
+        # Simulate LLM returning JSON with unescaped quote inside feedback
+        bad_json = (
+            '{"score": 4, "strengths": "Good.", "weaknesses": "Minor gaps.", '
+            '"feedback": "You used the word "consistency" correctly. Keep it up."}'
+        )
+
+        class FakeLLMGrader:
+            def generate_json(self, prompt):
+                return bad_json
+
+        result = grade_question(
+            FakeLLMGrader(),
+            q_text="What is write-ahead logging?",
+            model_answer="WAL ensures durability by writing changes to a log before applying them.",
+            student_answer="The database writes to a log first so crashes don't lose data.",
+            context_desc="Chapter 3, section: Storage Engines",
+        )
+
+        # Should not return the generic "API failed to evaluate response." error message
+        assert result.get("strengths") != "Error", (
+            "parse_llm_json should recover from unescaped quotes rather than "
+            "falling through to the generic API error handler"
+        )
+        assert result.get("score") == 4
