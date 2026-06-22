@@ -279,6 +279,7 @@ function injectHamburgerMenu() {
     toggleBtn.id = 'hamburgerMenuBtn';
     toggleBtn.className = 'hamburger-menu-btn';
     toggleBtn.setAttribute('aria-label', 'Toggle navigation menu');
+    toggleBtn.setAttribute('aria-expanded', 'false');
     toggleBtn.innerHTML = '<span></span><span></span><span></span>';
     
     // Create drawer
@@ -344,7 +345,8 @@ function injectHamburgerMenu() {
     
     // Toggle action
     const toggle = () => {
-        toggleBtn.classList.toggle('open');
+        const isOpen = toggleBtn.classList.toggle('open');
+        toggleBtn.setAttribute('aria-expanded', isOpen);
         drawer.classList.toggle('open');
         overlay.classList.toggle('open');
     };
@@ -365,10 +367,19 @@ function injectHamburgerMenu() {
     if (logoArea) {
         logoArea.style.cursor = 'pointer';
         logoArea.style.transition = 'opacity 0.2s ease';
+        logoArea.setAttribute('role', 'link');
+        logoArea.setAttribute('tabindex', '0');
+        logoArea.setAttribute('aria-label', 'Go to Homepage');
         logoArea.addEventListener('mouseenter', () => logoArea.style.opacity = '0.85');
         logoArea.addEventListener('mouseleave', () => logoArea.style.opacity = '1');
         logoArea.addEventListener('click', () => {
             window.location.href = prefix + 'index.html';
+        });
+        logoArea.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                window.location.href = prefix + 'index.html';
+            }
         });
     }
 }
