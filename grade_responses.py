@@ -261,21 +261,34 @@ def extract_book_chapter_text(ch_num):
     if not files:
         pattern = os.path.join(chapters_dir, f"*_{ch_num}_*.html")
         files = glob.glob(pattern)
-        if not files:
-            return ""
 
-    html_file = files[0]
-    try:
-        with open(html_file, "r", encoding="utf-8") as f:
-            # Add comment explaining optimization
-            # Performance optimization: cache the parsed HTML text per chapter to
-            # avoid expensive synchronous File I/O and BeautifulSoup parsing in loops.
-            soup = BeautifulSoup(f.read(), "html.parser")
-            result = soup.get_text(separator="\n", strip=True)
-            _CHAPTER_TEXT_CACHE[ch_num] = result
-            return result
-    except Exception:
-        return ""
+    if files:
+        html_file = files[0]
+        try:
+            with open(html_file, "r", encoding="utf-8") as f:
+                # Add comment explaining optimization
+                # Performance optimization: cache the parsed HTML text per chapter to
+                # avoid expensive synchronous File I/O and BeautifulSoup parsing in loops.
+                soup = BeautifulSoup(f.read(), "html.parser")
+                result = soup.get_text(separator="\n", strip=True)
+                _CHAPTER_TEXT_CACHE[ch_num] = result
+                return result
+        except Exception:
+            pass
+
+    # Fallback to chapters_fallback/
+    fallback_dir = os.path.join(base_dir, "chapters_fallback")
+    fallback_file = os.path.join(fallback_dir, f"chapter_{ch_num}.txt")
+    if os.path.exists(fallback_file):
+        try:
+            with open(fallback_file, "r", encoding="utf-8") as f:
+                result = f.read().strip()
+                _CHAPTER_TEXT_CACHE[ch_num] = result
+                return result
+        except Exception:
+            pass
+
+    return ""
 
 
 def parse_context_desc(context_desc):

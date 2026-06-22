@@ -1,0 +1,98 @@
+[
+  {
+    "chapter": "Chapter 4: Storage and Retrieval",
+    "overview": "This chapter examines the internal mechanics of database storage engines, contrasting the architectural designs of systems optimized for transaction processing (OLTP) with those designed for analytics (OLAP). It covers the two main families of OLTP storage engines: log-structured engines (such as LSM-trees) and update-in-place engines (such as B-trees).",
+    "sections": [
+      {
+        "title": "Log-Structured Storage & LSM-Trees",
+        "description": "Explores engines that write data to immutable, append-only files and periodically merge them, transitioning from basic log append-only functions to fully realized Log-Structured Merge-trees (LSM-trees).",
+        "key_concepts": [
+          "Append-only Logs: The simplest write format where modifications are appended sequentially. Extremely fast for writes (O(1) sequential throughput) but suffers from O(n) read performance requiring full file scans.",
+          "SSTables (Sorted Strings Table): A structured format where key-value pairs are stored sorted by key and each key appears once per segment. This sorting enables efficient range queries and allows the use of sparse in-memory indexes.",
+          "Memtables: In-memory sorted write buffers (implemented via Red-Black trees or Skip Lists) that hold writes before flushing them to disk as sorted SSTable segments when a memory threshold is reached.",
+          "Write-Ahead Log (WAL): An append-only recovery file on disk used to record every write before it is added to the volatile Memtable, ensuring durability across crashes.",
+          "Compaction: A background merge-sort process that consolidates multiple immutable SSTable segments, keeping only the most recent value for each key and removing deleted keys represented by tombstones.",
+          "Bloom Filters: Probabilistic data structures that quickly determine whether a key is absent from an SSTable, preventing unnecessary disk seeks for non-existent keys."
+        ],
+        "trade_offs": [
+          "Write vs. Read Speed: Log-structured engines maximize write throughput by converting random writes into sequential disk operations. However, reads are slower than writes because the engine must check the Memtable and multiple SSTable segments (mitigated by Bloom filters).",
+          "Size-tiered vs. Leveled Compaction: Size-tiered compaction is highly performant for heavy write workloads but requires significant temporary disk space during large merges. Leveled compaction restricts SSTables to fixed sizes and organizes them into levels, reducing read amplification and disk overhead at the expense of extra write bandwidth."
+        ]
+      },
+      {
+        "title": "B-Trees",
+        "description": "Details the standard and most widely used update-in-place indexing structure in relational and many non-relational database systems.",
+        "key_concepts": [
+          "Fixed-size Pages: Unlike log-structured systems which use variable-size segments, B-trees break databases down into fixed-size blocks or pages (traditionally 4 KiB to 16 KiB) as the unit of reading and writing.",
+          "Tree Structure: Pages form a balanced hierarchy starting from a Root Page, passing through Interior Pages containing range boundaries, and ending at Leaf Pages containing individual values or pointers to data.",
+          "Branching Factor: The number of child page references contained within a single parent page, which typically measures in the hundreds, keeping tree depth shallow (O(log n)).",
+          "In-place Updates: Overwriting existing pages on disk directly, which contrasts with the append-only nature of LSM-trees.",
+          "Page Splitting: An expensive operation occurring when an insert exceeds a page's capacity, forcing it to split into two pages and requiring updates to parent references."
+        ],
+        "trade_offs": [
+          "Reliability vs. Speed: Because in-place page updates can be interrupted by crashes (resulting in corrupted or torn pages), B-trees must write every modification twice—once to a Write-Ahead Log (WAL) and once to the page itself—introducing write overhead.",
+          "Concurrency and Fragmentation: Overwriting pages can lead to fragmentation over time, necessitating costly background vacuuming processes. However, B-trees provide predictable, low-latency reads because each key lookup requires traversing a highly stable, shallow tree."
+        ]
+      },
+      {
+        "title": "Comparing B-Trees and LSM-Trees",
+        "description": "An architectural comparison of log-structured and update-in-place storage engines.",
+        "trade_offs": [
+          "Sequential vs. Random I/O: LSM-trees write sequentially, which matches the physical characteristics of hard disks and reduces write amplification on solid-state drives (SSDs) by minimizing garbage collection wear. B-trees produce scattered, random page updates.",
+          "Write Amplification: LSM-trees write data multiple times due to background compaction, whereas B-trees write data multiple times due to WAL logging and writing whole pages for minor updates. LSM-trees generally exhibit lower write amplification on write-heavy workloads.",
+          "Read Amplification and Latency Spikes: B-trees offer highly predictable, consistent read latencies. LSM-trees can suffer from read latency spikes when background compaction processes compete for shared disk I/O bandwidth with active user writes."
+        ]
+      },
+      {
+        "title": "Secondary and Multicolumn Indexes",
+        "description": "Discusses how database engines support indexing fields beyond the primary key to enable complex lookups.",
+        "key_concepts": [
+          "Clustered Index: A storage strategy where the actual table row data is stored directly within the leaf nodes of the primary index.",
+          "Heap Files: An alternative storage design where table rows are kept in an unordered format elsewhere, and the index leaf nodes only store references to the locations inside the heap file.",
+          "Covering Index: A hybrid design where specific non-key columns are duplicated inside a secondary index, allowing certain queries to be answered solely using the index to avoid extra lookups to the heap file."
+        ],
+        "trade_offs": [
+          "Clustered vs. Heap-based Indexes: Clustered indexes make primary key lookups incredibly fast, but secondary index lookups are slower because they must resolve to the primary key first. Heap files make secondary index lookups direct, but updating a record to a larger size in a heap file can force expensive pointer updates across all indexes."
+        ]
+      },
+      {
+        "title": "In-Memory Databases",
+        "description": "Analyzes systems that store their entire dataset in volatile RAM rather than on non-volatile disk.",
+        "key_concepts": [
+          "In-Memory Engines: Databases (such as Redis or Memcached) optimized for operating entirely in RAM. Durability can be achieved through asynchronous disk logging, snapshotting, or machine replication.",
+          "Removal of Serialization Overhead: The performance advantage of in-memory systems does not derive merely from avoiding disk reads, but from bypassing the overhead of encoding complex in-memory structures into disk-friendly formats."
+        ],
+        "trade_offs": [
+          "Data Complexity vs. Durability: By keeping all records in RAM, systems can easily implement complex data structures (like sorted sets or lists) that are difficult to manage on disk. However, they are strictly limited by physical RAM capacity and require specialized replication or disk-logging mechanisms to guarantee durability."
+        ]
+      },
+      {
+        "title": "Data Storage for Analytics (OLAP)",
+        "description": "Contrasts transactional workloads with analytical workloads, highlighting the shift toward columnar storage architectures.",
+        "key_concepts": [
+          "OLTP vs. OLAP: Online Transaction Processing (OLTP) is optimized for low-latency, high-volume reads and writes targeting small numbers of records. Online Analytical Processing (OLAP) is optimized for scanning millions of records to aggregate values across a small number of columns.",
+          "HTAP (Hybrid Transactional/Analytical Processing): Systems that attempt to run both OLTP and OLAP workloads under a single SQL engine interface by maintaining separate under-the-hood storage engines.",
+          "Modern OLAP Architecture: Built upon distinct components: Query Engines (e.g., Trino), Storage Formats (e.g., Parquet), Table Formats (e.g., Iceberg), and Data Catalogs."
+        ],
+        "trade_offs": [
+          "Row-Oriented vs. Column-Oriented Storage: Row-oriented (OLTP) systems are efficient for fetching entire records but waste I/O bandwidth during analytical queries that scan only a few columns. Column-oriented (OLAP) systems compress and read only the targeted columns, vastly improving analytical efficiency at the cost of slow, complex single-row writes."
+        ]
+      }
+    ],
+    "core_terminology_definitions": {
+      "LSM-Tree": "Log-Structured Merge-Tree. A storage engine design that writes incoming updates to a sorted in-memory buffer (Memtable) and flushes them to disk as immutable, sorted segments (SSTables) which are merged and purged of deleted data via background compaction.",
+      "SSTable": "Sorted Strings Table. An immutable database file format containing key-value pairs sorted by key, featuring a sparse index to allow fast range queries and compressed data blocks to minimize disk footprint.",
+      "Memtable": "A volatile, sorted in-memory structure (typically implemented as a Red-Black tree or Skip List) that buffers writes in sorted order before they are written to disk as SSTables.",
+      "Write-Ahead Log (WAL)": "An append-only transaction log on disk. In B-tree engines, it records planned changes before modifying pages to prevent corruption from crashes; in LSM-trees, it ensures Memtable data survival.",
+      "Compaction": "A background process in log-structured systems that merges separate SSTable files, resolves duplicate updates by keeping the newest record, and permanently discards deleted records.",
+      "Bloom Filter": "A memory-efficient, probabilistic data structure used to test set membership. It yields no false negatives, letting an engine instantly skip SSTable files that definitely do not contain a queried key.",
+      "B-Tree": "A ubiquitous, balanced, page-based search tree structure where data pages on disk are updated in-place, offering predictable O(log n) read and write paths.",
+      "Branching Factor": "The capacity of a single B-tree page to hold references to child pages, determining the width and depth of the tree.",
+      "Write Amplification": "The ratio of the physical volume of bytes written to non-volatile storage relative to the logical volume of bytes requested by the application.",
+      "Clustered Index": "An index architecture where the physical database table rows are stored directly inside the index leaf nodes, eliminating secondary lookup hops.",
+      "Heap File": "An unordered, append-only or reusable disk file structure where table records are placed in any position, indexed by secondary structures holding byte offsets.",
+      "Covering Index": "An index that duplicates additional non-key columns alongside the index keys, satisfying specific read queries entirely from the index without accessing the underlying table heap.",
+      "Tombstone": "A special deletion marker appended to log-structured engines to indicate that a key has been deleted, ensuring the key is stripped from older segments during subsequent compaction passes."
+    }
+  }
+]

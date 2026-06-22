@@ -206,7 +206,9 @@ class TestEndpointContract:
         def fail_on_api_call(*args, **kwargs):
             raise RuntimeError("Rate limit or auth error from LLM API")
 
-        monkeypatch.setattr(grade_responses.LLMGrader, "generate_json", fail_on_api_call)
+        monkeypatch.setattr(
+            grade_responses.LLMGrader, "generate_json", fail_on_api_call
+        )
 
         payload = {
             "chapterKey": "ddia_ch1_learning",
@@ -229,7 +231,9 @@ class TestEndpointContract:
         def fail_on_api_call(*args, **kwargs):
             raise RuntimeError("API quota exceeded")
 
-        monkeypatch.setattr(grade_responses.LLMGrader, "generate_json", fail_on_api_call)
+        monkeypatch.setattr(
+            grade_responses.LLMGrader, "generate_json", fail_on_api_call
+        )
 
         payload = {
             "isExam": True,
@@ -268,7 +272,9 @@ class TestEndpointContract:
         def fail_on_summary_call(*args, **kwargs):
             raise RuntimeError("LLM API summary service unavailable")
 
-        monkeypatch.setattr(grade_responses.LLMGrader, "generate_json", fail_on_summary_call)
+        monkeypatch.setattr(
+            grade_responses.LLMGrader, "generate_json", fail_on_summary_call
+        )
 
         payload = {
             "chapterKey": "ddia_ch1_learning",
@@ -553,6 +559,37 @@ def test_book_context_extraction_integration():
 
 
 @pytest.mark.smoketest
+def test_book_context_fallback_extraction():
+    """Verify that if chapters/ HTML file is missing, extract_book_chapter_text falls back to chapters_fallback/."""
+    print("\n--> Starting test_book_context_fallback_extraction", flush=True)
+    from grade_responses import extract_book_chapter_text, _CHAPTER_TEXT_CACHE
+    import os
+
+    # Clear cache for chapter 99
+    _CHAPTER_TEXT_CACHE.pop(99, None)
+
+    # Use project root directory to create a temporary fallback file
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    fallback_dir = os.path.join(base_dir, "chapters_fallback")
+    os.makedirs(fallback_dir, exist_ok=True)
+
+    fallback_file = os.path.join(fallback_dir, "chapter_99.txt")
+    with open(fallback_file, "w", encoding="utf-8") as f:
+        f.write("This is chapter 99 fallback summary content.")
+
+    try:
+        text = extract_book_chapter_text(99)
+        assert text == "This is chapter 99 fallback summary content."
+    finally:
+        if os.path.exists(fallback_file):
+            try:
+                os.remove(fallback_file)
+            except Exception:
+                pass
+    print("--> Finished test_book_context_fallback_extraction", flush=True)
+
+
+@pytest.mark.smoketest
 def test_grade_responses_sqlite_loading_support(tmp_path):
     """Verify that grade_responses can detect and load progress from an exported SQLite database."""
     print("\n--> Starting test_grade_responses_sqlite_loading_support", flush=True)
@@ -757,7 +794,9 @@ class TestLLMGraderAdapter:
         mock_model = MockLLMGrader()
 
         # Call generate_summary for Chapter 1
-        result = generate_summary(mock_model, "Chapter 1: Trade-Offs in Data Systems Architecture", {})
+        result = generate_summary(
+            mock_model, "Chapter 1: Trade-Offs in Data Systems Architecture", {}
+        )
 
         assert captured_prompt is not None
         assert "TEXTBOOK CHAPTER 1 FULL CONTENT:" in captured_prompt

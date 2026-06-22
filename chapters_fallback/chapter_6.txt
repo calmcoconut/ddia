@@ -1,0 +1,73 @@
+{
+  "chapter_title": "Chapter 6: Replication",
+  "definitions": {
+    "Replication": "The process of keeping copies of the same data on multiple physically separated machines connected via a network to minimize access latency, provide fault tolerance, and scale read throughput.",
+    "Replication_Lag": "The delay between a write operation occurring on the leader node and that change being successfully applied to a follower replica.",
+    "Eventual_Consistency": "A weak consistency guarantee stating that if no new writes are made to the database, all replicas will eventually catch up and converge to identical states. It offers no bounds on how long this convergence may take.",
+    "Write_Ahead_Log_WAL": "An append-only log on disk where all database modifications are written before being applied to the storage engine (e.g., B-Trees). It ensures durability and is frequently shipped to followers for replication.",
+    "LSN_Log_Sequence_Number": "A unique, monotonically increasing identifier assigned to each entry in a database's write-ahead log, used to track a follower's replication progress relative to the leader.",
+    "Logical_Row_Based_Log": "A replication log decoupled from physical storage internals that represents database modifications at the granularity of individual row actions (insertions, deletions, or updates).",
+    "Linearizability": "A strong consistency guarantee asserting that the system behaves as if there were only a single copy of the data, and all operations appear to execute atomically at a specific point in time between their invocation and completion.",
+    "Partitioning_Sharding": "The practice of breaking a large dataset down into smaller, independent subsets (partitions) managed by different database nodes to improve system scalability.",
+    "Split_Brain": "A highly dangerous condition where two nodes in a distributed system simultaneously believe they are the active leader, leading to concurrent, conflicting writes and inevitable data corruption.",
+    "Fencing": "A safety mechanism (e.g., using locks, leases, or fencing tokens) designed to isolate, shut down, or strip privileges from an old leader node to prevent split-brain scenarios upon failover.",
+    "LSM_Trees_and_SSTables": "Log-Structured Merge-Trees and Sorted String Tables are storage formats where writes are collected in memory and written out to disk as immutable, sorted sequence files. Used in cloud-native storage engines (such as SlateDB) to enable efficient batching on top of cloud object storage."
+  },
+  "sections": [
+    {
+      "section_title": "1. Single-Leader Replication Architecture",
+      "key_concepts": [
+        "**Leader-Based Model**: All write requests from clients must be routed to a single designated node (the leader, primary, or active). The leader applies writes to local storage and generates a replication log or change stream.",
+        "**Followers**: Non-leader replicas (secondaries, passive standbys, or read replicas) process the replication log to apply writes locally in the exact order determined by the leader. Followers serve read-only queries.",
+        "**Synchronous Replication**: The leader blocks and waits for a follower to acknowledge that it has safely recorded the write before returning a success status to the client. This guarantees up-to-date data on the follower but increases write latency and stalls the system if the follower crashes.",
+        "**Asynchronous Replication**: The leader returns success to the client immediately after writing to its local storage, sending the replication update to followers asynchronously. This yields highly performant, non-blocking writes but risks data loss if the leader fails before the changes reach the followers.",
+        "**Semisynchronous Configuration**: A hybrid approach where one follower is configured to be synchronous and the rest are asynchronous. If the synchronous follower goes offline, an asynchronous follower is promoted to synchronous to ensure that at least two nodes constantly hold a complete copy of the data."
+      ],
+      "trade_offs_and_mechanisms": [
+        "**Setting Up New Followers**: Initiated by taking a consistent snapshot of the leader without locking the database, copying it to the new node, and requesting all replication log changes since the snapshot's log coordinate (e.g., Log Sequence Number or binlog coordinates).",
+        "**Catch-up Recovery for Followers**: If a follower crashes, it utilizes its local log to identify the last processed transaction and requests only the subsequent modifications from the leader upon reboot.",
+        "**Automatic Failover Steps**: 1) Detection via a heartbeat timeout (e.g., 30 seconds of inactivity). 2) Election or appointment of a new leader (often the follower with the highest LSN). 3) Reconfiguration of client routing and instructing the old leader to become a follower upon its return.",
+        "**Failover Vulnerabilities**: Discarding un-replicated asynchronous writes can lead to data loss and coordinate failures across external systems (e.g., primary key reuse causing divergence between a relational database and a cache). Unnecessary failovers can also be triggered by temporary load spikes or network latency."
+      ]
+    },
+    {
+      "section_title": "2. Database Storage Implementations & Zero-Disk Architecture",
+      "key_concepts": [
+        "**Object Storage as Primary Tier**: Databases leverage cheap, durable, multi-region cloud object stores (e.g., Amazon S3, Google Cloud Storage) to serve live queries, bypassing local disk limitations and regional networking fees.",
+        "**Zero-Disk Architecture (ZDA)**: Systems (such as WarpStream, SlateDB, and Redpanda Serverless) that persist all actual state to object storage. Disk and memory are treated strictly as volatile caching layers, rendering nodes stateless and simplifying horizontal scaling and failover."
+      ],
+      "trade_offs_and_mechanisms": [
+        "**Latency vs. Durability**: While cloud object stores offer exceptional durability, they suffer from high read/write latency. Systems must batch writes, which further increases latency but prevents excessive API call charges.",
+        "**Immutability**: Object stores do not support in-place updates. This makes random-access writes highly resource-intensive and forces modern engines to adopt LSM-Trees and SSTables to batch writes sequentially into immutable files.",
+        "**Conditional Writes**: Databases rely on object storage conditional writes (Compare-and-Set / CAS operations) to safely implement distributed transactions and perform leader election."
+      ]
+    },
+    {
+      "section_title": "3. Implementation Methods of Replication Logs",
+      "key_concepts": [
+        "**Statement-Based Replication**: The leader logs and forwards every raw write query (e.g., SQL statements) to its followers. Extremely compact but highly vulnerable to nondeterministic operations (e.g., `NOW()`, `RAND()`, autoincrements, or state-dependent triggers).",
+        "**Write-Ahead Log (WAL) Shipping**: The physical byte-level modifications of disk blocks are transmitted directly to followers. Highly robust, but tightly couples replication to the storage engine's physical layout, making rolling software upgrades impossible without system downtime.",
+        "**Logical (Row-Based) Replication**: The replication log is abstracted into high-level row modifications, entirely decoupled from the storage engine's layout. This supports backward/forward compatibility, allows rolling software upgrades, and simplifies parsing for external Change Data Capture (CDC) systems."
+      ]
+    },
+    {
+      "section_title": "4. Managing Replication Lag Anomalies",
+      "key_concepts": [
+        "**Read-Your-Writes Consistency**: Prevents users from submitting an update and subsequently loading a stale replica that lacks their write. It is guaranteed by reading highly dynamic data (e.g., the user's own profile) exclusively from the leader, or waiting to route queries to a follower until its LSN catches up to the client's write timestamp.",
+        "**Monotonic Reads**: Guarantees that an individual user will not observe the database state roll backward in time during successive reads. This is typically implemented by pinning each user's requests to a specific replica (e.g., via hashing their user ID) instead of routing reads randomly.",
+        "**Consistent Prefix Reads**: Ensures that causally related writes are observed in their correct logical order (preventing an observer from seeing an answer before a question). This is a critical issue in sharded databases because separate partitions operate independently with no global write order. Solutions involve routing causally linked writes to the same partition or explicitly tracking causal dependencies."
+      ]
+    },
+    {
+      "section_title": "5. Multi-Leader Replication",
+      "key_concepts": [
+        "**Multi-Leader Configuration (Active/Active)**: An architecture where multiple database nodes can accept write operations. Each leader acts as a follower to all other leaders, asynchronously propagating its local writes across the network."
+      ],
+      "trade_offs_and_mechanisms": [
+        "**Performance and Latency**: Writes are executed locally within the closest geographic datacenter, hiding inter-region WAN latency from clients. Replication across datacenters occurs asynchronously in the background.",
+        "**Fault Tolerance**: Capable of surviving regional outages and WAN partitions; each region continues accepting local writes and queues updates until connectivity is restored.",
+        "**Consistency Constraints**: Multi-leader setups cannot easily enforce global constraints (e.g., unique username registration or preventing bank accounts from going negative) without introducing synchronous coordination, which defeats the performance and availability benefits of a multi-leader design."
+      ]
+    }
+  ]
+}
