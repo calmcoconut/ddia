@@ -1,0 +1,6 @@
+🎨 Palette: Declutter cards and add friendly empty states
+
+💡 What: Removed explicit 'Launch' buttons from all clickable chapter/exam cards to clean up the UI, since the cards themselves act as links. Added encouraging 'empty state' text ("Let's Begin!", "Ready", etc.) to the stats dashboard when a new user has 0 progress.
+🎯 Why: Redundant buttons inside clickable cards add visual noise. For new users, a dashboard showing just "0" stats can feel uninviting; empty states provide a much warmer onboarding experience that encourages immediate action.
+📸 Before/After: N/A
+♿ Accessibility: Ensures the whole card operates as an interactive `<a>` element, improving the click target size.
