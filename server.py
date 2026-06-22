@@ -10,6 +10,7 @@ import time
 import uuid
 import re
 import concurrent.futures
+import threading
 from logger_setup import configure_logging
 from grade_responses import (
     grade_question,
@@ -90,8 +91,12 @@ def grade():
         )
 
         results = {}
+        abort_event = threading.Event()
 
         def process_exam_question(item):
+            if abort_event.is_set():
+                raise RuntimeError("API evaluation aborted due to previous error")
+
             q_idx_str = str(item.get("idx"))
             student_ans = item.get("studentAnswer", "")
             q_text = item.get("q", "")
@@ -104,7 +109,7 @@ def grade():
 
             try:
                 grade_result = grade_question(
-                    model, q_text, model_ans, student_ans, context
+                    model, q_text, model_ans, student_ans, context, raise_on_error=True
                 )
             except Exception as exc:
                 log.error(
@@ -116,12 +121,8 @@ def grade():
                     },
                     exc_info=True,
                 )
-                grade_result = {
-                    "score": 0,
-                    "strengths": "",
-                    "weaknesses": "",
-                    "feedback": str(exc),
-                }
+                abort_event.set()
+                raise
 
             elapsed_ms = round((time.monotonic() - q_start) * 1000)
 
@@ -148,6 +149,7 @@ def grade():
                 executor.submit(process_exam_question, item): item
                 for item in exam_questions
             }
+            api_error = None
             for future in concurrent.futures.as_completed(future_to_idx):
                 try:
                     q_idx_str, grade_result = future.result()
@@ -158,6 +160,14 @@ def grade():
                         extra={"request_id": request_id, "error": str(exc)},
                         exc_info=True,
                     )
+                    api_error = exc
+                    # Cancel any pending futures that haven't started yet
+                    for f in future_to_idx:
+                        f.cancel()
+                    break
+
+        if api_error:
+            return jsonify({"error": f"LLM grading failed: {str(api_error)}"}), 500
 
         total_ms = round((time.monotonic() - start_time) * 1000)
         log.info(
@@ -205,8 +215,12 @@ def grade():
         return jsonify({"error": f"Invalid chapter key: {ch_key}"}), 400
 
     results = {}
+    abort_event = threading.Event()
 
     def process_chapter_question(q_idx_str, student_ans):
+        if abort_event.is_set():
+            raise RuntimeError("API evaluation aborted due to previous error")
+
         q_start = time.monotonic()
         try:
             q_idx = int(q_idx_str)
@@ -226,7 +240,12 @@ def grade():
 
         try:
             grade_result = grade_question(
-                model, q["q"], q["modelAnswer"], student_ans, context
+                model,
+                q["q"],
+                q["modelAnswer"],
+                student_ans,
+                context,
+                raise_on_error=True,
             )
         except Exception as exc:
             log.error(
@@ -238,12 +257,8 @@ def grade():
                 },
                 exc_info=True,
             )
-            grade_result = {
-                "score": 0,
-                "strengths": "",
-                "weaknesses": "",
-                "feedback": str(exc),
-            }
+            abort_event.set()
+            raise
 
         elapsed_ms = round((time.monotonic() - q_start) * 1000)
 
@@ -272,6 +287,7 @@ def grade():
             executor.submit(process_chapter_question, q_idx_str, student_ans): q_idx_str
             for q_idx_str, student_ans in answered.items()
         }
+        api_error = None
         for future in concurrent.futures.as_completed(future_to_idx):
             try:
                 res = future.result()
@@ -284,6 +300,13 @@ def grade():
                     extra={"request_id": request_id, "error": str(exc)},
                     exc_info=True,
                 )
+                api_error = exc
+                for f in future_to_idx:
+                    f.cancel()
+                break
+
+    if api_error:
+        return jsonify({"error": f"LLM grading failed: {str(api_error)}"}), 500
 
     total_ms = round((time.monotonic() - start_time) * 1000)
     log.info(

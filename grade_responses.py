@@ -388,7 +388,9 @@ def parse_llm_json(text):
     return json.loads(text_stripped, strict=False)
 
 
-def grade_question(model, q_text, model_answer, student_answer, context_desc=""):
+def grade_question(
+    model, q_text, model_answer, student_answer, context_desc="", raise_on_error=False
+):
     if not student_answer or not student_answer.strip():
         return {
             "score": 0,
@@ -439,14 +441,26 @@ Provide your response in the following JSON format. Do not wrap it in markdown c
 """
     try:
         text = model.generate_json(prompt).strip()
-        return parse_llm_json(text)
     except Exception as e:
         print(f"Error calling LLM API: {e}")
+        if raise_on_error:
+            raise
         return {
             "score": 0,
             "strengths": "Error",
             "weaknesses": "API failed to evaluate response.",
             "feedback": str(e),
+        }
+
+    try:
+        return parse_llm_json(text)
+    except Exception as e:
+        print(f"Error parsing LLM response: {e}")
+        return {
+            "score": 0,
+            "strengths": "Error",
+            "weaknesses": "Failed to parse grader response.",
+            "feedback": f"Response was: {text}\nError: {str(e)}",
         }
 
 

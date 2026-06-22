@@ -198,6 +198,68 @@ class TestEndpointContract:
         assert res.status_code == 404
         print("--> Finished test_serve_static_nonexistent_file", flush=True)
 
+    def test_api_error_returns_500_early(self, client, monkeypatch):
+        """Test that a grading failure in the chapter path returns 500 immediately."""
+        print("\n--> Starting test_api_error_returns_500_early", flush=True)
+        import server
+
+        def fail_on_api_call(*args, **kwargs):
+            raise RuntimeError("Rate limit or auth error from LLM API")
+
+        monkeypatch.setattr(server, "grade_question", fail_on_api_call)
+
+        payload = {
+            "chapterKey": "ddia_ch1_learning",
+            "writeIns": {"2": "Answer for Q2", "5": "Answer for Q5"},
+        }
+
+        res = client.post("/grade", json=payload)
+        print(f"--> Received response status {res.status_code}", flush=True)
+        assert res.status_code == 500
+        data = res.get_json()
+        assert "error" in data
+        assert "Rate limit or auth error" in data["error"]
+        print("--> Finished test_api_error_returns_500_early", flush=True)
+
+    def test_exam_api_error_returns_500_early(self, client, monkeypatch):
+        """Test that a grading failure in the exam path returns 500 immediately."""
+        print("\n--> Starting test_exam_api_error_returns_500_early", flush=True)
+        import server
+
+        def fail_on_api_call(*args, **kwargs):
+            raise RuntimeError("API quota exceeded")
+
+        monkeypatch.setattr(server, "grade_question", fail_on_api_call)
+
+        payload = {
+            "isExam": True,
+            "chapterKey": "ddia_exam_midterm",
+            "questions": [
+                {
+                    "idx": 0,
+                    "studentAnswer": "Ans 1",
+                    "q": "Q1",
+                    "modelAnswer": "MA1",
+                    "chapterNum": 1,
+                },
+                {
+                    "idx": 1,
+                    "studentAnswer": "Ans 2",
+                    "q": "Q2",
+                    "modelAnswer": "MA2",
+                    "chapterNum": 1,
+                },
+            ],
+        }
+
+        res = client.post("/grade", json=payload)
+        print(f"--> Received response status {res.status_code}", flush=True)
+        assert res.status_code == 500
+        data = res.get_json()
+        assert "error" in data
+        assert "API quota exceeded" in data["error"]
+        print("--> Finished test_exam_api_error_returns_500_early", flush=True)
+
 
 # ── Live Integration Test (opt-in, skipped without real key) ────────────────
 
