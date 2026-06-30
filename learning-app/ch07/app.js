@@ -24,8 +24,8 @@ const QUIZ_QUESTIONS = [
     options: [
       "PostgreSQL, MySQL, and Oracle",
       "Redis, VoltDB, and FoundationDB",
-      "Cassandra, MongoDB, and HBase",
-      "BigQuery, Snowflake, and Delta Lake"
+      "Elasticsearch, ClickHouse, and ScyllaDB",
+      "TimescaleDB, InfluxDB, and QuestDB"
     ],
     correct: 1,
     explanation: "Redis, VoltDB, and FoundationDB run single-threaded processes per CPU core, using sharding within a single node to parallelize across cores and optimize for Non-Uniform Memory Access (NUMA).",
@@ -97,7 +97,7 @@ const QUIZ_QUESTIONS = [
     options: [
       "They lack cryptographic security guarantees and can be easily decrypted by malicious clients",
       "They return different hash values for the same key in different processes or executions",
-      "They are restricted by design to only hash integer-based numeric attributes, not string values",
+      "They are computationally too slow for high-throughput writes, adding unacceptable per-operation latency",
       "They fail to distribute keys uniformly across the partition space, leading to severe hash collisions"
     ],
     correct: 1,
@@ -130,8 +130,8 @@ const QUIZ_QUESTIONS = [
     options: [
       "Too many logical shards slows down read queries due to scatter-gather overhead, while too few shards results in non-uniform key distribution hashes",
       "Too many shards increases management and metadata overhead, while too few shards makes shards very large and expensive to rebalance or recover",
-      "Too many logical shards forces the storage engine to write exclusively to SSD arrays, while too few shards permits using cheaper physical HDDs",
-      "Too many logical shards restricts the maximum cluster size to exactly two nodes, while too few shards limits the architecture to ten nodes"
+      "Too many logical shards increases ZooKeeper/etcd metadata overhead and significantly slows down coordinator failover recovery time",
+      "Too few logical shards makes it impossible to achieve fine-grained load balancing as workload hotspot patterns shift over time"
     ],
     correct: 1,
     explanation: "If the shard count is too high, the system incurs significant management and query planning overhead. If it is too low, each shard holds a large portion of the dataset, making network transfer during rebalancing and recovery from node outages extremely slow and expensive.",
@@ -196,8 +196,8 @@ const QUIZ_QUESTIONS = [
     options: [
       "It forces the entire database cluster into a read-only state for the duration of the partition movement process to ensure data consistency",
       "It can trigger a cascading failure where slow, overloaded nodes are incorrectly assumed dead, shifting load and overloading the rest of the cluster",
-      "It permanently locks all existing shard boundaries and partition keys, preventing them from ever being split or split-merged in the future",
-      "It blocks external application clients from executing standard DNS resolution queries to locate the active IP addresses of database nodes"
+      "It can cause a shard-split storm where multiple splits trigger simultaneously, multiplying disk I/O on nodes already transferring data",
+      "It can cause inconsistent routing because the routing tier may lag behind shard movement updates, sending requests to stale node locations"
     ],
     correct: 1,
     explanation: "If a node is slow due to high load, automated failure detection might mark it dead. Shifting its shards to other nodes requires expensive data transfer over the network, overloading the remaining nodes and causing them to fail, leading to a cascading outage.",
@@ -210,7 +210,7 @@ const QUIZ_QUESTIONS = [
       "Clients contact any random database node, which acts as a proxy and forwards the request if it does not own the target shard",
       "A separate, shard-aware load balancing or proxy tier receives all requests, determines the correct node, and forwards them",
       "Clients maintain a local copy of the partition map to determine the correct node and establish a direct connection to it",
-      "Clients cache all database record states locally inside the application runtime memory to avoid contacting any node over networks"
+      "Clients use a shard-aware driver that receives push notifications from nodes whenever shard assignments change and routes directly"
     ],
     correct: 1,
     explanation: "A routing tier acts as a shard-aware proxy or load balancer. It does not store or process data itself but routes the client requests to the appropriate database node.",
@@ -267,9 +267,9 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Which of the following sets of databases rely on local secondary indexes?",
     options: [
-      "CockroachDB, YugabyteDB, and TiDB",
+      "Redis, FoundationDB, and VoltDB",
       "MongoDB, Cassandra, and Elasticsearch",
-      "BigQuery, Snowflake, and Delta Lake",
+      "CockroachDB, YugabyteDB, and TiDB",
       "VoltDB, BigQuery, and Citus"
     ],
     correct: 1,
@@ -303,7 +303,7 @@ const QUIZ_QUESTIONS = [
       "Synchronously via distributed transactions, ensuring reads are always strongly consistent",
       "Asynchronously, meaning reads may temporarily return stale data due to replication lag",
       "Manually, requiring client applications to write updates to both the table and the index",
-      "Periodically, during scheduled database maintenance windows executed once every week"
+      "Via a two-phase commit protocol that guarantees exactly-once delivery to all index shards"
     ],
     correct: 1,
     explanation: "DynamoDB propagates writes to global secondary indexes asynchronously. As a result, reads from these indexes are eventually consistent and may temporarily return stale data due to replication lag.",
