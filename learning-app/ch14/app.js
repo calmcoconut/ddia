@@ -10,7 +10,7 @@ const QUIZ_QUESTIONS = [
     q: "What is the primary ethical distinction between using predictive analytics for predicting weather versus predicting parole recidivism?",
     options: [
       "Weather prediction requires significantly more CPU cycles and complex physics simulations.",
-      "Weather systems operate deterministically, whereas human decisions are completely random.",
+      "Human behavior is more difficult to model precisely than atmospheric physics, making social predictions inherently less reliable.",
       "Recidivism prediction directly gatekeeps individual human freedom and societal participation.",
       "Parole systems are run on distributed database clusters, making transaction audits harder."
     ],
@@ -75,7 +75,7 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is 'systems thinking' as defined in the context of evaluating data systems?",
     options: [
-      "Writing optimizer software that dynamically selects and compiles query execution plans for database engines.",
+      "Abstracting away low-level implementation details so engineers can reason about component interactions and dependencies at an architectural scale.",
       "Analyzing how a computerized system interacts with and responds to the people and structures around it as a whole.",
       "Ensuring that a database cluster replicates data to multiple hot standby instances to prevent hardware failures.",
       "Designing decoupled microservices such that every domain model retains exclusive ownership of its own data store."
@@ -130,7 +130,7 @@ const QUIZ_QUESTIONS = [
     q: "When a data-collecting company goes bankrupt, what typically happens to the personal data of its users?",
     options: [
       "It is automatically deleted and purged from all storage media by regulatory mandates.",
-      "It is cryptographically locked with a master key and archived indefinitely on server tapes.",
+      "It remains the legal property of the users who generated it and is excluded from insolvency proceedings as inalienable.",
       "It is sold as one of the company's financial property assets to the highest bidding buyer.",
       "It is transferred to and managed by a neutral public trust run directly by government agencies."
     ],
@@ -142,10 +142,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Why does Bruce Schneier compare personal data to a 'toxic asset' or 'hazardous material'?",
     options: [
-      "It degrades physical silicon state and hard drive sectors significantly faster than non-personal binary files.",
-      "It contains high entropy structures that cannot be compressed, wasting network bandwidth during replication.",
+      "It becomes a diminishing resource over time — the older data becomes, the less analytically valuable it is for training models or targeting users.",
+      "It requires users to surrender legal ownership, creating a financial liability that must be disclosed in annual regulatory filings.",
       "Its presence creates immense security liabilities, risk of leaks, and exposure to government compulsion.",
-      "It is legally classified as a biological or physical hazard under international environmental safety treaties."
+      "Holding large volumes of personal data forces companies to pay progressively higher data-residency taxes under international trade law."
     ],
     correct: 2,
     explanation: "Storing data creates liabilities. If a system is breached, data is leaked, or the company is compelled by a future hostile government to hand it over, the data itself becomes the source of harm.",
@@ -175,10 +175,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "How does the principle of data minimization conflict with the core philosophy of 'big data'?",
     options: [
-      "Data minimization requires high-performance CPU architectures to run validation algorithms, whereas big data runs on cheap commodity hardware arrays.",
+      "Data minimization requires explicit user re-consent for each new analytical query, whereas big data relies on broad, one-time consent covering all future uses.",
       "Data minimization restricts collection to specified purposes, whereas big data aims to store everything speculatively to discover unforeseen insights.",
       "Data minimization is structurally constrained to relational schemas, whereas big data processing is optimized for unstructured NoSQL document databases.",
-      "Data minimization is exclusively applicable to corporate entities inside Europe, whereas big data infrastructure is only deployed across Asian markets."
+      "Data minimization mandates purpose limitation at collection time, while big data's value depends on combining datasets across originally separate business domains."
     ],
     correct: 1,
     explanation: "Big data relies on collecting and cross-referencing massive amounts of data for exploratory analysis. This directly contradicts the requirement to collect data only for a narrow, predetermined purpose.",
@@ -271,7 +271,7 @@ const QUIZ_QUESTIONS = [
       "Implement active multi-master replication setups across all database nodes.",
       "Encrypt all historical offline database backups using AES-256 cipher keys.",
       "Purge data as soon as it is no longer needed and minimize what is collected.",
-      "Deploy GraphQL query boundaries instead of standard RESTful API endpoints."
+      "Implement fine-grained access control lists so personal data is only accessible by authenticated service accounts."
     ],
     correct: 2,
     explanation: "The most effective way to secure data is not to have it. 'Data you don't have is data that can't be leaked, stolen, or compelled by governments.'",
@@ -283,7 +283,7 @@ const QUIZ_QUESTIONS = [
     options: [
       "They are legally binding regulations that are strictly audited and enforced by government tech agencies.",
       "They are rarely discussed, applied, or enforced in practice, leading to a cavalier attitude toward privacy.",
-      "They are automatically parsed and integrated into modern compiler libraries as static code analysis warnings.",
+      "They are voluntarily adopted by major tech firms as part of ESG and responsible AI commitments, but lack legal teeth.",
       "They have been completely replaced and superseded by international data protection treaties like the GDPR."
     ],
     correct: 1,
@@ -301,9 +301,9 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Why does the GDPR's 'right to be forgotten' pose a severe technical challenge to modern event-sourced and append-only database architectures?",
     options: [
-      "Append-only database systems are designed in such a way that they cannot support read queries for individual user IDs.",
+      "Read-model projections and materialized views cache aggregated user state, so even after deleting events, the projected view may still retain the personal data.",
       "Deleting a user's events requires rewriting or compacting immutable log files, which is operationally complex and costly.",
-      "It requires the distributed cluster coordinator to transition its voting mechanisms from Paxos to Raft consensus protocols.",
+      "Event stores use content-addressable hashing, so deleting any record modifies the root hash and invalidates the entire downstream audit trail.",
       "The regulation mandates that all system logs must be stored in plain text CSV format instead of binary files on disks."
     ],
     correct: 1,
