@@ -25,7 +25,7 @@ const QUIZ_QUESTIONS = [
       "Benefit: Provides extremely low write latency for client connections; Drawback: Introduces a high risk of serving stale or inconsistent read data to users",
       "Benefit: The follower is guaranteed to have an up-to-date copy; Drawback: If the synchronous follower blocks/fails, the leader cannot process any writes",
       "Benefit: Maximizes total write throughput across nodes; Drawback: Results in a lack of strong durability guarantees if the primary node suffers a power loss",
-      "Benefit: Simplifies execution of rolling schema migrations; Drawback: Increases sensitivity to minor network latency jitter and packet drop partitions"
+      "Benefit: Eliminates the possibility of data loss on leader crash since all acknowledged writes exist on two nodes; Drawback: Every write must traverse the network to the follower before acknowledging, significantly increasing average write latency under load"
     ],
     correct: 1,
     explanation: "Synchronous replication guarantees that the follower has an identical copy of the leader's data before acknowledging the write. However, if that follower is slow or down, the write is blocked, sacrificing write availability.",
@@ -57,8 +57,8 @@ const QUIZ_QUESTIONS = [
     options: [
       "To build a point-in-time cold backup copy of the database schema that can be immediately restored if the primary leader node crashes",
       "To get a consistent copy of the data at a point in time without locking the database, which can then be copied to the follower",
-      "To execute checksum validation on the storage engine block files to verify that the primary leader's disk has not suffered corruption",
-      "To run a vacuum operation that clears out old transaction log history and reclaims fragmented physical disk space on the leader"
+      "To briefly lock the database tables so that no in-flight writes can contaminate the snapshot during the copy, ensuring a perfectly consistent baseline",
+      "To capture the exact replication log position (e.g., LSN or binlog coordinates) at which the follower should begin streaming subsequent changes from the leader"
     ],
     correct: 1,
     explanation: "Setting up a new follower requires copying the leader's dataset. To avoid locking the active database, we take a consistent snapshot, copy it to the follower, and then use the replication log to catch up on changes since the snapshot.",
@@ -88,10 +88,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is a 'split-brain' scenario in single-leader replication?",
     options: [
-      "When a distributed database engine physically splits its compute and storage resources across independent network nodes",
+      "When a follower detects it has missed writes from the leader and begins serving stale, inconsistent read data to clients until replication catches up",
       "When two nodes in a cluster both believe they are the active leader, leading to conflicting writes and potential data loss",
-      "When a database is configured to use entirely different consensus algorithms for handling read queries and write operations",
-      "When the primary leader's volatile CPU cache gets out of synchronization with the main RAM memory on a hardware failure"
+      "When a cluster's consensus protocol fails to elect any leader at all, stalling all writes until a timeout expires and a new election succeeds",
+      "When an old leader is fenced off by the cluster but continues accepting local writes from clients that have not yet discovered the new leader's address"
     ],
     correct: 1,
     explanation: "If two nodes in a cluster think they are the leader, both accept write operations, and there is no simple way to merge their divergent histories. This typically happens due to network partitions where the old leader is cut off but still active, while followers elect a new leader.",
@@ -289,7 +289,7 @@ const QUIZ_QUESTIONS = [
     options: [
       "The client writes to a centralized coordinator node, which then synchronously replicates the data to all followers",
       "The client (or a coordinator node) sends the write command directly to several replica nodes in parallel in the cluster",
-      "The database replica nodes poll client-side memory buffers periodically for new data updates and write statements",
+      "The client writes to the single nearest replica node, which then gossip-propagates the data asynchronously to all other replicas in the background",
       "The client only writes to a single database node, which then uses gossip protocols to asynchronously distribute the data"
     ],
     correct: 1,
