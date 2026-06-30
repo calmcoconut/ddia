@@ -13,7 +13,7 @@ const QUIZ_QUESTIONS = [
       "It guarantees that transactions are executed in some serial order without interleaving.",
       "It behaves as if there is only one copy of the data, and all operations on it are atomic.",
       "It allows reads to return stale data temporarily while guaranteeing eventual convergence.",
-      "It requires that all concurrent operations must block until transaction leases are active."
+      "It ensures that once any client reads a new value, no client can subsequently read an older value from any replica."
     ],
     correct: 1,
     explanation: "Linearizability is a recency guarantee that makes the system behave as if there is only one copy of the data and all operations on it take effect atomically at some point in time.",
@@ -24,7 +24,7 @@ const QUIZ_QUESTIONS = [
     q: "In a nonlinearizable sports website, what is the cause of Bryce seeing a stale score after Aaliyah has already seen the final score?",
     options: [
       "A transaction write conflict caused by concurrent database updates executing without locks.",
-      "A physical clock skew issue between Bryce's mobile device and Aaliyah's mobile connection.",
+      "Server-side NTP clock drift causing the replica's write timestamp to be rejected as stale.",
       "Bryce's request being served by a replica that is lagging behind the one that served Aaliyah.",
       "A violation of serializability guarantees within the transactional database storage engine."
     ],
@@ -56,10 +56,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What does the combination of linearizability and serializability provide?",
     options: [
-      "Weak eventual consistency guarantees across replicas",
+      "Causal consistency guarantees across all replicas in the distributed system",
       "Monotonic read isolation within single client sessions",
       "Strict serializability (or strong one-copy serializability)",
-      "Two-phase commit coordination protocols across sharded databases"
+      "Snapshot isolation using multi-version concurrency control across sharded databases"
     ],
     correct: 2,
     explanation: "A database that guarantees both serializability and linearizability is said to provide strict serializability, which is the strongest consistency and isolation model.",
@@ -92,10 +92,10 @@ const QUIZ_QUESTIONS = [
       "Single-leader replication where all read operations go to the leader node.",
       "Consensus-based systems running protocols such as Raft, Paxos, or Zab.",
       "Multi-leader replication systems accepting concurrent writes on multiple nodes.",
-      "Single-node database engines running on a single dedicated machine."
+      "Leaderless replication configured with strict quorum overlap (w + r > n)."
     ],
     correct: 2,
-    explanation: "Multi-leader systems concurrently accept writes on different nodes and replicate them asynchronously, naturally leading to conflicting concurrent writes and making linearizability impossible.",
+    explanation: "Multi-leader systems concurrently accept writes on different nodes and replicate them asynchronously, naturally leading to conflicting concurrent writes and making linearizability impossible. Leaderless quorums, by contrast, can be made linearizable with synchronous read repair and pre-write reads—at significant performance cost.",
     section: "Implementing Linearizable Systems"
   },
   {
@@ -107,15 +107,15 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "mc",
-    q: "Which ID generation scheme guarantees that IDs are unique and monotonically ordered consistent with physical time without network communication?",
+    q: "Which ID generation scheme provides the strongest guarantee of IDs being monotonically ordered consistent with physical time, while still being generatable without a centralized coordinator?",
     options: [
-      "Sharded database ID assignment schemes.",
-      "Preallocated ranges or blocks of unique IDs.",
+      "Sharded database ID assignment schemes using per-shard auto-increment counters.",
+      "Preallocated ranges or blocks of unique IDs distributed to nodes in advance.",
       "Standard Version 4 randomized UUID values.",
-      "None of the options listed above are valid."
+      "Snowflake-style IDs combining a wall-clock millisecond timestamp with a machine ID and sequence number."
     ],
     correct: 3,
-    explanation: "None of the above schemes can guarantee strictly physical-time ordered IDs without network communication, as physical clocks drift and no-communication shard IDs are not sequentially interleaved. Approximations like Snowflake or UUID v7 exist, but they are not strictly ordered. This is why most systems treat IDs as opaque identifiers and avoid depending on their time ordering for correctness.",
+    explanation: "Snowflake-style IDs embed physical wall-clock milliseconds, making them the closest to physically-ordered IDs without a centralized coordinator. However, they are still vulnerable to clock skew between machines and NTP adjustments, so they cannot guarantee strict physical-time ordering. Most systems treat such IDs as opaque identifiers and avoid depending on their time ordering for correctness.",
     section: "Ordering and Consensus"
   },
   {
@@ -123,9 +123,9 @@ const QUIZ_QUESTIONS = [
     q: "What does a logical clock count?",
     options: [
       "Elapsed physical seconds using an oscillator.",
-      "Accumulated CPU clock cycles since node boot.",
+      "The number of messages sent and received on the local node.",
       "The total number of events that have occurred.",
-      "The total number of active nodes in a cluster."
+      "The version number of the most recent write to a local register."
     ],
     correct: 2,
     explanation: "Unlike physical clocks which measure time, logical clocks are algorithms that count events (like messages sent or processed) to capture ordering.",
@@ -142,7 +142,7 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Why are Lamport timestamps insufficient for enforcing a database uniqueness constraint (e.g., locking a username)?",
     options: [
-      "Because Lamport timestamps do not incorporate unique node identifiers and can result in duplicate values.",
+      "Because network reordering can cause a node to receive messages out of causal order, breaking the counter's monotonicity.",
       "Because a node cannot know if its own request has the lowest timestamp without contacting all other nodes.",
       "Because they rely on highly synchronized hardware atomic clocks and GPS receivers to function correctly.",
       "Because they are designed strictly to order sequential transactions and cannot compare concurrent events."
@@ -155,7 +155,7 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is the main advantage of a Hybrid Logical Clock (HLC) over a standard Lamport clock?",
     options: [
-      "It leverages random 128-bit UUIDs to guarantee absolute uniqueness.",
+      "It uses GPS-synchronized atomic clocks to provide sub-microsecond precision, eliminating clock drift entirely.",
       "It maintains event histories to explicitly detect concurrent operations.",
       "It stays close to physical time-of-day while preserving causal ordering.",
       "It completely eliminates the requirement for node identifiers or IDs."
@@ -175,7 +175,7 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is a 'timestamp oracle' in systems like TiDB or Google's Percolator?",
     options: [
-      "A machine learning algorithm that dynamically predicts round-trip network latency.",
+      "A stateless, horizontally scaled service that generates distributed UUIDs on demand without coordination.",
       "A single logical leader node that assigns linearizable timestamps to transactions.",
       "A high-precision Network Time Protocol (NTP) server equipped with GPS receivers.",
       "A distributed consensus cluster that votes on all physical system clock adjustments."
@@ -190,8 +190,8 @@ const QUIZ_QUESTIONS = [
     options: [
       "It relies on distributed vector clocks combined with advanced compression to track causal histories.",
       "It uses atomic clocks and GPS receivers to bound clock uncertainty and waits out the uncertainty interval.",
-      "It routes all regional database transaction writes to a single master database instance in North America.",
-      "It relaxes correctness guarantees, abandoning linearizable execution in favor of eventual consistency."
+      "It uses a Paxos-based global timestamp service with sub-10ms lease renewals to sequence all transactions.",
+      "It uses multi-version concurrency control (MVCC) without any physical clock reliance, ordering by transaction ID."
     ],
     correct: 1,
     explanation: "Spanner's TrueTime API provides a time interval representing clock uncertainty. By waiting out this uncertainty interval before committing, Spanner guarantees that subsequent transactions get a larger timestamp, ensuring linearizability.",
@@ -210,7 +210,7 @@ const QUIZ_QUESTIONS = [
     options: [
       "Consensus can never be achieved under any circumstances in a packet network with variable routing delay.",
       "No deterministic consensus algorithm is guaranteed to terminate in an asynchronous system if nodes can crash.",
-      "Eventual consistency is mathematically impossible to implement on distributed, shared-nothing storage systems.",
+      "No consensus algorithm can be both safe and live in the presence of arbitrary, unbounded message delays.",
       "Active network partitions will always cause split-brain conditions and state corruption in Raft clusters."
     ],
     correct: 1,
@@ -228,9 +228,9 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What does 'state machine replication' (SMR) entail?",
     options: [
-      "Replicating physical database backup snapshots to secondary storage regions using cron job scripts.",
+      "Periodically snapshotting replica state and shipping the snapshot to followers so they can catch up.",
       "Having replicas apply a totally ordered sequence of inputs from a shared log deterministically.",
-      "Running a different, heterogeneous operating system kernel on each database replica in the cluster.",
+      "Sending the same write operation to all replicas in parallel without enforcing a delivery order.",
       "Randomly routing incoming write requests to arbitrary nodes across the system to balance execution load."
     ],
     correct: 1,
@@ -250,7 +250,7 @@ const QUIZ_QUESTIONS = [
     options: [
       "By leveraging GPS-linked clock synchronization to lock out potential secondary leaders.",
       "By defining epoch/term numbers and requiring a quorum to elect a leader and commit logs.",
-      "By forcing all nodes to write their state updates directly to a single shared disk page.",
+      "By requiring a candidate to obtain a revocable lease acknowledgment from the prior leader before accepting writes.",
       "By relying on system operators to manually shut down lagging or partitioned replicas."
     ],
     correct: 1,
@@ -270,7 +270,7 @@ const QUIZ_QUESTIONS = [
     options: [
       "It requires every active node in the cluster to vote on every single read query, degrading performance.",
       "It allows a stale replica to become leader, potentially losing committed writes and corrupting the log.",
-      "It completely blocks all new write operations during any occurrence of a routing network partition.",
+      "It forces the cluster to wait until a majority of in-sync replicas confirm availability before electing a leader.",
       "It enforces strict serializability guarantees at the expense of excessive nonvolatile disk space usage."
     ],
     correct: 1,
@@ -288,10 +288,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Which of the following is a primary use case for coordination services like ZooKeeper or etcd?",
     options: [
-      "Storing petabytes of unstructured analytical clickstream data.",
+      "Serving as a distributed key-value cache for high read-throughput application session data.",
       "Processing high-frequency user financial transaction ledgers.",
       "Distributed leader election and system metadata configuration.",
-      "Managing object-based storage for large image and video files."
+      "Coordinating distributed transactions across sharded relational database partitions."
     ],
     correct: 2,
     explanation: "Coordination services are optimized to hold small, slow-changing metadata (like leader registration, shard allocation, and configuration) in memory, replicated via consensus.",
@@ -310,8 +310,8 @@ const QUIZ_QUESTIONS = [
     options: [
       "They are served immediately from memory by whichever local follower replica the client happens to contact.",
       "The reading node performs a quorum check with other nodes to confirm it is still the authoritative leader.",
-      "They rely on highly synchronized physical clocks using local Network Time Protocol (NTP) daemons.",
-      "They are throttled by default, ensuring that read executions are only allowed once per calendar day."
+      "They rely on a read-index protocol where the leader confirms its current lease is still valid before responding.",
+      "They rely on highly synchronized physical clocks using local Network Time Protocol (NTP) daemons."
     ],
     correct: 1,
     explanation: "To ensure a read is linearizable and does not return stale data from a deposed leader, etcd forces the reading leader to perform a quorum exchange to verify its status before returning the read value.",
