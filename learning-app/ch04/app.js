@@ -11,7 +11,7 @@ const QUIZ_QUESTIONS = [
     options: [
       "It enables random key lookups using a sparse in-memory index to locate segments, avoiding a scan of the entire disk file.",
       "It eliminates the need for in-memory indexing entirely by enabling direct binary search on the raw blocks of the disk file.",
-      "It compresses record data payloads so they are guaranteed to fit entirely within the operating system's page memory cache.",
+      "It enables parallel disk reads by distributing key-value pairs across multiple independent I/O streams.",
       "It supports fast in-place data updates by modifying a key's corresponding value directly at its original physical byte offset."
     ],
     correct: 0,
@@ -42,7 +42,7 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "In an LSM-tree storage engine, what problem do Bloom filters solve?",
     options: [
-      "They speed up incoming writes by pre-sorting keys in heap memory before flushing them to the database's memtable.",
+      "They cache the most recently read SSTable blocks in memory to reduce the number of repeated disk seeks.",
       "They apply block-level compression to SSTables on disk in order to minimize query-time physical disk read and write I/O.",
       "They prevent the storage engine from having to search every single on-disk SSTable segment for keys that do not exist.",
       "They resolve hash collisions within the sparse memory index when keys map to the same physical disk block addresses."
@@ -75,7 +75,7 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is the purpose of 'abbreviating keys' in B-tree page design?",
     options: [
-      "To encrypt sensitive field keys and payload properties before committing them to public cloud block storage volumes.",
+      "To allow leaf pages to store more sorted entries per disk block without exceeding the page's fixed byte capacity.",
       "To fit more keys into each page, increasing the branching factor (fan-out) and reducing the total depth of the B-tree.",
       "To accelerate string comparison routines within CPU registers by reducing variable-length keys to fixed byte lengths.",
       "To prevent hash key collision problems when nesting a B-tree index structure inside an in-memory database hash index."
@@ -123,7 +123,7 @@ const QUIZ_QUESTIONS = [
     options: [
       "An index that automatically indexes every single column within a database table, guaranteeing that all application queries can be resolved using index lookups.",
       "An index that stores specific extra column values inside the index itself, letting the engine answer queries entirely from the index without reading the raw data row.",
-      "An index optimization that monitors foreign keys and dynamically indexes target columns to prevent latency spikes during multi-table relational join operations.",
+      "A secondary index that is automatically kept synchronized with the primary index so it never needs a separate heap file lookup.",
       "A clustered index layout that duplicates data blocks across multiple physical hard drives in a RAID cluster to safeguard the system against hard drive failures."
     ],
     correct: 1,
@@ -142,7 +142,7 @@ const QUIZ_QUESTIONS = [
     q: "In full-text search engines like Apache Lucene, how are spelling corrections or fuzzy search queries typically implemented efficiently?",
     options: [
       "By sequentially scanning the full index text and computing the Levenshtein distance for each word record in the database.",
-      "By utilizing a pre-computed hash map that stores the calculated edit distances for all possible alphanumeric word pairs.",
+      "By traversing a trie with a breadth-first search, branching at each character edit permitted within the allowed edit distance.",
       "By building a Levenshtein automaton (a finite state transducer) over a trie representing terms present in the dictionary.",
       "By translating all query terms into phonetic soundex codes and executing range searches inside a balanced binary tree."
     ],
@@ -189,8 +189,8 @@ const QUIZ_QUESTIONS = [
     options: [
       "ELT runs all data transformations directly within source operational OLTP databases before data extraction occurs, whereas reverse ETL is a recovery procedure that exports analytics data back into raw, localized CSV files.",
       "ELT loads raw data directly into the cloud warehouse and runs transformations using the warehouse's compute resources, while reverse ETL syncs processed analytical insights back to operational databases and business systems.",
-      "ELT relies exclusively on NoSQL document databases to process raw log data payloads prior to ingestion, whereas reverse ETL represents a specialized replication protocol designed to sync B-tree index files across regions.",
-      "ELT functions as a real-time message streaming protocol that completely bypasses persistent storage systems, whereas reverse ETL is an offline archive utility utilized to back up historical records to magnetic tape drives."
+      "ELT loads raw data into a staging area outside the warehouse for cleansing before ingestion, whereas reverse ETL refers to syncing that staging layer back to the original source systems.",
+      "ELT and ETL are functionally identical in modern practice, and the distinction between them only matters for legacy on-premise Hadoop deployments."
     ],
     correct: 1,
     explanation: "In modern cloud data warehousing (e.g., Snowflake, BigQuery), ELT is preferred: raw data is extracted and loaded immediately, leveraging the warehouse's massive parallel compute power to run transformations (e.g. using SQL/dbt) inside the warehouse. Reverse ETL is the practice of copying that processed data from the warehouse back into operational business systems (like CRMs or marketing engines) to drive day-to-day actions.",
@@ -210,7 +210,7 @@ const QUIZ_QUESTIONS = [
       "All values of an individual database row are kept together in contiguous segments, and new rows are appended sequentially to the end of the data file.",
       "Each column is written to an independent file on disk, where values belonging to the same database row are aligned at identical offsets in each file.",
       "Column attributes are hashed and stored in a multi-dimensional matrix of fixed-size pages that are dynamically managed by a central index controller.",
-      "Related columns are grouped into logical families and written sequentially to append-only XML schemas to support flexible schema-on-read parsing."
+      "Columns are grouped by access frequency and co-located within the same physical row group to minimize seek overhead during scans."
     ],
     correct: 1,
     explanation: "Column-oriented storage stores all values of column A together on disk, then all values of column B, and so on. The relationship between columns is maintained by their position (index) within the column file: the 500th value in column A belongs to the same row as the 500th value in column B.",
@@ -220,7 +220,7 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "How does bitmap encoding help compress data and speed up queries in column-oriented databases?",
     options: [
-      "It transforms alphanumeric columns into standardized graphics metadata files that can be compressed efficiently using lossless PNG compression algorithms.",
+      "It converts column values into variable-length integer codes stored in a sorted dictionary, enabling fast equality filters via dictionary lookups.",
       "It maps low-cardinality values to bitmaps where each bit represents a row index, enabling the query engine to run filters via fast bitwise operations.",
       "It indexes column files by constructing multi-level B-tree paths where every intermediate node holds a bitmap representation of page addresses on disk.",
       "It hashes individual column records into a centralized Bloom filter, allowing the query optimizer to check for duplicate keys without reading files."
@@ -240,10 +240,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is an OLAP data cube, and what are its trade-offs compared to querying raw columnar data?",
     options: [
-      "A specialized 3D storage drive that records transaction values holographically to eliminate disk read latency for analytical query pipelines.",
+      "A multi-dimensional index over a fact table that pre-sorts dimension key ranges, allowing the query planner to skip full table scans.",
       "A grid of pre-computed aggregates across multiple dimensions, providing sub-millisecond query performance at the expense of query flexibility.",
       "A relational warehouse design that strictly enforces exactly three normalized foreign keys on the central fact table to simplify SQL joins.",
-      "A distributed partition cache that automatically replicates analytical queries and aggregates to exactly six adjacent servers in the cluster."
+      "A distributed caching layer that materializes partial per-partition aggregates to reduce cross-node shuffle during analytical joins."
     ],
     correct: 1,
     explanation: "A data cube is a multi-dimensional aggregate table. It pre-computes values like total sales grouped by date, product, and region. Queries are extremely fast because the aggregation has already been done, but it is less flexible because you cannot run arbitrary ad-hoc queries on attributes that were not pre-aggregated (e.g., grouping by a new dimension).",
@@ -274,9 +274,9 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Why are standard B-trees unsuitable for querying 2D spatial data, such as finding all restaurants within a bounding box of latitude and longitude?",
     options: [
-      "B-trees are mathematically incapable of sorting floating-point values, which prevents them from indexing decimal coordinates like latitude and longitude.",
+      "B-trees require spatial coordinates to be flattened into a single composite key using a space-filling curve, which cannot represent arbitrary bounding box shapes.",
       "B-trees index a one-dimensional key space, meaning they can only filter on one coordinate field efficiently while executing a slow scan on the second.",
-      "B-trees are restricted to sorting alphanumeric string attributes and cannot be used to index any form of numeric values or geographic coordinate keys.",
+      "B-trees must rebuild their entire branching structure whenever a coordinate pair is updated, making them too slow for frequently moving spatial data.",
       "B-trees cannot process the extremely high write workloads generated by active mobile clients updating their GPS coordinates in real-time database apps."
     ],
     correct: 1,
@@ -289,7 +289,7 @@ const QUIZ_QUESTIONS = [
     options: [
       "To lock individual database rows to ensure transaction isolation and prevent concurrent transactions from executing dirty reads.",
       "To protect the tree's internal structures from concurrent thread access, avoiding race conditions during page splits or updates.",
-      "To guarantee that updated data pages are committed and flushed to physical disk files in a single atomic filesystem operation.",
+      "To guarantee that a transaction's changes are made durable on disk before the transaction is allowed to commit.",
       "To link index pages across separate database instances in a distributed cluster to maintain eventual consistency of schemas."
     ],
     correct: 1,
@@ -307,7 +307,7 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Which of the following is a B-tree optimization that reduces random disk writes by writing new pages to a different location on disk rather than overwriting existing pages?",
     options: [
-      "Page-overlay B-tree configurations",
+      "Fractional cascading B-trees",
       "Append-only or copy-on-write B-trees",
       "Leveled B-tree indexing strategies",
       "Sharded distributed index tree maps"
