@@ -1,10 +1,8 @@
 from unittest.mock import patch
 
-import pytest
 
 from grade_responses import parse_args
 
-@pytest.mark.smoketest
 class TestParseArgs:
     def test_default_args(self):
         with patch('sys.argv', ['grade_responses.py']):

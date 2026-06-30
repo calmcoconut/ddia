@@ -28,7 +28,7 @@ jobs:
         run: ruff check .
 
       - name: Run Python Tests
-        run: pytest -m smoketest
+        run: pytest -m "not live"
         env:
           PYTHONPATH: .
 

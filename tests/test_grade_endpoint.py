@@ -1,29 +1,20 @@
-import os
-from grade_responses import load_env
-load_env()
-
-# Ensure we have a default key for test imports
-os.environ.setdefault("LLM_KEY", "test-key-placeholder")
-if os.environ.get("LLM_KEY"):
-    os.environ["LLM_KEY"] = os.environ["LLM_KEY"].strip()
-
 import json
 import logging
+import os
 import sqlite3
-
-import pytest
 
 import grade_responses
 import logger_setup
+import pytest
 import server
 from grade_responses import (
+    LLMGrader,
     extract_book_chapter_text,
     generate_summary,
     get_llm_config,
     grade_question,
     parse_context_desc,
     parse_llm_json,
-    LLMGrader,
 )
 from server import app
 
@@ -533,7 +524,6 @@ class TestLogging:
         print("--> Finished test_api_error_is_logged_to_error_level", flush=True)
 
 
-@pytest.mark.smoketest
 def test_book_context_extraction_integration():
     """Verify that chapter numbers are parsed correctly, and full chapter text is retrieved."""
     print("\n--> Starting test_book_context_extraction_integration", flush=True)
@@ -555,7 +545,6 @@ def test_book_context_extraction_integration():
     print("--> Finished test_book_context_extraction_integration", flush=True)
 
 
-@pytest.mark.smoketest
 def test_book_context_fallback_extraction():
     """Verify that if chapters/ HTML file is missing, extract_book_chapter_text falls back to chapters_fallback/."""
     print("\n--> Starting test_book_context_fallback_extraction", flush=True)
@@ -584,7 +573,6 @@ def test_book_context_fallback_extraction():
     print("--> Finished test_book_context_fallback_extraction", flush=True)
 
 
-@pytest.mark.smoketest
 def test_grade_responses_sqlite_loading_support(tmp_path):
     """Verify that grade_responses can detect and load progress from an exported SQLite database."""
     print("\n--> Starting test_grade_responses_sqlite_loading_support", flush=True)
@@ -800,7 +788,6 @@ class TestLLMGraderAdapter:
 # value, breaking the parser midway through a long response.
 
 
-@pytest.mark.smoketest
 class TestParseLlmJson:
     """Unit tests for parse_llm_json covering clean JSON, markdown-wrapped JSON,
     and malformed JSON produced by LLMs (unescaped quotes, literal newlines, etc.)."""

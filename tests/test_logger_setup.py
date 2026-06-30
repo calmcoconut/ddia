@@ -1,8 +1,11 @@
-import logging
 import json
+import logging
 import sys
-from logger_setup import JsonFormatter, CustomJsonFormatter
 from datetime import datetime
+
+
+from logger_setup import CustomJsonFormatter, JsonFormatter
+
 
 def test_json_formatter_basic_fields():
     formatter = JsonFormatter()
@@ -23,6 +26,7 @@ def test_json_formatter_basic_fields():
     assert data["level"] == "INFO"
     assert data["logger"] == "test_logger"
     assert data["msg"] == "test message"
+
 
 def test_json_formatter_extra_fields():
     formatter = JsonFormatter()
@@ -47,6 +51,7 @@ def test_json_formatter_extra_fields():
     assert data["msg"] == "test warning"
     assert data["user_id"] == 123
     assert data["action"] == "login"
+
 
 def test_json_formatter_exc_info():
     formatter = JsonFormatter()
@@ -77,7 +82,7 @@ def test_json_formatter_exc_info():
 
 def test_custom_json_formatter_adds_timestamp():
     """Verify that CustomJsonFormatter correctly adds a timestamp if it's missing."""
-    formatter = CustomJsonFormatter('%(timestamp)s %(level)s %(message)s')
+    formatter = CustomJsonFormatter("%(timestamp)s %(level)s %(message)s")
     record = logging.LogRecord(
         name="test_custom",
         level=logging.INFO,
@@ -89,7 +94,7 @@ def test_custom_json_formatter_adds_timestamp():
     )
 
     # Ensure no timestamp is present before formatting
-    assert not hasattr(record, 'timestamp')
+    assert not hasattr(record, "timestamp")
 
     formatted = formatter.format(record)
     data = json.loads(formatted)
@@ -106,9 +111,10 @@ def test_custom_json_formatter_adds_timestamp():
 
     assert is_valid_ts, "The added timestamp is not in the expected format"
 
+
 def test_custom_json_formatter_preserves_existing_timestamp():
     """Verify that CustomJsonFormatter doesn't overwrite an existing timestamp."""
-    formatter = CustomJsonFormatter('%(timestamp)s %(message)s')
+    formatter = CustomJsonFormatter("%(timestamp)s %(message)s")
     record = logging.LogRecord(
         name="test_custom",
         level=logging.INFO,
