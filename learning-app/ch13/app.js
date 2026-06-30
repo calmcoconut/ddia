@@ -10,10 +10,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Why is it often necessary to integrate multiple specialized storage systems rather than relying on a single 'general-purpose' database?",
     options: [
-      "A general-purpose database is architecturally constrained by internal block structures, preventing it from storing more than a few gigabytes of data.",
+      "Because a single RDBMS introduces too many failure modes, so splitting systems across multiple databases is the safest way to improve overall reliability.",
       "Different access patterns (e.g., keyword search vs transactional lookups) require fundamentally different storage engine designs for optimal performance.",
-      "Using a single centralized database server inherently violates modern strict security compliance standards and user data privacy regulations globally.",
-      "Standard relational databases are theoretically incapable of performing complex relational join queries across three or more partitioned source tables."
+      "A cache like Redis can serve full-text search queries as efficiently as a dedicated search index, so only the search tier needs a second system.",
+      "A relational database's query planner already compiles full-text search predicates into inverted index scans, making a separate search engine redundant."
     ],
     correct: 1,
     explanation: "No single storage format or indexing structure is optimal for all access patterns. For example, keyword search requires an inverted index, while transactional lookups are best served by B-trees or LSM-trees.",
@@ -50,10 +50,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Why does scaling event throughput past a single machine's capacity limit the ability to maintain a total order of events?",
     options: [
-      "Total order broadcast becomes mathematically impossible to compute if more than one node participates in state.",
+      "Total order broadcast is effectively solved by vector clocks, so sharding has no impact on a system's ability to establish global ordering.",
       "Sharding the log across multiple machines means event order between different shards is ambiguous without coordination.",
-      "Consensus protocols are theoretically incapable of running or committing transactions on partition-sharded databases.",
-      "Network partitions and packet drops are physically guaranteed to occur if global network event throughput rises."
+      "A single-leader node can always be vertically scaled to handle any throughput level, so horizontal sharding is never truly required.",
+      "Consensus protocols guarantee total ordering across partitions as long as a quorum of nodes remains reachable."
     ],
     correct: 1,
     explanation: "To establish a total order, all events typically must pass through a single leader. If throughput requires sharding the log, there is no inherent sequence ordering between events that are appended to different shards.",
@@ -70,10 +70,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "In the context of the Kappa architecture, how is application evolution (e.g., changing how a search index is computed) typically handled?",
     options: [
-      "By performing a zero-downtime relational schema migration using database triggers to replicate modifications live.",
-      "By running an offline batch process on a data warehouse cluster and performing a full recovery restore on the database.",
+      "By stopping the current stream processor, updating the business logic in place, and resuming from the last committed consumer offset.",
+      "By running a one-time backfill job against the current search index to add the new computed fields without touching the raw event log.",
       "By replaying historical events through a new version of the stream processor and routing reads to the new view when ready.",
-      "By halting all incoming client write traffic to the system while administrators migrate historical database files manually."
+      "By deploying a shadow write path that dual-writes to both the old and new index until read traffic is fully migrated."
     ],
     correct: 2,
     explanation: "Kappa architecture unifies batch and stream processing by keeping historical events in a log. To evolve the app, you feed the historical event log into the new version of the stream processor, building a new derived view side-by-side with the old one, and gradually switch user reads.",
@@ -112,8 +112,8 @@ const QUIZ_QUESTIONS = [
     options: [
       "The dataflow approach executes synchronous REST endpoints to fetch dependencies, which avoids partition network splits and makes debugging simpler.",
       "The dataflow approach subscribes to a stream of updates ahead of time, storing them locally, which replaces synchronous network queries with fast local lookups.",
-      "The dataflow approach completely eliminates the need for local storage layers or data caching systems, reducing overall database operations to zero.",
-      "The dataflow approach implements synchronous lock coordination protocols, guaranteeing that currency exchange rates are always strictly linearizable."
+      "The dataflow approach reduces operational cost because it eliminates the need to maintain a local copy of upstream data, relying on the upstream service for all state.",
+      "The dataflow approach improves consistency because the stream subscriber can validate data against the upstream source in real time before processing each event."
     ],
     correct: 1,
     explanation: "By subscribing to exchange rate updates asynchronously and storing the current state in a local database, the dataflow service can process purchase transactions instantly without making synchronous network requests, increasing speed and fault isolation.",
@@ -130,10 +130,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "In terms of the 'write path' and 'read path,' how can we conceptualize the role of database indexes and caches?",
     options: [
-      "They operate as lazy evaluation mechanisms that run and rebuild indexes only when a database query execution fails.",
+      "They operate as lazy evaluation mechanisms that defer all computation to read time, so that writes are always instantaneous with zero overhead.",
       "They shift the boundary between the read path and write path, doing more work at write time to save work at read time.",
-      "They function as hardware-specific silicon optimizations that completely eliminate the need for host CPU execution.",
-      "They represent the raw, un-derived canonical system of record that persists all incoming client transaction files."
+      "They serve as the raw, un-transformed system of record that is never derived from other data and must always be written to directly.",
+      "They reduce write amplification by consolidating multiple small writes into larger sequential batches before flushing them to disk."
     ],
     correct: 1,
     explanation: "Caches and indexes are precomputed structures. By spending write-time resources to update them eagerly, we drastically reduce the work (e.g., full-table scans) required to serve queries on the read path.",
@@ -143,10 +143,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "In local-first software and offline-capable clients, how should we conceptualize the state stored on the user's device?",
     options: [
-      "It functions as the absolute, single system of record for the entire enterprise customer database.",
+      "It functions as the authoritative system of record that the server must synchronize with, since the client always writes first.",
       "It is a local replica or cache of the server state, and the UI is a materialized view of that local state.",
-      "It is a stateless network buffer that must be completely wiped and deleted whenever connection is lost.",
-      "It represents an isolated, un-derivable data source that cannot be synchronized with other device nodes."
+      "It is a write-ahead buffer that holds mutations only until a server connection is established, after which the local copy is discarded.",
+      "It represents an independent data partition that cannot be merged or synchronized with other nodes once it has diverged."
     ],
     correct: 1,
     explanation: "Local-first software treats the device's storage as a local replica of the server state. The UI rendering on the screen is effectively a materialized view derived from this local model, and background sync engines propagate changes to and from the server.",
@@ -163,10 +163,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is a potential benefit of representing read queries as events and sending them through a stream processor?",
     options: [
-      "It guarantees that all incoming read queries are 100% linearizable without requiring any underlying database storage engines.",
+      "It guarantees strong read-after-write consistency for all clients because every read is now part of a durable, ordered log.",
       "It enables precise tracking of causal dependencies and data provenance by recording exactly what the user saw before taking an action.",
-      "It reduces server CPU usage, memory cache eviction, and disk I/O read overhead to absolute zero across the whole database cluster.",
-      "It completely eliminates the need for sharding database records, allowing a single single-leader node to handle petabyte streams."
+      "It improves read throughput because the stream processor can cache and deduplicate identical read queries before they hit the storage layer.",
+      "It allows the system to convert all read operations into idempotent writes, eliminating the need for separate read replicas."
     ],
     correct: 1,
     explanation: "If read queries are logged as events, they can be joined with write events, allowing the system to record and verify exactly what state of the system a user was looking at (e.g., inventory and shipping dates) when they clicked 'buy'.",
@@ -178,8 +178,8 @@ const QUIZ_QUESTIONS = [
     options: [
       "When queries are restricted to simple single-row primary key lookups against a local B-tree index.",
       "When performing complex distributed joins that must combine data from differently sharded datasets.",
-      "When the underlying database uses standard single-leader replication with asynchronous updates.",
-      "When client devices maintain high-bandwidth, 100% reliable network connections to broker nodes."
+      "When all data fits on a single node and sharding introduces unnecessary operational overhead.",
+      "When client devices maintain persistent, low-latency connections and can tolerate synchronous query execution."
     ],
     correct: 1,
     explanation: "For complex multishard joins (such as fraud detection combining sharded email, billing, and IP reputation scores), the stream processor's message routing and partitioning infrastructure provides a powerful framework for distributed execution.",
@@ -244,7 +244,7 @@ const QUIZ_QUESTIONS = [
     options: [
       "By executing a full Two-Phase Commit transaction across all independent log shards and database partitions for every single client write.",
       "By routing all requests for a specific value (e.g. username) to a single log shard where a single-threaded stream processor validates them sequentially.",
-      "By completely disabling log partition sharding and forcing the system to run on a single, non-replicated global database server instance.",
+      "By replicating every write to all shards and using last-write-wins conflict resolution to select the surviving username entry.",
       "By letting client applications write to any replica and subsequently resolve conflicting username entries using version vector clocks."
     ],
     correct: 1,
@@ -277,8 +277,8 @@ const QUIZ_QUESTIONS = [
     options: [
       "They are tightly coupled; the storage engine cannot maintain data integrity without ensuring immediate write timeliness.",
       "They are decoupled; the system can guarantee strict integrity (correct derivations and no lost writes) while allowing timeliness to lag.",
-      "The system guarantees microsecond timeliness for client read requests but permits index integrity to be violated during write bursts.",
-      "They are both completely obsolete concepts that are replaced by the linearizability guarantees defined in the PACELC and CAP theorems."
+      "Integrity is always sacrificed in asynchronous systems because at-least-once delivery can apply the same write multiple times, corrupting state.",
+      "Timeliness dominates because stream processors require strict event ordering, which inherently enforces linearizable reads on all downstream views."
     ],
     correct: 1,
     explanation: "Asynchronous stream processors decouple timeliness and integrity. Because they process logs asynchronously, reads can be stale (low timeliness), but deterministic processing and at-least-once delivery ensure that all writes are correctly incorporated without corruption (high integrity).",
@@ -295,10 +295,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Why does ACID consistency (in the traditional transaction sense) fail to protect data integrity from application-level software bugs?",
     options: [
-      "ACID consistency guarantees are structurally restricted to single-node databases and will fail to run on modern multi-core CPU architectures.",
+      "ACID consistency guarantees are limited to schema-level constraints like NOT NULL and foreign keys, and cannot enforce application-defined business invariants.",
       "Consistency in ACID assumes that transactions are bug-free; if a transaction writes incorrect data due to a bug, the database will faithfully commit it.",
-      "Application-level software bugs and logic exceptions always bypass the database transaction manager driver, writing raw corrupt records directly to disk.",
-      "Modern relational and document-oriented databases completely lack support for serializable transaction isolation levels or schema validation rules."
+      "ACID transactions use optimistic concurrency, which means a buggy transaction that passes validation is never rolled back even if it corrupts data.",
+      "Modern databases disable ACID consistency by default to improve write throughput, requiring developers to opt in explicitly per table."
     ],
     correct: 1,
     explanation: "Consistency in ACID means the database goes from one valid state to another, defined by database constraints. However, if the application has a logic bug (e.g., updating the wrong balance or missing checks), the database cannot know the intent and will commit the corrupted data.",
@@ -308,10 +308,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Why does event sourcing provide better auditability compared to traditional update-in-place databases?",
     options: [
-      "Event sourcing automatically encrypts all database rows and audit logs using homomorphic encryption keys, preventing any unauthorized modification.",
+      "Event sourcing stores both the raw events and the derived state in the same table, so auditors can compare both representations directly.",
       "Event sourcing represents user inputs as immutable events, and derived state is created via deterministic functions that can be rerun to verify correctness.",
-      "Event sourcing runs exclusively on decentralized, Byzantine fault-tolerant blockchain networks, which are cryptographically guaranteed to be secure.",
-      "Event sourcing does not store any historical event records or transaction logs on disk, keeping all system state strictly in volatile memory arrays."
+      "Event sourcing improves auditability because the event log is compacted periodically, reducing the number of records an auditor must inspect.",
+      "Event sourcing prevents unauthorized modifications because the event log is append-only and the database engine rejects any out-of-order writes."
     ],
     correct: 1,
     explanation: "Because event sourcing records the raw, immutable input events, we can audibly trace exactly why mutations occurred, rerun the derivation pipeline to check for corruption, or debug system behavior by replaying events.",
