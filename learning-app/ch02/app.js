@@ -11,11 +11,11 @@ const QUIZ_QUESTIONS = [
     options: [
       "It forces a sequential full table scan of all database records because the main posts table lacks a composite user_id partition or index.",
       "It requires fetching recent posts from every followed account and merging them, which is slow if a user follows thousands of accounts.",
-      "It requires the application to retrieve, decrypt, and verify the cryptographic signature and password hash of every follower's profile.",
-      "It forces the query optimizer to write temporary transaction log files to a slow, unindexed disk partition on every incoming read path."
+      "It generates a large intermediate result set that must be fully materialized in memory before sorting, increasing memory pressure on the database server.",
+      "It requires the database to acquire row-level read locks on all posts from followed accounts, blocking concurrent writes during timeline reads."
     ],
     correct: 1,
-    explanation: "When a user follows many accounts, the database must scan and merge the recent posts of all those accounts, then sort them by timestamp. At high throughput (e.g., millions of timeline reads per second), this is too slow and resource-intensive.",
+    explanation: "When a user follows many accounts, the database must scan and merge the recent posts of all those accounts, then sort them by timestamp. At high throughput (e.g., millions of timeline reads per second), this is too slow and resource-intensive. Note: memory pressure (option C) and row-level locking (option D) are real database concerns, but they describe side effects of heavy queries in general — not the specific bottleneck of the fan-out join problem shown in the case study.",
     section: "Case Study: Social Network Home Timelines",
     caseStudy: {
       id: "twitter_timeline",
@@ -92,11 +92,11 @@ const QUIZ_QUESTIONS = [
     options: [
       "The non-linear increase in network bandwidth consumption and packet loss that occurs when database write workloads exceed standard capacity limits.",
       "The phenomenon where a single slow backend service call delays the entire end-user request because multiple downstream services are queried in parallel.",
-      "A system vulnerability where malicious client connections artificially inflate message queue lengths to trigger cascading database thread timeouts.",
+      "The compounding effect where each retry from a slow response triggers additional downstream cache misses, progressively worsening latency across the request chain.",
       "The automated process of scaling out the database persistence tier when observed tail response times for write endpoints exceed a fixed threshold."
     ],
     correct: 1,
-    explanation: "If an end-user request depends on parallel calls to 100 backend services, the user must wait for the slowest of those 100 calls to complete. Even if only 1% of backend calls are slow, the probability that at least one of the 100 calls is slow is very high, slowing down the overall response.",
+    explanation: "If an end-user request depends on parallel calls to 100 backend services, the user must wait for the slowest of those 100 calls to complete. Even if only 1% of backend calls are slow, the probability that at least one of the 100 calls is slow is very high, slowing down the overall response. Option C describes a related but distinct cascade-miss phenomenon, not the parallel fan-out amplification effect.",
     section: "Describing Performance"
   },
   {
@@ -143,13 +143,13 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Why are software faults (systematic errors) often harder to handle than hardware faults?",
     options: [
-      "Software faults are caused by progressive physical wear and tear on memory gates and silicon processors, which makes their failure rates highly unpredictable.",
+      "Software faults are statistically independent across nodes, just like hardware faults, so redundancy strategies that work for hardware apply equally to software failures.",
       "Software faults are highly correlated across nodes running the same application version, causing simultaneous failures, whereas hardware faults are independent.",
-      "Software faults bypass the operating system's execution kernel entirely, preventing them from being captured by standard logging libraries or monitoring tools.",
-      "Software faults are unique to virtualized container environments and do not occur when application databases are run on physical, bare-metal server nodes."
+      "Software faults only affect the specific service component containing the bug, whereas hardware faults cascade across every service running on the affected machine.",
+      "Software can be hot-patched on a running system without a restart, unlike hardware failures, which makes software faults less disruptive to overall system availability."
     ],
     correct: 1,
-    explanation: "If one hard drive fails, other drives in the cluster are usually unaffected. However, a software bug (like a memory leak or a leap second bug) exists on all nodes running that code, and a specific trigger can cause all nodes to crash or fail at the same time.",
+    explanation: "If one hard drive fails, other drives in the cluster are usually unaffected. However, a software bug (like a memory leak or a leap second bug) exists on all nodes running that code, and a specific trigger can cause all nodes to crash or fail at the same time. Option A describes the exact wrong mental model — software faults are NOT independent like hardware faults. Option C inverts the truth: it's hardware failures that are typically contained to a single machine, while a software bug spreads across every node running that version.",
     section: "Reliability and Fault Tolerance"
   },
   {
@@ -178,11 +178,11 @@ const QUIZ_QUESTIONS = [
     options: [
       "A hardware-level failure that only occurs when server nodes are run at high temperatures, causing CPU instruction cycles to degrade and eventually crash the database.",
       "A state where a system enters a feedback loop (like a retry storm) and remains overloaded even after the external load is reduced, requiring manual intervention to reset.",
-      "A transient hardware fault where memory bits flip intermittently due to cosmic rays, causing progressive data corruption in active transaction storage logs over time.",
+      "A partial degradation mode where the system automatically sheds the slowest requests to protect itself, stabilizing at reduced but still functional capacity.",
       "A software failure that resolves itself automatically without any operator intervention, by dynamically shedding requests when internal database queue lengths exceed limits."
     ],
     correct: 1,
-    explanation: "In a metastable failure, an overload triggers a feedback loop (e.g., clients timing out and retrying, adding more requests). Even if the original trigger goes away, the system's efficiency has dropped so low that it cannot recover on its own.",
+    explanation: "In a metastable failure, an overload triggers a feedback loop (e.g., clients timing out and retrying, adding more requests). Even if the original trigger goes away, the system's efficiency has dropped so low that it cannot recover on its own. Option C describes adaptive load shedding — a deliberate resilience pattern — which is the opposite of metastable failure: the system stabilizes, rather than remaining stuck in a degraded loop.",
     section: "Describing Performance"
   },
   {
@@ -231,11 +231,11 @@ const QUIZ_QUESTIONS = [
     options: [
       "Design the database for at least two orders of magnitude (100x) growth from the start to prevent expensive software rewrites later.",
       "Design for no more than one order of magnitude (10x) growth in advance, since scaling requirements and system bottlenecks will evolve.",
-      "Design for near-infinite scale from day one by adopting a distributed, multi-region microservices architecture for all workloads.",
-      "Avoid planning for future scale entirely and instead rewrite the core application code and database schema in weekly sprint cycles."
+      "Design for at least 50x expected peak load to ensure the architecture never becomes the bottleneck as the business scales rapidly.",
+      "Design only for current load and rely on infrastructure auto-scaling to handle any future spikes dynamically without code changes."
     ],
     correct: 1,
-    explanation: "Architectures that handle a certain scale rarely work at 10x or 100x that scale. Designing for too much future scale is premature optimization that locks you into an inflexible, complex design. A good rule of thumb is to design for roughly one order of magnitude of growth.",
+    explanation: "Architectures that handle a certain scale rarely work at 10x or 100x that scale. Designing for too much future scale is premature optimization that locks you into an inflexible, complex design. A good rule of thumb is to design for roughly one order of magnitude of growth. Option C (50x headroom) sounds like cautious engineering but introduces premature complexity for growth that may never materialize. Option D (rely on auto-scaling alone) is a real position teams take but misses that many bottlenecks — like data model design or cross-service coupling — cannot be resolved purely by adding infrastructure.",
     section: "Scalability"
   },
   {
@@ -262,13 +262,13 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is the main tool engineers use to manage and hide complexity in software systems?",
     options: [
-      "Formatting tools that automatically standardize code layouts across the repository",
+      "Comprehensive inline documentation that describes every function's behavior, edge cases, and internal implementation in detail",
       "Modular abstractions that hide complex underlying implementation details behind clean APIs",
-      "Global state management where all application variables are stored in a single namespace",
-      "Compilation routines that rebuild and test the entire codebase on a daily schedule"
+      "Decomposing the codebase into microservices so each team independently owns and manages their service's internal complexity",
+      "Strict type systems and compile-time checks that prevent invalid states from being represented in the application code"
     ],
     correct: 1,
-    explanation: "Abstractions (like high-level programming languages, SQL, or clean APIs) hide massive implementation details behind a simpler interface, allowing developers to reason about the system without being overwhelmed by low-level mechanics.",
+    explanation: "Abstractions (like high-level programming languages, SQL, or clean APIs) hide massive implementation details behind a simpler interface, allowing developers to reason about the system without being overwhelmed by low-level mechanics. Documentation (option A) improves understanding but does not hide complexity — a well-documented 10,000-line function is still complex. Microservices (option C) distribute complexity across team boundaries but do not reduce the total complexity; they can even increase it via network coordination overhead. Type systems (option D) reduce a class of bugs but operate at the language level, not the architectural level where system complexity lives.",
     section: "Maintainability"
   },
   {
@@ -315,13 +315,13 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Why do modern cloud-native systems prioritize software-defined multi-node replication over relying solely on hardware-level redundancy (like RAID)?",
     options: [
-      "Software-defined replication processes are significantly faster to execute at scale because they completely bypass CPU instruction caches and local operating system kernel layers.",
+      "Hardware RAID can recover a failed disk in minutes and maintains full single-server uptime, making software-defined replication redundant for teams that do not expect full datacenter outages.",
       "Hardware redundancy only increases the reliability of a single server node and cannot protect against correlated failures (such as rack power cuts) or datacenter outages.",
-      "RAID disk configurations and hardware controllers are physically incompatible with modern solid-state drives and NVMe storage systems deployed in modern data centers.",
-      "Multi-node replication is the only known architectural mechanism that can actively prevent systematic software bugs from corrupting application state files in database memory."
+      "RAID and hardware redundancy have matured to the point where they can now protect against full server failures, not just individual disk crashes, making them equivalent to multi-node replication.",
+      "Software-defined replication introduces higher write latency than hardware RAID because each write must be acknowledged by multiple remote network nodes before completing."
     ],
     correct: 1,
-    explanation: "Hardware-level redundancy (like RAID) keeps a single machine running by protecting against individual component faults (such as a single disk crash). However, it cannot safeguard against correlated failures or datacenter outages, which require software-defined replication across independent nodes, racks, or availability zones.",
+    explanation: "Hardware-level redundancy (like RAID) keeps a single machine running by protecting against individual component faults (such as a single disk crash). However, it cannot safeguard against correlated failures or datacenter outages, which require software-defined replication across independent nodes, racks, or availability zones. Option A describes the real limitation of RAID correctly but draws the wrong conclusion — datacenter-level failures are common enough that software replication is essential. Option D describes a true tradeoff of multi-node replication (write latency), but it is a reason to tune replication carefully, not a reason to abandon it.",
     section: "Reliability and Fault Tolerance"
   },
   {
