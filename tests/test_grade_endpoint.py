@@ -1,6 +1,14 @@
+import os
+from grade_responses import load_env
+load_env()
+
+# Ensure we have a default key for test imports
+os.environ.setdefault("LLM_KEY", "test-key-placeholder")
+if os.environ.get("LLM_KEY"):
+    os.environ["LLM_KEY"] = os.environ["LLM_KEY"].strip()
+
 import json
 import logging
-import os
 import sqlite3
 
 import pytest
@@ -13,18 +21,12 @@ from grade_responses import (
     generate_summary,
     get_llm_config,
     grade_question,
-    load_env,
     parse_context_desc,
     parse_llm_json,
     LLMGrader,
 )
 from server import app
 
-# Ensure we have a default key for test imports
-load_env()
-os.environ.setdefault("LLM_KEY", "test-key-placeholder")
-if os.environ.get("LLM_KEY"):
-    os.environ["LLM_KEY"] = os.environ["LLM_KEY"].strip()
 # ── Fixtures ────────────────────────────────────────────────────────────────
 
 
@@ -83,10 +85,11 @@ class TestEndpointContract:
         def fail_on_api_call(*args, **kwargs):
             raise AssertionError("Should not make API call for empty responses")
 
-        if hasattr(server.model, "generate_json"):
-            monkeypatch.setattr(server.model, "generate_json", fail_on_api_call)
-        else:
-            monkeypatch.setattr(server.model, "generate_content", fail_on_api_call)
+        if server.model is not None:
+            if hasattr(server.model, "generate_json"):
+                monkeypatch.setattr(server.model, "generate_json", fail_on_api_call)
+            else:
+                monkeypatch.setattr(server.model, "generate_content", fail_on_api_call)
 
         print("--> Sending POST request with empty write-ins...", flush=True)
         res = client.post(
@@ -780,7 +783,12 @@ class TestLLMGraderAdapter:
 
         assert captured_prompt is not None
         assert "TEXTBOOK CHAPTER 1 FULL CONTENT:" in captured_prompt
-        assert "Thomas Sowell" in captured_prompt  # specific quote from chapter 1 text
+        if os.path.exists(
+            os.path.join(os.path.dirname(os.path.dirname(__file__)), "chapters")
+        ):
+            assert "Thomas Sowell" in captured_prompt  # specific quote from chapter 1 text
+        else:
+            assert "sushi principle" in captured_prompt  # present in the fallback text
         assert result["summary"] == "perfect"
 
 
