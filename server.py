@@ -6,6 +6,7 @@ Serves static files and evaluates student write-in answers via the Gemini API.
 
 from flask import Flask, request, jsonify, send_from_directory
 import os
+import sys
 import time
 import uuid
 import re
@@ -390,8 +391,6 @@ def grade_summary():
 
 
 if __name__ == "__main__":
-    import sys
-
     port = 8080
     if len(sys.argv) > 1:
         try:

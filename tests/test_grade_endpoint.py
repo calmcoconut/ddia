@@ -7,13 +7,25 @@ Requires:
   - GEMINI_API_KEY set in environment (for live tests)
   - pip install pytest flask
 """
-
 import json
 import logging
 import os
 import pytest
 import sqlite3
 import sys
+import server
+import logger_setup
+import grade_responses
+from server import app
+from grade_responses import (
+    get_llm_config,
+    parse_context_desc,
+    extract_book_chapter_text,
+    LLMGrader,
+    generate_summary,
+    parse_llm_json,
+    grade_question,
+)
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
@@ -21,8 +33,11 @@ from grade_responses import load_env
 
 load_env()
 
+# Ensure we have a default key for test imports
+os.environ.setdefault("LLM_KEY", "test-key-placeholder")
 if os.environ.get("LLM_KEY"):
     os.environ["LLM_KEY"] = os.environ["LLM_KEY"].strip()
+
 
 # ── Fixtures ────────────────────────────────────────────────────────────────
 
@@ -31,7 +46,6 @@ if os.environ.get("LLM_KEY"):
 def client():
     """Create a Flask test client with a fake API key."""
     os.environ.setdefault("LLM_KEY", "test-key-placeholder")
-    from server import app
 
     app.config["TESTING"] = True
     with app.test_client() as c:
@@ -78,7 +92,6 @@ class TestEndpointContract:
     def test_empty_write_ins_returns_zero_grades(self, client, monkeypatch):
         """All blank answers → score of 0, no API call made."""
         print("\n--> Starting test_empty_write_ins_returns_zero_grades", flush=True)
-        import server
 
         # Patch the model's generate_json to fail, ensuring no live API call is made
         def fail_on_api_call(*args, **kwargs):
@@ -106,7 +119,6 @@ class TestEndpointContract:
     def test_response_shape_with_mock(self, client, monkeypatch):
         """Mock grade_question → verify response JSON has correct shape."""
         print("\n--> Starting test_response_shape_with_mock", flush=True)
-        import server
 
         mock_result = {
             "score": 4,
@@ -135,7 +147,6 @@ class TestEndpointContract:
     def test_grade_summary_response_shape(self, client, monkeypatch):
         """Mock generate_summary -> verify /grade_summary JSON response shape."""
         print("\n--> Starting test_grade_summary_response_shape", flush=True)
-        import server
 
         mock_summary = {
             "summary": "You did great. Areas to improve: read more about B-Trees.",
@@ -211,7 +222,6 @@ class TestEndpointContract:
     def test_api_error_returns_500_early(self, client, monkeypatch):
         """Test that a grading failure in the chapter path returns 500 immediately."""
         print("\n--> Starting test_api_error_returns_500_early", flush=True)
-        import grade_responses
 
         def fail_on_api_call(*args, **kwargs):
             raise RuntimeError("Rate limit or auth error from LLM API")
@@ -236,7 +246,6 @@ class TestEndpointContract:
     def test_exam_api_error_returns_500_early(self, client, monkeypatch):
         """Test that a grading failure in the exam path returns 500 immediately."""
         print("\n--> Starting test_exam_api_error_returns_500_early", flush=True)
-        import grade_responses
 
         def fail_on_api_call(*args, **kwargs):
             raise RuntimeError("API quota exceeded")
@@ -277,7 +286,6 @@ class TestEndpointContract:
     def test_grade_summary_api_error_returns_500(self, client, monkeypatch):
         """Test that an API error during summary generation returns a 500 status code."""
         print("\n--> Starting test_grade_summary_api_error_returns_500", flush=True)
-        import grade_responses
 
         def fail_on_summary_call(*args, **kwargs):
             raise RuntimeError("LLM API summary service unavailable")
@@ -320,8 +328,6 @@ class TestLiveGrading:
     def test_live_grade_returns_valid_score(self, client, monkeypatch):
         """Real Gemini call — validates end-to-end round trip."""
         print("\n--> Starting test_live_grade_returns_valid_score", flush=True)
-        import server
-        from grade_responses import get_llm_config
 
         # Temporarily force provider to gemini for this test
         monkeypatch.setenv("LLM_PROVIDER", "gemini")
@@ -353,8 +359,6 @@ class TestLiveOpenAIGrading:
     def test_live_openai_grade_returns_valid_score(self, client, monkeypatch):
         """Real OpenAI call — validates end-to-end round trip."""
         print("\n--> Starting test_live_openai_grade_returns_valid_score", flush=True)
-        import server
-        from grade_responses import get_llm_config
 
         # Temporarily force provider to openai for this test
         monkeypatch.setenv("LLM_PROVIDER", "openai")
@@ -386,8 +390,6 @@ class TestLiveClaudeGrading:
     def test_live_claude_grade_returns_valid_score(self, client, monkeypatch):
         """Real Claude call — validates end-to-end round trip."""
         print("\n--> Starting test_live_claude_grade_returns_valid_score", flush=True)
-        import server
-        from grade_responses import get_llm_config
 
         # Temporarily force provider to claude for this test
         monkeypatch.setenv("LLM_PROVIDER", "claude")
@@ -416,7 +418,6 @@ class TestLogging:
     def test_successful_grade_is_logged(self, client, monkeypatch, tmp_path):
         """A successful /grade call writes a question_graded INFO entry."""
         print("\n--> Starting test_successful_grade_is_logged", flush=True)
-        import server, logger_setup
 
         print("--> Redirecting logs to a temp file for inspection...", flush=True)
         # Redirect logs to a temp file for inspection
@@ -451,7 +452,7 @@ class TestLogging:
         print("--> Flushing handler and reading logged lines...", flush=True)
         test_handler.flush()
         lines = log_file.read_text().strip().splitlines()
-        events = [json.loads(l) for l in lines if l]
+        events = [json.loads(line) for line in lines if line]
 
         event_names = [e["msg"] for e in events]
         assert "grade_request_received" in event_names
@@ -464,7 +465,6 @@ class TestLogging:
     ):
         """question_graded log entry contains score, latency, and username."""
         print("\n--> Starting test_question_graded_log_has_required_fields", flush=True)
-        import server, logger_setup
 
         print("--> Setting up logging handler for fields inspection...", flush=True)
         log_file = tmp_path / "fields_test.log"
@@ -498,9 +498,9 @@ class TestLogging:
         handler.flush()
         lines = log_file.read_text().strip().splitlines()
         graded = next(
-            json.loads(l)
-            for l in lines
-            if json.loads(l).get("msg") == "question_graded"
+            json.loads(line)
+            for line in lines
+            if json.loads(line).get("msg") == "question_graded"
         )
 
         assert graded["score"] == 5
@@ -512,7 +512,6 @@ class TestLogging:
     def test_api_error_is_logged_to_error_level(self, client, monkeypatch, tmp_path):
         """A Gemini API failure writes an ERROR-level log entry."""
         print("\n--> Starting test_api_error_is_logged_to_error_level", flush=True)
-        import server, logger_setup
 
         print("--> Setting up error logging handler...", flush=True)
         log_file = tmp_path / "error_test.log"
@@ -540,8 +539,8 @@ class TestLogging:
 
         print("--> Flushing and verifying error log level...", flush=True)
         handler.flush()
-        lines = [l for l in log_file.read_text().strip().splitlines() if l]
-        assert any(json.loads(l)["level"] == "ERROR" for l in lines)
+        lines = [line for line in log_file.read_text().strip().splitlines() if line]
+        assert any(json.loads(line)["level"] == "ERROR" for line in lines)
         print("--> Finished test_api_error_is_logged_to_error_level", flush=True)
 
 
@@ -549,7 +548,6 @@ class TestLogging:
 def test_book_context_extraction_integration():
     """Verify that chapter numbers are parsed correctly, and full chapter text is retrieved."""
     print("\n--> Starting test_book_context_extraction_integration", flush=True)
-    from grade_responses import parse_context_desc, extract_book_chapter_text
 
     ch_num, sec_name = parse_context_desc(
         "Chapter 1 (Trade-Offs), section: Data Warehouses"
@@ -572,11 +570,9 @@ def test_book_context_extraction_integration():
 def test_book_context_fallback_extraction():
     """Verify that if chapters/ HTML file is missing, extract_book_chapter_text falls back to chapters_fallback/."""
     print("\n--> Starting test_book_context_fallback_extraction", flush=True)
-    from grade_responses import extract_book_chapter_text, _CHAPTER_TEXT_CACHE
-    import os
 
     # Clear cache for chapter 99
-    _CHAPTER_TEXT_CACHE.pop(99, None)
+    grade_responses._CHAPTER_TEXT_CACHE.pop(99, None)
 
     # Use project root directory to create a temporary fallback file
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -656,8 +652,6 @@ class TestLLMGraderAdapter:
     """Unit tests validating dynamic LLMGrader client adapter logic with mock wrappers."""
 
     def test_grader_gemini_mock(self, monkeypatch):
-        from grade_responses import LLMGrader
-
         # Create fake model response class
         class FakeResponse:
             def __init__(self, text):
@@ -673,8 +667,6 @@ class TestLLMGraderAdapter:
                 return FakeResponse('{"score": 5, "feedback": "excellent"}')
 
         # Patch google.generativeai GenerativeModel constructor
-        import grade_responses
-
         monkeypatch.setattr(
             grade_responses.genai, "GenerativeModel", FakeGenerativeModel
         )
@@ -686,7 +678,6 @@ class TestLLMGraderAdapter:
         assert "excellent" in res
 
     def test_grader_openai_mock(self, monkeypatch):
-        from grade_responses import LLMGrader
 
         # Mock OpenAI library and client
         class FakeMessage:
@@ -716,8 +707,6 @@ class TestLLMGraderAdapter:
                 self.api_key = api_key
                 self.chat = FakeChat()
 
-        import grade_responses
-
         class DummyOpenaiModule:
             OpenAI = FakeOpenAIClient
 
@@ -730,7 +719,6 @@ class TestLLMGraderAdapter:
         assert "good" in res
 
     def test_grader_claude_mock(self, monkeypatch):
-        from grade_responses import LLMGrader
 
         # Mock Anthropic library and client
         class FakeTextMessage:
@@ -752,8 +740,6 @@ class TestLLMGraderAdapter:
                 self.api_key = api_key
                 self.messages = FakeMessages()
 
-        import grade_responses
-
         class DummyAnthropicModule:
             Anthropic = FakeAnthropicClient
 
@@ -768,7 +754,6 @@ class TestLLMGraderAdapter:
         assert "fair" in res
 
     def test_llm_config_general_vars(self, monkeypatch):
-        from grade_responses import get_llm_config
 
         # Setup general variables in environment
         monkeypatch.setenv("LLM_PROVIDER", "openai")
@@ -786,7 +771,6 @@ class TestLLMGraderAdapter:
 
     def test_generate_summary_injects_chapter_content(self, monkeypatch):
         """Verify that generate_summary fetches and injects the textbook chapter content in the prompt."""
-        from grade_responses import generate_summary, LLMGrader
 
         captured_prompt = None
 
@@ -828,7 +812,6 @@ class TestParseLlmJson:
     and malformed JSON produced by LLMs (unescaped quotes, literal newlines, etc.)."""
 
     def setup_method(self):
-        from grade_responses import parse_llm_json
 
         self.parse = parse_llm_json
 
@@ -920,7 +903,6 @@ class TestParseLlmJson:
         the result dict should NOT contain 'Error' in strengths.
         Instead it should extract whatever fields it can, or at minimum not crash.
         """
-        from grade_responses import grade_question, LLMGrader
 
         # Simulate LLM returning JSON with unescaped quote inside feedback
         bad_json = (

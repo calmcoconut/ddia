@@ -9,6 +9,7 @@ import traceback
 from logging.handlers import RotatingFileHandler
 from datetime import datetime, timezone
 import os
+from pythonjsonlogger import jsonlogger
 
 LOG_DIR = os.path.join(os.path.dirname(__file__), "logs")
 GRADER_LOG  = os.path.join(LOG_DIR, "grader.log")
@@ -16,8 +17,6 @@ ERROR_LOG   = os.path.join(LOG_DIR, "grader_errors.log")
 MAX_BYTES   = 5 * 1024 * 1024   # 5 MB
 BACKUP_COUNT = 3
 
-
-from pythonjsonlogger import jsonlogger
 
 class CustomJsonFormatter(jsonlogger.JsonFormatter):
     def format(self, record: logging.LogRecord) -> str:

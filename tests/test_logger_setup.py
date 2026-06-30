@@ -1,6 +1,6 @@
 import logging
 import json
-import pytest
+import sys
 from logger_setup import JsonFormatter, CustomJsonFormatter
 from datetime import datetime
 
@@ -53,8 +53,7 @@ def test_json_formatter_exc_info():
 
     try:
         1 / 0
-    except ZeroDivisionError as e:
-        import sys
+    except ZeroDivisionError:
         exc_info = sys.exc_info()
 
     record = logging.LogRecord(

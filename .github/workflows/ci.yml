@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff
+          pip install -r requirements.txt
+
+      - name: Run Ruff Linter
+        run: ruff check .
+
+      - name: Run Python Tests
+        run: pytest -m smoketest
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Puppeteer
+        run: npm install puppeteer
+
+      - name: Run JavaScript Tests
+        run: |
+          node -e "
+          const puppeteer = require('puppeteer');
+          (async () => {
+            const browser = await puppeteer.launch();
+            const page = await browser.newPage();
+            page.on('console', msg => console.log('PAGE LOG:', msg.text()));
+            page.on('pageerror', err => console.error('PAGE ERROR:', err));
+            
+            console.log('Opening tests.html...');
+            await page.goto('file://' + process.cwd() + '/learning-app/tests.html');
+            
+            console.log('Waiting for tests to complete...');
+            await page.waitForFunction(() => {
+              const badges = Array.from(document.querySelectorAll('.test-badge'));
+              return badges.length > 0 && badges.every(b => b.textContent === 'PASS' || b.textContent === 'FAIL');
+            }, {timeout: 15000});
+            
+            const passed = await page.\$eval('#passed-val', el => parseInt(el.textContent));
+            const failed = await page.\$eval('#failed-val', el => parseInt(el.textContent));
+            
+            console.log('JS Tests Results - Passed: ' + passed + ', Failed: ' + failed);
+            
+            if (failed > 0 || passed === 0) {
+              console.error('JS Tests failed or no tests ran!');
+              process.exit(1);
+            }
+            await browser.close();
+          })().catch(err => {
+            console.error(err);
+            process.exit(1);
+          });
+          "
