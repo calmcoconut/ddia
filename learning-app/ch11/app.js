@@ -22,10 +22,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "In web server access log analysis, how does the Unix command line 'sort | uniq -c | sort -r -n | head -n 5' operate?",
     options: [
-      "It scans the log file and counts occurrences of each URL by maintaining a dynamically resized hash table in memory",
+      "It scans the log file and counts occurrences of each URL by storing running totals in a temporary hash file on disk",
       "It sorts the keys alphabetically so that identical entries are adjacent, counts them, and then sorts the counts numerically",
-      "It shuffles all log lines using a random permutation to generate a statistically representative sample of top URLs",
-      "It partitions the log files across multiple local disk drives to perform parallel aggregation on separate CPU cores"
+      "It forks multiple sort processes on separate CPU cores and merges their outputs using a parallel merge driver",
+      "It partitions the log lines into fixed-size chunks and dispatches them to worker threads for parallel aggregation"
     ],
     correct: 1,
     explanation: "Unix pipes use sorting to bring identical lines together so that 'uniq -c' can count adjacent matching lines without keeping a hash table of all distinct keys in memory.",
@@ -42,10 +42,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "How do the block sizes of distributed filesystems (like HDFS) compare to local filesystems (like ext4)?",
     options: [
-      "DFS blocks are smaller (typically 512 bytes) to minimize internal storage fragmentation and slack space",
+      "DFS blocks are slightly smaller (e.g., 4 KB to 16 KB) to align with the OS page cache and reduce memory waste",
       "DFS blocks are exactly the same size (4,096 bytes) to align with standard operating system page caches",
       "DFS blocks are much larger (e.g., 128 MB) to reduce metadata tracking overhead and disk seek penalties",
-      "DFS blocks are dynamically sized per record to prevent any unused space from being allocated on the disk"
+      "DFS blocks are fixed at 4 MB, matching POSIX page cache alignment and SSD erase block boundaries"
     ],
     correct: 2,
     explanation: "HDFS defaults to 128 MB blocks, which is much larger than the 4 KB blocks of local filesystems like ext4. This reduces the amount of metadata the NameNode needs to track, and lowers disk seek overhead.",
@@ -75,8 +75,8 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is a major limitation of object stores (like S3) compared to distributed filesystems (like HDFS)?",
     options: [
-      "They restrict individual objects from exceeding a maximum size limit of 1 MB for all read operations",
-      "They lack standard support for network-level transport encryption or identity-based access controls",
+      "They require all objects to be compressed with gzip before upload, adding CPU overhead on every write operation",
+      "They expose a POSIX-compatible filesystem interface, making directory renames more expensive than in HDFS due to lock management overhead",
       "They do not support atomic directory renames or file appends because objects must be treated as immutable",
       "They require clients to be located within the same physical server rack to perform data retrieval actions"
     ],
@@ -95,10 +95,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "In cluster resource managers like YARN and Kubernetes, what daemon runs on each node to manage tasks?",
     options: [
-      "The NameNode or FoundationDB process which tracks block metadata and transaction commits",
+      "The ResourceManager or control-plane API server, which tracks overall cluster capacity and accepts scheduling requests",
       "The ApplicationMaster or Operator which coordinates resource requests for a specific job",
       "The NodeManager or kubelet process which starts, monitors, and stops individual containers",
-      "The ZooKeeper or etcd service which manages cluster state synchronization and configuration"
+      "The Scheduler or kube-scheduler process, which selects which node a new pod or container should be placed on"
     ],
     correct: 2,
     explanation: "Task executors like YARN's NodeManager or Kubernetes's kubelet run on each cluster node to start, monitor, and report the status of individual tasks.",
@@ -108,10 +108,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Why is gang scheduling in resource allocation considered a double-edged sword?",
     options: [
-      "It executes tasks sequentially to prevent network congestion, which simplifies debugging but increases total job latency and queue wait times",
+      "It allocates fractional CPU shares proportionally across all queued jobs, which improves fairness but causes head-of-line blocking for large-scale jobs",
       "It reserves resources until all tasks can start, preventing partial execution starvation but reducing cluster utilization and causing deadlocks",
-      "It dynamically allocates additional RAM to struggling tasks to prevent out-of-memory errors, but causes severe CPU starvation on neighbor nodes",
-      "It runs tasks in randomized priority batches to optimize cache locality, but requires specialized bare-metal hardware that lacks Kubernetes support"
+      "It groups tasks by data locality to reduce network traffic, but requires tasks to wait for the scheduler to compute optimal node placements",
+      "It runs tasks in strict FIFO priority order to prevent starvation, but requires all tasks in a batch to declare their memory limits upfront"
     ],
     correct: 1,
     explanation: "Gang scheduling avoids running a job partially by waiting until all requested cores are available. However, this causes nodes to sit idle while waiting, reducing cluster utilization and risking deadlocks.",
@@ -148,10 +148,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is a DAG in the context of dataflow engines?",
     options: [
-      "Data Access Gateway, representing the secure network boundary for database queries",
-      "Directed Acyclic Graph of operators, representing the structured flow of data",
-      "Distributed Aggregation Group, representing the clustered nodes processing reductions",
-      "Dynamic Allocation Grid, representing the execution slots assigned by the scheduler"
+      "A logical execution plan representing all stages of a streaming query, as used by Apache Kafka Streams",
+      "Directed Acyclic Graph of operators, representing the structured flow of data through a processing pipeline",
+      "A task dependency graph used by workflow schedulers like Airflow to sequence independent batch jobs",
+      "A graph of distributed storage nodes in a cluster, where each node represents a DataNode replica holding a data block"
     ],
     correct: 1,
     explanation: "A Directed Acyclic Graph (DAG) represents the workflow of a dataflow engine, where vertices are processing operators (maps, filters, joins) and edges represent the flow of data between them.",
@@ -197,7 +197,7 @@ const QUIZ_QUESTIONS = [
       "To sort the final aggregated outputs of each individual reducer task alphabetically before writing them out to HDFS or S3",
       "To guarantee that the reducer receives the user's profile record (dimension) before any of their activity events (facts)",
       "To pre-sort the intermediate keys alphabetically in the mapper memory buffers before transmitting them over the network",
-      "To run a validation check during the shuffle phase that prevents duplicate keys from being processed by different reducers"
+      "To merge sorted partition files from multiple mappers into a single globally sorted output stream before the reducer starts"
     ],
     correct: 1,
     explanation: "Secondary sort arranges records so that the join dimension record (e.g., user profile) arrives at the reducer before the fact records (e.g., click events). This allows the reducer to cache the profile once in memory and join it with events streamingly.",
@@ -249,8 +249,8 @@ const QUIZ_QUESTIONS = [
     options: [
       "Spark executes operations eagerly to return immediate feedback to the console, whereas Pandas schedules updates asynchronously via a queue",
       "Spark translates method calls into a query plan and optimizes it before executing, while Pandas executes operations immediately in memory",
-      "Spark exclusively supports declarative SQL queries on flat files, whereas Pandas allows executing custom python lambda functions in parallel",
-      "Spark operates strictly on unstructured stream data without joining tables, whereas Pandas is designed for complex relational aggregations"
+      "Spark exclusively supports declarative SQL queries on flat files, whereas Pandas allows executing custom Python lambda functions in parallel",
+      "Spark caches all intermediate DataFrame operations in an external store like Redis before executing them, whereas Pandas operates directly in the Python process memory"
     ],
     correct: 1,
     explanation: "Pandas executes DataFrame operations immediately when called. Spark DataFrame APIs build up a logical query plan, compile and optimize it using Spark Catalyst, and then execute it across the cluster when an action is triggered.",
