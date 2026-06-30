@@ -1,44 +1,30 @@
-#!/usr/bin/env python3
-"""
-Smoke tests for the /grade Flask endpoint.
-Run with: python -m pytest tests/test_grade_endpoint.py -v
-
-Requires:
-  - GEMINI_API_KEY set in environment (for live tests)
-  - pip install pytest flask
-"""
 import json
 import logging
 import os
-import pytest
 import sqlite3
-import sys
-import server
-import logger_setup
+
+import pytest
+
 import grade_responses
-from server import app
+import logger_setup
+import server
 from grade_responses import (
-    get_llm_config,
-    parse_context_desc,
     extract_book_chapter_text,
-    LLMGrader,
     generate_summary,
-    parse_llm_json,
+    get_llm_config,
     grade_question,
+    load_env,
+    parse_context_desc,
+    parse_llm_json,
+    LLMGrader,
 )
-
-sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
-
-from grade_responses import load_env
-
-load_env()
+from server import app
 
 # Ensure we have a default key for test imports
+load_env()
 os.environ.setdefault("LLM_KEY", "test-key-placeholder")
 if os.environ.get("LLM_KEY"):
     os.environ["LLM_KEY"] = os.environ["LLM_KEY"].strip()
-
-
 # ── Fixtures ────────────────────────────────────────────────────────────────
 
 

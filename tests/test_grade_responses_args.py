@@ -1,10 +1,7 @@
-#!/usr/bin/env python3
-import os
-import sys
-import pytest
 from unittest.mock import patch
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+import pytest
+
 from grade_responses import parse_args
 
 @pytest.mark.smoketest

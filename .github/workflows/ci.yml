@@ -29,6 +29,8 @@ jobs:
 
       - name: Run Python Tests
         run: pytest -m smoketest
+        env:
+          PYTHONPATH: .
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
