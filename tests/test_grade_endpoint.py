@@ -169,6 +169,16 @@ class TestEndpointContract:
         assert "You did great." in data["summary"]
         print("--> Finished test_grade_summary_response_shape", flush=True)
 
+    def test_index_route_serves_index_html(self, client):
+        """Test that the index route (/) serves index.html."""
+        print("\n--> Starting test_index_route_serves_index_html", flush=True)
+        print("--> Requesting /...", flush=True)
+        res = client.get("/")
+        print(f"--> Received response status {res.status_code}", flush=True)
+        assert res.status_code == 200
+        assert b"<!DOCTYPE html>" in res.data or b"<html" in res.data
+        print("--> Finished test_index_route_serves_index_html", flush=True)
+
     def test_static_files_still_served(self, client):
         """Ensure static serving is not broken by the /grade route."""
         print("\n--> Starting test_static_files_still_served", flush=True)
