@@ -11,8 +11,8 @@ const QUIZ_QUESTIONS = [
     options: [
       "They suffer from extremely high execution latencies and consume more memory than text formats like JSON",
       "They lock you into a single programming language and introduce severe security vulnerabilities",
-      "They cannot serialize complex nested data structures like arbitrary tree structures or nested hash maps",
-      "They fail to compile at runtime or generate valid type definitions in statically typed target languages"
+      "They produce schemas that are not self-documenting, making it difficult to validate field types without running the full application",
+      "They require explicit versioning annotations on every class field or the deserializer silently drops unrecognized attributes"
     ],
     correct: 1,
     explanation: "Language-specific formats are tied to their host language, making multi-language integration very difficult. More importantly, they frequently suffer from security flaws where decoding untrusted data allows arbitrary code execution (RCE).",
@@ -45,7 +45,7 @@ const QUIZ_QUESTIONS = [
       "By utilizing adaptive Huffman coding algorithms to compress all textual metadata fields",
       "By omitting field names entirely and identifying fields using compact numeric tag numbers",
       "By encoding all variable-length strings as compressed hexadecimal representation values",
-      "By enforcing that all floating-point numbers must be stored as raw 8-bit integer values"
+      "By using delta encoding to store only the difference between consecutive field values, reducing repetitive data"
     ],
     correct: 1,
     explanation: "In MessagePack, the field names (like 'userName') are repeated in every record. Protocol Buffers omits these strings, replacing them with a 1-byte header containing the field tag (number) and wire type.",
@@ -58,7 +58,7 @@ const QUIZ_QUESTIONS = [
       "The removed tag number must be reassigned immediately to new fields to maintain schema size",
       "You must never reuse that tag number again, and it should be marked as reserved in the schema",
       "The tag number must be converted to a negative integer to indicate its deletion in binary logs",
-      "You must run a complete database migration to shift all subsequent field tag numbers down by one"
+      "You must write a migration script to rewrite all existing records, updating the binary tag value in each stored record"
     ],
     correct: 1,
     explanation: "If you reuse a tag number that was previously removed, old records stored in databases or archives containing that tag will be decoded incorrectly by new code, assuming it is the new field type and meaning.",
@@ -77,8 +77,8 @@ const QUIZ_QUESTIONS = [
     options: [
       "Avro payloads include explicit field tag headers, whereas Protocol Buffers omits tags entirely",
       "Avro payloads contain only concatenated byte values without embedding any field names or tag numbers",
-      "Avro stores schemas natively as XML definitions, while Protocol Buffers relies exclusively on JSON",
-      "Avro requires all serializable record attributes to be encoded as fixed-length binary values"
+      "Avro schemas are distributed with each individual record as a JSON header prefix, allowing consumers to decode messages independently",
+      "Avro requires numeric field tag annotations in its schema, much like Protocol Buffers, but omits them from the wire payload"
     ],
     correct: 1,
     explanation: "Avro payloads contain no tags or markers to identify fields. It is simply a continuous sequence of byte values, requiring the exact writer's schema to reconstruct the data structure.",
@@ -91,11 +91,11 @@ const QUIZ_QUESTIONS = [
       "It throws an immediate runtime parsing exception and halts deserialization because of strict schema mismatch rules",
       "It dynamically compares the writer's schema and reader's schema to resolve differences by matching field names",
       "It queries a centralized schema registry to translate the binary payload into intermediate JSON representation structures",
-      "It falls back to a deterministic brute-force guess of field boundaries by inspecting type flags in the payload"
+      "It uses the record's embedded version tag to look up the writer's schema hash and reconstructs field offsets directly"
     ],
     correct: 1,
     explanation: "Avro handles schema evolution by comparing the schema used to write the data (writer's schema) with the one the current code expects (reader's schema). It matches fields by name, ignoring removed fields and filling in defaults for added fields. In practice (such as in Kafka data pipelines), this is often facilitated by a central Schema Registry where the reader retrieves the writer's schema using a version ID embedded in the binary message.",
-    section: "Avro - The writer’s schema and the reader’s schema"
+    section: "Avro - The writer's schema and the reader's schema"
   },
   {
     type: "write",
@@ -108,10 +108,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What does the phrase 'data outlives code' refer to in database architectures?",
     options: [
-      "Database storage systems must be over-provisioned because raw business data occupies significantly more physical bytes than source code files",
+      "Database schemas must be designed for maximum extensibility because modifying them requires acquiring table-level write locks across all active nodes",
       "Application code is updated frequently, but historical data in the database remains in its original format unless explicitly rewritten",
-      "Data is persisted on high-end solid-state drives, which have a much longer physical and operational lifespan than standard application servers",
-      "Core query execution engines and storage drivers are implemented in low-level languages whose internal structures rarely undergo modification"
+      "Storage engines prioritize write durability because a database crash could lose any in-flight transaction that hasn't been flushed from the WAL buffer",
+      "Schema migrations must be coordinated across all replicas simultaneously to prevent the leader and followers from diverging on field interpretations"
     ],
     correct: 1,
     explanation: "While application code can be updated to a new version in minutes, data written years ago under older schemas will sit in the database in its original representation unless a costly rewrite migration is performed.",
@@ -141,7 +141,7 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is a key distinction between a database query interface and a service API in a microservices architecture?",
     options: [
-      "Service APIs restrict clients to executing state-modifying write operations and do not allow any read-only query requests to be processed",
+      "Service APIs expose the full underlying data schema to clients so consumers can construct arbitrary joins and filters, while databases restrict operations to predefined stored procedures",
       "Service APIs encapsulate business logic and expose a restricted set of endpoints, whereas databases allow arbitrary query expressions",
       "Database query interfaces must block on thread-locked synchronous connections, while microservice endpoints are strictly asynchronous",
       "Service API schemas must be defined using strict XML formats, whereas databases communicate using binary protocols or raw SQL text"
@@ -154,7 +154,7 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Which of the following is a fundamental reason why the Remote Procedure Call (RPC) model of location transparency is flawed?",
     options: [
-      "RPC protocols require compiling and binding the client code using native C++ environments and cannot support other languages",
+      "RPC frameworks couple the client and server at compile time using generated stubs, forcing both sides to be updated simultaneously during any interface change",
       "A network call is unpredictable, subject to latency spikes, timeouts, and partial failures, unlike a local function call",
       "Local in-memory function calls incur significant overhead and are consistently slower than optimized network socket requests",
       "RPC frameworks do not support passing complex parameters or serialized arguments, restricting calls to parameterless routines"
@@ -174,9 +174,9 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is the purpose of durable execution frameworks like Temporal or Restate?",
     options: [
-      "To speed up and parallelize database index rebuild operations across multi-node relational cluster setups",
+      "To orchestrate long-running transactions across multiple microservices by holding distributed locks for the entire workflow's duration",
       "To guarantee exactly-once semantics for workflows by logging state changes and replaying execution on failure",
-      "To automatically encrypt and replicate static database backup snapshots across secure cloud storage buckets",
+      "To checkpoint and serialize in-memory application state to a distributed cache on each function call boundary",
       "To replace external layer-7 load balancers with decentralized, in-memory route translation tables on nodes"
     ],
     correct: 1,
@@ -189,8 +189,8 @@ const QUIZ_QUESTIONS = [
     options: [
       "The orchestrator automatically parses the new source file and rewrites the historical execution log on-the-fly",
       "The framework might throw an error or execute incorrect activities because replay relies on deterministic ordering",
-      "The runtime optimizer compiles the workflows into vectorized CPU instructions, increasing performance execution speed",
-      "The execution environment ignores the modified code paths entirely and falls back to cached, pre-compiled binaries"
+      "The framework detects the code change, pauses all in-flight workflows, and waits for an operator confirmation before resuming execution",
+      "The execution environment drains in-flight workflows to completion on the old version before routing new events to the updated code"
     ],
     correct: 1,
     explanation: "Because durable execution replays the code to check against the event log, changing the order of activities will cause the replay to mismatch the logged history. This breaks determinism and triggers workflow execution errors.",
@@ -207,7 +207,7 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is a primary architectural advantage of using an asynchronous message broker (like Apache Kafka) over direct synchronous RPC?",
     options: [
-      "It avoids the serialization step by transmitting raw application memory references directly over network sockets",
+      "It eliminates retry logic by guaranteeing that every consumer receives each message exactly once via distributed consensus",
       "It acts as a buffer to handle consumer overload, improves system reliability, and decouples the sender from the consumer",
       "It compresses all event packets using zero-copy transfers, effectively reducing the active network bandwidth to zero",
       "It guarantees that all write operations to multiple database systems are wrapped in distributed commit transactions"
@@ -223,7 +223,7 @@ const QUIZ_QUESTIONS = [
       "By placing distributed locking mechanisms on database tables to block concurrent execution threads dynamically",
       "By encapsulating logic in independent actors that share no state and communicate exclusively via asynchronous messages",
       "By assigning a dedicated physical CPU core to run each individual actor function sequentially inside the runtime",
-      "By converting all local function calls into blocking, synchronous REST API calls routed through a service proxy"
+      "By using a central mediator object that serializes all inter-actor calls and dispatches them in priority order"
     ],
     correct: 1,
     explanation: "The actor model avoids race conditions and deadlocks by ensuring actors do not share state. Each actor processes messages sequentially from its mailbox, making concurrency safe within each actor's scope.",
@@ -238,12 +238,12 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "mc",
-    q: "Which text-based data format does not natively support nested structures and requires the application to manually define row and column meanings?",
+    q: "Which text-based data format requires the application to manually define the meaning of each column and does not natively support nested or hierarchical data structures?",
     options: [
       "JSON",
       "CSV",
       "XML",
-      "YAML"
+      "MessagePack"
     ],
     correct: 1,
     explanation: "CSV is a flat, tabular format. It has no native support for nested arrays or objects, and lack of schema means the application code must parse columns and row offsets manually.",
@@ -260,9 +260,9 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "In RESTful APIs, how is versioning typically managed when backwards compatibility cannot be maintained?",
     options: [
-      "By dropping the database schema and purging historical records from the storage system entirely",
+      "By negotiating a version identifier during the TLS handshake so the proxy can route the request before the HTTP body is parsed",
       "By putting a version number in the URL path (e.g. /v2/) or utilizing the HTTP Accept header",
-      "By altering the TCP port number on which the web server listens for incoming network requests",
+      "By encoding the API version as a mandatory field in the JSON request body alongside all other business parameters",
       "By requiring all end-users to reinstall their local web browsers to load the new interface"
     ],
     correct: 1,
@@ -294,7 +294,7 @@ const QUIZ_QUESTIONS = [
     q: "Your Kafka consumer crashes with a schema resolution error when reading an Avro topic. Explain why Avro requires the exact writer's schema to decode data, whereas Protocol Buffers can decode payloads without it.",
     hint: "Think about what metadata (or lack thereof) is present in the binary payload of each format.",
     modelAnswer: "Avro does not write any metadata, field tag numbers, or datatype indicators into the serialized binary payload; it only writes the raw value bytes concatenated together. Without the writer's schema, a reader cannot know where one field ends and another begins, nor what datatype a sequence of bytes represents. Protocol Buffers, on the other hand, tags each field with its tag number and wire type in the binary payload, allowing a reader to skip unrecognized fields using only the tag wire-type information.",
-    section: "Avro - The writer’s schema and the reader’s schema"
+    section: "Avro - The writer's schema and the reader's schema"
   },
   {
     type: "mc",
@@ -302,7 +302,7 @@ const QUIZ_QUESTIONS = [
     options: [
       "The new field must be assigned a unique numeric tag number in the schema",
       "The new field must have a default value explicitly declared in the schema",
-      "The new field name must start with a capital letter for the parser to map it",
+      "The new field must be defined as a union type that includes 'null' as the first variant so old readers can safely skip it",
       "The new field must be placed at the very beginning of the serialized record"
     ],
     correct: 1,
