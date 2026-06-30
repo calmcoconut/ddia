@@ -45,7 +45,7 @@ const QUIZ_QUESTIONS = [
     options: [
       "The speed of light in fiber varies significantly based on current network traffic load",
       "Routers queue packets when outbound links are congested, potentially dropping them",
-      "Operating systems inject deliberate delays to optimize local CPU cache usage",
+      "Operating systems throttle outbound throughput per-process to prevent a single application from monopolizing the NIC bandwidth",
       "TCP checksum validation overhead scales non-linearly with payload size"
     ],
     correct: 1,
@@ -58,7 +58,7 @@ const QUIZ_QUESTIONS = [
     options: [
       "Telephone networks transmit analog voice signals which physically travel through copper wires much faster than digitized packetized data payloads",
       "Ethernet is designed for variable, bursty traffic and shares bandwidth dynamically, while telephone networks reserve fixed bandwidth for each call",
-      "Relational database engines are structurally incompatible with synchronous circuit-switched networks and must run on asynchronous packet routing",
+      "Circuit-switched networks require a pre-established end-to-end path before any data is transmitted, adding connection setup overhead that makes short bursty requests slower overall",
       "Ethernet standard implementations completely lack TCP-like congestion control algorithms, which telephone networks implement directly in hardware"
     ],
     correct: 1,
@@ -91,7 +91,7 @@ const QUIZ_QUESTIONS = [
     options: [
       "The system clock automatically jumps backward or forward by exactly one hour twice a year due to daylight saving time",
       "The quartz crystal oscillator runs slightly faster or slower depending on temperature, accumulating drift over time",
-      "A persistent memory leak in the kernel causes the system timer process to drop cycles under heavy CPU scheduling",
+      "A bug in the NTP synchronization daemon causes accumulated offset errors across successive sync cycles",
       "Congested network routers strip time synchronization flags and timestamp headers from standard TCP/IP packet headers"
     ],
     correct: 1,
@@ -110,7 +110,7 @@ const QUIZ_QUESTIONS = [
     q: "What is a 'logical clock' and how does it differ from a 'physical clock'?",
     options: [
       "A logical clock measures elapsed execution time in CPU cycles and hardware instruction execution rates rather than seconds",
-      "A logical clock is a software-emulated synchronization protocol that simulates a localized hardware atomic clock cluster",
+      "A logical clock assigns unique timestamps to events using a distributed consensus round, ensuring no two events share the same timestamp across nodes",
       "A logical clock uses incrementing counters to track the relative order of events, rather than measuring elapsed physical time",
       "A logical clock runs within virtualized environments to prevent process preemption and garbage collection-related pauses"
     ],
@@ -191,7 +191,7 @@ const QUIZ_QUESTIONS = [
       "Standard datacenter network switches and routers do not support the low-overhead packet headers required by the Byzantine protocol",
       "Datacenter nodes are controlled by a single organization and can be trusted, making the extreme performance cost of BFT unjustifiable",
       "The BFT mathematical formulation is only compatible with transactional SQL databases, whereas corporate networks run NoSQL document stores",
-      "BFT implementations require highly synchronized GPS-linked atomic clocks on every node, which remain too expensive for standard datacenters"
+      "BFT requires each node to run independent implementations of the same protocol in different languages to detect software-level faults, making deployment impractical at scale"
     ],
     correct: 1,
     explanation: "BFT protocols are complex and have high CPU/network overhead. Since datacenter nodes are owned by a single organization and run in a trusted network, traditional security (access control, encryption) is used instead.",
@@ -210,8 +210,8 @@ const QUIZ_QUESTIONS = [
     options: [
       "The crash-recovery model",
       "The crash-stop model",
-      "The Byzantine fail-slow model",
-      "The transient amnesia model"
+      "The Byzantine fail-arbitrary model",
+      "The fail-slow (performance fault) model"
     ],
     correct: 1,
     explanation: "The crash-stop (or fail-stop) model assumes that a node that halts is gone forever. It is mathematically simpler to reason about, but does not reflect real-world server reboots.",
@@ -243,7 +243,7 @@ const QUIZ_QUESTIONS = [
     options: [
       "A safety property",
       "A liveness property",
-      "A Byzantine property",
+      "A consistency property guaranteeing reads always reflect the most recent write",
       "A deterministic property"
     ],
     correct: 1,
