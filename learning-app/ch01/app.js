@@ -11,11 +11,11 @@ const QUIZ_QUESTIONS = [
     options: [
       "An application whose performance is bottlenecked by raw CPU processing power, mathematical operations, or graphics rendering",
       "An application where the complexity, volume, and rate of change of data represent the primary system development challenges",
-      "An application that relies on low-latency networks and real-time streaming interfaces to process over one gigabyte per second",
+      "An application that processes large volumes of continuous sensor or telemetry data through real-time streaming pipelines",
       "An application designed specifically to store and archive massive datasets exceeding several petabytes of cold storage"
     ],
     correct: 1,
-    explanation: "A data-intensive app is one where data management (storing, processing, consistency, availability) is the primary challenge — not raw CPU power.",
+    explanation: "A data-intensive app is one where data management (storing, processing, consistency, availability) is the primary challenge — not raw CPU power. Note: storing large volumes of data (option D) or streaming telemetry (option C) are specific use cases, but 'data-intensive' is broader — it's about data complexity, volume, and change rate being the dominant challenge.",
     section: "Introduction"
   },
   {
@@ -55,13 +55,13 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "When is self-hosting often cheaper than cloud services?",
     options: [
-      "In virtually all circumstances because cloud infrastructure providers always charge a premium markup",
+      "When your company has already purchased physical servers and wants to avoid ongoing cloud subscription fees on top of existing hardware costs",
       "When application workloads are highly dynamic, unpredictable, and require automatic elastic scaling",
       "When your team has operational expertise and system workloads are predictable and relatively stable",
       "When running as an early-stage startup with fewer than ten engineers and limited initial funding"
     ],
     correct: 2,
-    explanation: "The chapter states: if you already have operational expertise and your load is predictable (no need for elastic scaling), self-hosting is often cheaper.",
+    explanation: "The chapter states: if you already have operational expertise and your load is predictable (no need for elastic scaling), self-hosting is often cheaper. Owning hardware (option A) is a common intuition but misses the point — operational expertise and load predictability are the deciding factors, not whether you've already bought servers.",
     section: "Cloud vs Self-Hosting"
   },
   {
@@ -110,11 +110,11 @@ const QUIZ_QUESTIONS = [
     options: [
       "Applying compression algorithms to binary data payloads in order to minimize active storage costs",
       "Collecting and storing only data that serves a specified, explicit purpose to limit legal and security risk",
-      "Selecting the smallest hardware capacity and disk sizes necessary to run your production database cluster",
-      "Optimizing application algorithms to minimize the frequency of queries sent to the relational database"
+      "Anonymizing personal data fields through tokenization before storing them in production databases",
+      "Partitioning large database tables to reduce the volume of rows scanned during analytical query execution"
     ],
     correct: 1,
-    explanation: "Data minimization means not storing data 'just in case.' The GDPR mandates collecting data only for a specified purpose. The chapter argues the cost of storage includes liability, reputational damage, and legal risk — not just S3 bills.",
+    explanation: "Data minimization means not storing data 'just in case.' The GDPR mandates collecting data only for a specified purpose. The chapter argues the cost of storage includes liability, reputational damage, and legal risk — not just S3 bills. Note: anonymization (option C) and partitioning (option D) are real techniques, but they address how data is stored or protected — not whether it should be collected in the first place.",
     section: "Law and Society"
   },
   {
@@ -123,11 +123,11 @@ const QUIZ_QUESTIONS = [
     options: [
       "They inherently rely on completely different serialization structures, such as nested JSON and XML documents",
       "Running resource-intensive analytical queries on OLTP databases can severely degrade performance for active users",
-      "OLTP is restricted to relational SQL systems, whereas OLAP can only be executed on schema-less NoSQL platforms",
-      "Analytical OLAP data must be encrypted at rest, whereas transactional OLTP data only requires transit encryption"
+      "OLAP systems require columnar storage formats that are incompatible with the row-oriented engines used by OLTP databases",
+      "Keeping analytical queries on a read replica prevents write amplification on the primary, which is the core motivation for separation"
     ],
     correct: 1,
-    explanation: "Heavy aggregate queries in OLAP scan millions of rows and consume significant CPU/memory, which would starve resources for critical transaction operations in OLTP.",
+    explanation: "Heavy aggregate queries in OLAP scan millions of rows and consume significant CPU/memory, which would starve resources for critical transaction operations in OLTP. While columnar vs. row storage (option C) is a real difference between OLAP and OLTP engines, it's a consequence of optimizing for different access patterns — not the primary reason for separation. Read replicas (option D) can help distribute load, but replication lag is a symptom of the solution, not the motivation.",
     section: "OLTP vs OLAP"
   },
   {
@@ -176,24 +176,24 @@ const QUIZ_QUESTIONS = [
     options: [
       "Extracting structured data from an analytical warehouse and loading it back into operational transactional systems",
       "Migrating raw, unstructured data payloads from a distributed data lake directly into a relational data warehouse",
-      "Converting processed database records in a data warehouse back into raw, uncompressed CSV files on a local disk",
-      "Restoring an archived database backup to primary production servers immediately following a critical node failure"
+      "Re-running the ETL pipeline in reverse chronological order to reprocess and correct historical records",
+      "Feeding transformed warehouse data back through the original ETL transformation scripts to validate data integrity"
     ],
     correct: 0,
-    explanation: "Reverse ETL takes derived, processed, or model-scored data from analytical systems (like a customer churn prediction score) and pushes it back into OLTP tools (like Salesforce) to drive business operations.",
+    explanation: "Reverse ETL takes derived, processed, or model-scored data from analytical systems (like a customer churn prediction score) and pushes it back into OLTP tools (like Salesforce) to drive business operations. Option B describes a standard lake-to-warehouse pipeline (forward ETL). Options C and D describe operational patterns within a pipeline, not a distinct architectural pattern.",
     section: "Data Warehouses"
   },
   {
     type: "mc",
     q: "Why is distributing a system across multiple machines considered a 'double-edged sword'?",
     options: [
-      "It significantly reduces hardware hosting costs but severely limits horizontal scale-out capacity",
+      "It improves fault tolerance and read throughput globally, but dedicated inter-node networking hardware often exceeds the cost of a single high-spec machine",
       "It scales throughput and availability but introduces complex partial failure modes and network latency",
-      "It requires a larger engineering team to maintain but reduces overall electricity consumption in data centers",
-      "It is only compatible with analytical OLAP engines and cannot be implemented for transactional OLTP workloads"
+      "It enables geographic distribution and low global read latency, but cross-region replication overhead reduces write throughput",
+      "It eliminates single points of failure but requires abandoning ACID transactions entirely in favor of eventual consistency"
     ],
     correct: 1,
-    explanation: "Distribution lets you handle more load and tolerate node failures, but it introduces partial failure states, network partitions, split-brain issues, and consistency challenges.",
+    explanation: "Distribution lets you handle more load and tolerate node failures, but it introduces partial failure states, network partitions, split-brain issues, and consistency challenges. Option C is a real trade-off in geo-distributed systems but describes one specific scenario, not the general case. Option D overstates the constraint — distributed ACID is hard but possible (e.g., via 2PC or consensus protocols), not categorically impossible.",
     section: "Single-Node vs Distributed"
   },
   {
@@ -226,7 +226,7 @@ const QUIZ_QUESTIONS = [
       "A raw, uncompressed user profile image uploaded directly to an object store"
     ],
     correct: 2,
-    explanation: "A search index is derived from the system of record. If lost, it can be fully rebuilt by re-processing the primary database's records.",
+    explanation: "A search index is derived from the system of record. If lost, it can be fully rebuilt by re-processing the primary database's records. A password hash (option A) may seem derived because it is computed from the original password, but it is not 'derived data' in the DDIA sense — it cannot be used to reconstruct the original, and it is not a redundant copy of the same logical fact. Derived data must be fully reconstructable from its source.",
     section: "System of Record"
   },
   {
@@ -240,13 +240,13 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is vendor lock-in?",
     options: [
-      "A security mechanism that automatically locks developers out of their cloud console after suspicious logins",
+      "The risk that a cloud provider could terminate or significantly reprice your service contract, forcing a costly and disruptive migration",
       "The high financial cost and technical difficulty of migrating an application from one cloud provider to another",
-      "An automated network firewall policy that blocks external database connections from entering local environments",
-      "Deploying a relational database that requires purchasing a proprietary, commercial license key from a vendor"
+      "Adopting open-source databases like PostgreSQL instead of proprietary cloud-native ones to preserve deployment flexibility",
+      "A contractual minimum monthly cloud spend commitment negotiated at enterprise pricing tiers"
     ],
     correct: 1,
-    explanation: "Vendor lock-in happens when an architecture relies on proprietary, provider-specific features (like DynamoDB or BigQuery) making a migration to a competitor extremely expensive.",
+    explanation: "Vendor lock-in happens when an architecture relies on proprietary, provider-specific features (like DynamoDB or BigQuery) making a migration to a competitor extremely expensive. Option A describes a related risk (contract risk) but is a consequence of lock-in rather than its definition. Option C describes the solution to lock-in, not lock-in itself. Option D describes enterprise pricing structures, not architectural dependency.",
     section: "Cloud vs Self-Hosting"
   },
   {
@@ -254,9 +254,9 @@ const QUIZ_QUESTIONS = [
     q: "Which regulatory framework is directly mentioned as impacting data system design?",
     options: [
       "CCPA (California Consumer Privacy Act)",
-      "PCI-DSS (Payment Card Security Act)",
+      "PCI-DSS (Payment Card Security Standards)",
       "GDPR (General Data Protection Regulation)",
-      "SOX (Sarbanes-Oxley Compliance Act)"
+      "SOX (Sarbanes-Oxley Act)"
     ],
     correct: 2,
     explanation: "The chapter specifically discusses the GDPR (and similar laws like CCPA) under 'Data Systems, Law, and Society,' highlighting how rules like the 'right to be forgotten' affect system architecture.",
@@ -287,12 +287,12 @@ const QUIZ_QUESTIONS = [
     q: "Which of the following workloads is typically compute-intensive rather than data-intensive?",
     options: [
       "A retail banking system processing millions of credit card transactions daily",
-      "A media streaming service distributing live video to thousands of active users",
+      "A real-time fraud detection system analyzing transaction patterns across 500 million daily events",
       "An atmospheric simulation modeling global wind currents on a supercomputer node",
       "A sales dashboard running aggregate queries on transaction data from five years"
     ],
     correct: 2,
-    explanation: "Atmospheric simulation requires executing complex mathematical models (millions of floating-point operations) on a fixed set of boundary conditions, bottlenecked by CPU/GPU computation. Conversely, a banking system is data-intensive because its primary challenges are data management, reliability, concurrency, and volume—not complex CPU math.",
+    explanation: "Atmospheric simulation requires executing complex mathematical models (millions of floating-point operations) on a fixed set of boundary conditions, bottlenecked by CPU/GPU computation. The other options are all data-intensive: banking (high write volume and concurrency), fraud detection (high-volume event processing and pattern matching), and sales dashboards (large-scale aggregation queries).",
     section: "Introduction"
   },
   {
@@ -325,7 +325,7 @@ const QUIZ_QUESTIONS = [
       "Rebuilding the search index entirely by copying and exporting database records every single night"
     ],
     correct: 1,
-    explanation: "Change Data Capture (CDC) reads the database transaction log and streams inserts/updates to the search index, ensuring consistency without client-side dual-write complexity.",
+    explanation: "Change Data Capture (CDC) reads the database transaction log and streams inserts/updates to the search index, ensuring consistency without client-side dual-write complexity. A nightly full rebuild (option D) is a valid approach used in practice, but it introduces hours of staleness and does not scale to large datasets. CDC is preferred because it delivers near-real-time consistency with far lower compute cost at scale.",
     section: "System of Record"
   },
   {
