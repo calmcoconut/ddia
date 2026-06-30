@@ -11,9 +11,9 @@ const QUIZ_QUESTIONS = [
     q: "What is the primary difference between a batch processor and a stream processor regarding input data boundedness?",
     options: [
       "Batch processing processes bounded data of a known, finite size; stream processing processes unbounded data that arrives incrementally.",
-      "Batch processing handles only static text files on shared disks; stream processing handles only binary stream objects over network sockets.",
+      "Batch processing handles only structured relational data; stream processing handles only semi-structured or schema-free event data.",
       "Batch processing is always executed synchronously in single threads; stream processing is always executed asynchronously in parallel nodes.",
-      "Batch processing stores all input datasets in local volatile memory; stream processing stores and indexes them directly on persistent disk."
+      "Batch processing requires all input data to reside in a distributed file system; stream processing reads directly from network sockets."
     ],
     correct: 0,
     explanation: "Batch processes work on bounded datasets (like a file or directory), whereas stream processes work on unbounded datasets that never end and must be processed incrementally as they arrive.",
@@ -26,7 +26,7 @@ const QUIZ_QUESTIONS = [
       "They retain all historical messages indefinitely on disk to support future replay and audits by separate consumers.",
       "They track consumer read progress within partitions using log offsets managed and stored by the broker service.",
       "They are optimized for short queues and delete messages as soon as they are successfully acknowledged by consumers.",
-      "They require consumers to connect via low-latency UDP multicast protocols to stream events directly between tasks."
+      "They assign entire log partitions to individual consumer group members to achieve coarse-grained parallelism."
     ],
     correct: 2,
     explanation: "Traditional JMS/AMQP style message brokers (like RabbitMQ) are designed to route and deliver messages to consumers, deleting them as soon as they are processed. They assume queues are short.",
@@ -65,7 +65,7 @@ const QUIZ_QUESTIONS = [
     options: [
       "The search index will reject incoming updates that do not match its relational schema, causing runtime errors.",
       "Network partitions or client crashes can cause one write to succeed while the other fails, leading to permanent inconsistency.",
-      "Writing to two systems simultaneously always doubles the network and storage cost of subsequent database read operations.",
+      "Writing to two systems simultaneously guarantees higher total throughput but prevents atomic rollback on either store.",
       "Relational databases do not support writing from applications that maintain concurrent connections to secondary indexes."
     ],
     correct: 1,
@@ -78,7 +78,7 @@ const QUIZ_QUESTIONS = [
     options: [
       "By polling the database with periodic SELECT queries checking updated timestamps.",
       "By reading the database's internal replication log or write-ahead log directly.",
-      "By intercepting and replicating database writes in the application-level logic.",
+      "By intercepting and replicating database writes via application-level commit callbacks.",
       "By exporting the entire database to CSV file segments at regular hourly gaps."
     ],
     correct: 1,
@@ -96,10 +96,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What does 'log compaction' do in a log-based stream or database?",
     options: [
-      "It compresses physical log files using GZIP or Snappy algorithms to reduce disk usage.",
+      "It enforces a time-based retention policy, deleting all records older than a configured duration threshold.",
       "It discards old log records, keeping only the most recent update for each unique key.",
       "It merges multiple independent log partitions into a single unified global partition.",
-      "It deletes all historical records in the log that exceed a static 24-hour retention window."
+      "It rewrites log segments into read-optimized columnar file formats to accelerate range scans."
     ],
     correct: 1,
     explanation: "Log compaction garbage-collects old updates for a key, keeping only the latest state. This allows a log to be replayed from the beginning to restore state without processing redundant intermediate updates.",
@@ -149,7 +149,7 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is a 'watermark' in stream processing?",
     options: [
-      "A cryptographic signature embedded in headers confirming the data integrity of raw streaming events.",
+      "A configurable lateness threshold beyond which the processor emits an early, partial aggregate rather than waiting for late events.",
       "A temporal threshold indicating that no more events with timestamps prior to the watermark are expected.",
       "The maximum buffer memory size allocated for storing event states before writing to local database disks.",
       "A metadata marker indicating that a log partition has reached its configured retention size or disk quota."
@@ -172,7 +172,7 @@ const QUIZ_QUESTIONS = [
       "A stream-table join, which enriches incoming stream events with relational database rows",
       "A table-table join, which materializes and maintains a join view between two databases",
       "A stream-stream join, which matches and joins events from two active streams within a window",
-      "A compacted log join, which matches new events against only the latest value of each key"
+      "A stream-table join with a versioned table, which replays historical table snapshots per event timestamp"
     ],
     correct: 2,
     explanation: "A stream-stream join (such as matching search queries with search clicks) requires buffering events from both streams for a specific window of time because the matching events can arrive out of order and with variable latency.",
@@ -202,9 +202,9 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "How does the microbatching model (used in Apache Spark Streaming) achieve fault tolerance?",
     options: [
-      "By replicating every active stream processor node ten times across independent availability zones in the cloud.",
+      "By writing idempotent state markers to a distributed ledger and discarding any duplicate processing tokens on retry.",
       "By treating the stream as a series of short, bounded batch jobs and saving checkpoints to a reliable filesystem.",
-      "By forcing client applications to cache all emitted events in local memory until final pipeline stages complete.",
+      "By forcing each worker to continuously synchronize in-memory state with a quorum of peer nodes before emitting output.",
       "By dropping any out-of-order events that cannot be processed immediately by active, thread-pooled executors."
     ],
     correct: 1,
@@ -235,10 +235,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is a main limitation of log immutability when dealing with modern data regulations?",
     options: [
-      "Immutable logs exhibit severe write latency penalties when run on standard enterprise-grade SSD storage arrays.",
+      "Immutable logs cannot be replicated across geo-distributed regions without violating data sovereignty laws by default.",
       "They make it difficult to satisfy the GDPR 'right to be forgotten' because rewriting history is technically complex.",
       "They cannot be replicated across multiple machines without triggering partition splits and split-brain scenarios.",
-      "They require specialized operating system kernels and system call libraries to enforce append-only file writes."
+      "They require all downstream consumers to adopt the same schema version before any historical records can be read."
     ],
     correct: 1,
     explanation: "Laws like GDPR require companies to delete a user's data upon request. In an append-only, immutable event log, deleting data requires rewriting the historical log or using workarounds like cryptographic erasure (key shredding) to render the data unreadable.",
