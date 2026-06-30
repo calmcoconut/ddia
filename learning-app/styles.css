@@ -64,7 +64,7 @@ body {
   color: var(--text-primary);
   line-height: 1.65;
   min-height: 100vh;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 /* ── Ambient Background ── */
@@ -295,7 +295,6 @@ body {
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   margin-bottom: 2rem;
-  overflow: hidden;
   transition: border-color var(--transition-base), box-shadow var(--transition-base);
 }
 
@@ -734,6 +733,76 @@ body {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+}
+
+/* Case Study Context Box */
+.quiz-case-study {
+  padding: 1.5rem;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.03) 0%, rgba(139, 92, 246, 0.03) 100%);
+  border: 1px solid var(--border-subtle);
+  border-left: 4px solid var(--accent-indigo);
+  border-radius: var(--radius-md);
+  margin-bottom: 0.25rem;
+}
+.case-study-banner {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  color: var(--accent-indigo);
+  margin-bottom: 0.5rem;
+  opacity: 0.8;
+}
+.case-study-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+.case-study-icon {
+  font-size: 1.2rem;
+}
+.case-study-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+.case-study-content {
+  font-size: 0.85rem;
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+.case-study-content p {
+  margin: 0 0 0.75rem 0;
+}
+.case-study-content p:last-of-type {
+  margin-bottom: 0;
+}
+.case-study-content ol, .case-study-content ul {
+  margin: 0 0 0.75rem 1.25rem;
+  padding: 0;
+}
+.case-study-content li {
+  margin-bottom: 0.4rem;
+}
+.case-study-content li:last-child {
+  margin-bottom: 0;
+}
+.case-study-content pre {
+  background: rgba(0, 0, 0, 0.2);
+  padding: 0.6rem 0.8rem;
+  border-radius: var(--radius-sm);
+  overflow-x: auto;
+  margin: 0.6rem 0;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  line-height: 1.4;
+}
+.case-study-content code {
+  font-family: var(--font-mono);
+  color: var(--text-primary);
 }
 
 .quiz-question {
@@ -1422,6 +1491,22 @@ body {
   gap: 1.5rem;
   margin-bottom: 1.5rem;
   flex-wrap: wrap;
+
+  /* Sticky positioning */
+  position: sticky;
+  top: 70px; /* Clears the site header */
+  z-index: 40;
+
+  /* Background and padding to prevent content overlap during scroll */
+  background: var(--bg-card);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 1rem 1.5rem;
+  margin-left: -1.5rem;
+  margin-right: -1.5rem;
+  border-top: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 .quiz-progress-info {
   display: flex;
@@ -1625,11 +1710,42 @@ body {
 .results-header {
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
   gap: 3rem;
-  margin-bottom: 2rem;
+  margin-bottom: 3rem;
   flex-wrap: wrap;
 }
+
+.results-score-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.writein-score-circle {
+  border-color: var(--accent-cyan) !important;
+  box-shadow: 0 0 30px rgba(6, 182, 212, 0.2) !important;
+}
+
+.llm-score-circle {
+  border-color: var(--accent-amber) !important;
+  box-shadow: 0 0 30px rgba(245, 158, 11, 0.2) !important;
+}
+
+.writein-score-circle .score-num {
+  background: none !important;
+  -webkit-text-fill-color: var(--accent-cyan) !important;
+  color: var(--accent-cyan) !important;
+}
+
+.llm-score-circle .score-num {
+  background: none !important;
+  -webkit-text-fill-color: var(--accent-amber) !important;
+  color: var(--accent-amber) !important;
+}
+
+/* Fallbacks for original class names to keep legacy compatibility/tests happy */
 .results-writein-badge {
   display: flex;
   flex-direction: column;
@@ -1640,23 +1756,60 @@ body {
   border-radius: 50%;
   border: 4px solid var(--accent-cyan);
   box-shadow: 0 0 30px rgba(6, 182, 212, 0.2);
+  position: relative;
+  margin-bottom: 2rem;
 }
 .writein-count {
   font-size: 2.5rem;
   font-weight: 800;
   color: var(--accent-cyan);
 }
-.writein-label {
-  font-size: 0.65rem;
+.results-writein-badge .writein-label {
+  position: absolute;
+  bottom: -2.2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.75rem;
   color: var(--text-muted);
+  white-space: nowrap;
   text-align: center;
-  padding: 0 0.5rem;
+}
+.results-llm-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 4px solid var(--accent-amber);
+  box-shadow: 0 0 30px rgba(245, 158, 11, 0.2);
+  position: relative;
+  margin-bottom: 2rem;
+}
+.llm-score {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: var(--accent-amber);
+}
+.results-llm-badge .llm-label {
+  position: absolute;
+  bottom: -2.2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  text-align: center;
 }
 .score-label {
   display: block;
   font-size: 0.75rem;
   color: var(--text-muted);
-  margin-top: 0.5rem;
+  margin-top: 0.75rem;
+  text-align: center;
+  max-width: 140px;
+  line-height: 1.3;
 }
 .results-actions {
   display: flex;
@@ -1664,6 +1817,31 @@ body {
   gap: 1rem;
   margin-top: 1.5rem;
 }
+.ai-summary-panel {
+  background: linear-gradient(145deg, rgba(30, 41, 59, 0.6), rgba(15, 23, 42, 0.8));
+  border: 1px solid var(--accent-indigo);
+  border-radius: 12px;
+  padding: 1.5rem 2rem;
+  margin: 2rem auto;
+  max-width: 800px;
+  box-shadow: 0 8px 32px rgba(99, 102, 241, 0.15);
+  backdrop-filter: blur(10px);
+}
+.summary-title {
+  color: var(--accent-indigo);
+  font-size: 1.4rem;
+  margin-top: 0;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.summary-content {
+  color: var(--text-primary);
+  line-height: 1.6;
+  font-size: 1rem;
+}
+
 
 @media (max-width: 768px) {
   .header-content { flex-direction: column; align-items: flex-start; }
@@ -2312,3 +2490,24 @@ body {
 }
 
 
+
+/* Accessibility enhancements: Focus styles for interactive elements */
+.quiz-option:focus-visible,
+.mc-btn:focus-visible,
+.btn-scenario-nav:focus-visible,
+.slider:focus-visible,
+.filter-btn:focus-visible,
+.hub-card-btn:focus-visible,
+.timer-btn:focus-visible {
+  outline: 2px solid var(--accent-indigo);
+  outline-offset: 2px;
+}
+
+.logo-area:focus-visible {
+  outline: 2px solid var(--accent-indigo);
+  outline-offset: 2px;
+}
+
+.empty-state {
+  font-size: 1.5rem !important;
+}

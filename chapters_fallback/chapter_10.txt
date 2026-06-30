@@ -1,0 +1,122 @@
+{
+  "chapter_title": "Chapter 10: Consistency and Consensus",
+  "document_purpose": "Reference summary designed for AI-driven evaluation and grading of student systems design responses.",
+  "core_philosophies": {
+    "eventual_consistency": {
+      "definition": "A weak consistency model where replica divergence is exposed to the application layer. The application developer is responsible for resolving conflicts and handling stale reads, typically used in multi-leader and leaderless replication architectures.",
+      "trade_offs": "Maximizes write availability and minimizes latency at the cost of high application-level complexity and temporary read anomalies."
+    },
+    "strong_consistency": {
+      "definition": "A paradigm that abstracts replication details entirely, presenting the distributed system to the application as if it were a single, non-replicated node.",
+      "trade_offs": "Simplifies application development but introduces significant latency overhead and reduces fault tolerance during network partitions."
+    }
+  },
+  "core_terminology_definitions": [
+    {
+      "term": "Linearizability",
+      "definition": "Also known as atomic consistency, immediate consistency, or external consistency. It is a recency guarantee requiring that the system behaves as if there is only one copy of the data, and all operations (reads, writes) on it are atomic. Once a write succeeds, all subsequent reads must return that value or a newer one in real-time."
+    },
+    {
+      "term": "Serializability",
+      "definition": "An isolation level of transactions that guarantees multi-object execution is equivalent to some serial ordering. It does not impose real-time recency constraints and allows stale reads if the serial order permits."
+    },
+    {
+      "term": "Strict Serializability",
+      "definition": "Also known as strong one-copy serializability (strong-1SR). It is the combination of transaction serializability (multi-object transactional safety) and linearizability (real-time recency guarantees on individual objects)."
+    },
+    {
+      "term": "Register",
+      "definition": "An abstraction of a single data object in distributed systems theory, such as a key in a key-value store, a row in a relational table, or a document in a document store."
+    },
+    {
+      "term": "Compare-and-Set (CAS)",
+      "definition": "An atomic database operation that updates the value of a register to a new value if and only if its current value matches a specified expected old value."
+    },
+    {
+      "term": "CAP Theorem",
+      "definition": "An impossibility result stating that a distributed system experiencing a network partition (P) must choose between consistency (C, formalized strictly as linearizability) and availability (A, formalized as every non-failing node returning a successful response without error)."
+    },
+    {
+      "term": "PACELC Principle",
+      "definition": "An extension of the CAP theorem: If there is a Partition (P), the system must trade off Availability (A) versus Consistency (C); Else (E), when the system is running normally, it must trade off Latency (L) versus Consistency (C)."
+    },
+    {
+      "term": "Lamport Clock / Timestamp",
+      "definition": "A logical clock algorithm that provides a total ordering of events consistent with causality. It represents a timestamp as a pair: (counter, node ID)."
+    },
+    {
+      "term": "Hybrid Logical Clock (HLC)",
+      "definition": "A logical clock implementation that combines physical time-of-day clocks with the causal progress tracking of Lamport clocks to ensure monotonic sequence numbers and causal alignment without special hardware."
+    }
+  ],
+  "sections": [
+    {
+      "section_name": "1. What Makes a System Linearizable?",
+      "key_concepts": [
+        "Real-Time Ordering: Unlike serializability, linearizability is defined by real-time temporal constraints. If operation A completes before operation B starts in physical time, operation B must observe the state left by A.",
+        "Atomic Transitions: As a write operation occurs, there is an exact, single point in time (between the start and end of the client's request) where the state of the register atomically flips from the old value to the new value.",
+        "Monotonic Reads: Once any client read returns a newly written value, all subsequent reads (whether concurrent with the ongoing write or initiated afterward, across any client) must also return that new value."
+      ],
+      "key_trade_offs": {
+        "Concurrency vs. Recency": "Concurrent reads (overlapping with a write in progress) are permitted to return either the old or new value, but they must not flip back to the old value once the new value has been read by any client."
+      }
+    },
+    {
+      "section_name": "2. Linearizability vs. Serializability",
+      "key_concepts": [
+        "Granularity Difference: Serializability deals with transactions containing operations on multiple objects, whereas linearizability deals with individual operations on a single object (register).",
+        "Independence of Guarantees: Systems can offer linearizability without serializability (e.g., single-object key-value stores), serializability without linearizability (e.g., databases using SSI that permit stale snapshot reads), or both (strict serializability)."
+      ],
+      "key_trade_offs": {
+        "Coordination Overhead": "Providing strict serializability requires high coordination among distributed nodes (e.g., Spanner, FoundationDB), while databases prioritizing performance may offer serializability with weaker recency bounds (e.g., CockroachDB)."
+      }
+    },
+    {
+      "section_name": "3. Relying on Linearizability (Use Cases)",
+      "key_concepts": [
+        "Distributed Lock and Leader Election: Selecting a single leader requires a linearizable consensus store (e.g., ZooKeeper or etcd using leases) to ensure two nodes cannot concurrently acquire the leader lease (avoiding split-brain).",
+        "Uniqueness Constraints: Relational constraints (such as unique usernames, email addresses, or stock counts) require linearizable semantics because concurrent attempts to write the same value must resolve to a single winner.",
+        "Cross-Channel Timing Dependencies: Race conditions occur when a system has multiple communication channels. For example, if a web server writes a video to non-linearizable storage and puts a message on a queue, the transcoder reading the queue may retrieve a stale/non-existent video if the storage replication lags behind the queue."
+      ],
+      "key_trade_offs": {
+        "Correctness vs. Performance": "Strict enforcement of uniqueness and distributed locks requires linearizability, which adds latency to the critical path. Some systems relax these constraints (e.g., allowing flight overbooking) to optimize latency."
+      }
+    },
+    {
+      "section_name": "4. Implementing Linearizable Systems",
+      "key_concepts": [
+        "Single-Leader Replication": "Potentially linearizable if all reads and writes go exclusively to the active leader. Stale reads occur if a deposed leader continues to process requests (mitigated by using leases or checking consensus).",
+        "Consensus Algorithms": "Typically linearizable. They employ robust protocols to prevent split-brain and elect leaders, though stale reads must be guarded against (e.g., requiring the leader to coordinate with a quorum before answering a read).",
+        "Multi-Leader Replication": "Non-linearizable. Writes are accepted concurrently on multiple nodes and replicated asynchronously, naturally leading to conflicting states and violating the single-copy illusion.",
+        "Leaderless Replication": "Generally non-linearizable. Even with strict quorum configurations (w + r > n), network delays can cause a read request to fetch older data from a quorum. Synchronous read repair and strict write-timestamp tracking are required to achieve linearizable quorums, which degrades write latency."
+      ],
+      "key_trade_offs": {
+        "Replication Strategy Choice": "Opting for leaderless or multi-leader strategies maximizes write availability and cross-region throughput but surrenders linearizability. Choosing single-leader or consensus systems secures linearizability at the cost of availability during network anomalies."
+      }
+    },
+    {
+      "section_name": "5. The Cost of Linearizability & The CAP Theorem",
+      "key_concepts": [
+        "The Partition Trade-off: If a network partition occurs, a linearizable database must block writes and reads in the partitioned minority partition (acting as CP - Consistent under Partitions), leading to unavailability. An AP system (Available under Partitions) allows replicas to process operations independently, sacrificing consistency.",
+        "Historical Context of CAP: Originally introduced by Eric Brewer as a rule of thumb, its formalization is narrow (only covering linearizability and network partitions), leading to industry confusion. The PACELC theorem better captures the latency trade-off during normal operations.",
+        "The Attiya-Welch Proof: A formal theorem proving that in any network with variable delays (unbounded delays), the response time of linearizable read and write operations is fundamentally proportional to the uncertainty of those network delays."
+      ],
+      "key_trade_offs": {
+        "Fault Tolerance vs. Availability": "During partitions, a system cannot be both consistent (linearizable) and available. CP architectures choose consistency, while AP architectures choose availability.",
+        "Latency vs. Consistency": "Even in the absence of partitions, maintaining linearizability degrades read and write latency because operations are bound by network delay variability (as demonstrated by multi-core CPU cache models where linearizability is dropped for performance)."
+      }
+    },
+    {
+      "section_name": "6. ID Generators and Logical Clocks",
+      "key_concepts": [
+        "Distributed ID Generation Challenges: Single-node generators (e.g., auto-incrementing counters) provide linearizable, causally ordered IDs but are single points of failure and performance bottlenecks. Sharded block allocation, UUIDs, and Snowflake-style timestamps lose strict causal ordering.",
+        "Lamport Timestamps: An elegant logical clock that produces unique, totally ordered IDs consistent with causality. It consists of (counter, node ID). If node A receives a message with a higher counter than its own, it advances its local counter to match the message before incrementing.",
+        "Limitations of Lamport Clocks: They only provide a total ordering retrospectively. They cannot be used to determine concurrency in real-time or prevent duplicate registrations (e.g., securing a unique username) without an active coordination/consensus protocol.",
+        "Hybrid Logical Clocks (HLCs): A practical improvement that keeps the logical clock aligned closely with physical UTC clocks, ensuring monotonic increments and causal ordering without relying on highly synchronized hardware."
+      ],
+      "key_trade_offs": {
+        "Physical vs. Logical Time": "Physical clocks are prone to drift and jumps (NTP adjustments), making them unsafe for ordering. Logical clocks guarantee causality but lack real-world context (e.g., cannot be used for 'find all messages written yesterday'). HLCs trade off absolute precision to balance both requirements."
+      }
+    }
+  ]
+}

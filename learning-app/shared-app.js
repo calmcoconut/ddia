@@ -238,6 +238,7 @@ function renderQuiz() {
   const writeIns = state.writeInAnswers || {};
   const graded = state.quizGraded || false;
 
+  const renderedCaseStudies = new Set();
   let renderedCount = 0;
 
   QUIZ_QUESTIONS.forEach((q, idx) => {
@@ -252,6 +253,26 @@ function renderQuiz() {
     if (currentFilter === 'unanswered' && isAnswered) return;
 
     renderedCount++;
+
+    if (q.caseStudy) {
+      const csId = q.caseStudy.id || q.caseStudy.title;
+      if (!renderedCaseStudies.has(csId)) {
+        renderedCaseStudies.add(csId);
+        const csDiv = document.createElement('div');
+        csDiv.className = 'quiz-case-study';
+        csDiv.innerHTML = `
+          <div class="case-study-banner">Case Study Context</div>
+          <div class="case-study-header">
+            <span class="case-study-icon">📖</span>
+            <h3 class="case-study-title">${q.caseStudy.title}</h3>
+          </div>
+          <div class="case-study-content">
+            ${q.caseStudy.text}
+          </div>
+        `;
+        container.appendChild(csDiv);
+      }
+    }
 
     const div = document.createElement('div');
     div.className = `quiz-question ${isMc ? 'type-mc' : 'type-write'}`;
@@ -383,7 +404,7 @@ function renderQuiz() {
     showQuizResultsPanel(loadState());
     const cachedState = loadState();
     if (cachedState.aiGrades) {
-      renderAiGrades(cachedState.aiGrades);
+      renderAiGrades(cachedState.aiGrades, cachedState.aiSummary);
     }
   } else {
     // Render submit row
@@ -426,6 +447,38 @@ function gradeQuiz() {
 }
 
 function showQuizResultsPanel(state) {
+  // Restructure results-header for uniform results circles if not already done
+  const header = document.querySelector('.results-header');
+  if (header) {
+    const mcContainer = header.querySelector('.results-score');
+    if (mcContainer) {
+      mcContainer.className = 'results-score-item mc-score-item';
+    }
+    const writeInBadge = header.querySelector('.results-writein-badge');
+    if (writeInBadge) {
+      const writeInContainer = document.createElement('div');
+      writeInContainer.className = 'results-score-item writein-score-item';
+
+      const writeInCircle = document.createElement('div');
+      writeInCircle.className = 'score-circle writein-score-circle';
+
+      const countSpan = document.getElementById('writeinCount') || writeInBadge.querySelector('.writein-count');
+      if (countSpan) {
+        countSpan.className = 'score-num';
+        writeInCircle.appendChild(countSpan);
+      }
+
+      writeInContainer.appendChild(writeInCircle);
+
+      const labelSpan = document.createElement('span');
+      labelSpan.className = 'score-label';
+      labelSpan.textContent = 'Write-in responses saved';
+      writeInContainer.appendChild(labelSpan);
+
+      writeInBadge.replaceWith(writeInContainer);
+    }
+  }
+
   const selections = state.quizSelections || {};
   const writeIns = state.writeInAnswers || {};
 
@@ -603,12 +656,37 @@ async function gradeWriteIns() {
     if (percentEl) percentEl.textContent = `${pct}%`;
   }
 
-  if (statusEl) statusEl.textContent = `All questions graded successfully!`;
-  
   const currentState = loadState();
   currentState.aiGrades = { ...(currentState.aiGrades || {}), ...grades };
+
+  if (statusEl) statusEl.textContent = `All questions graded successfully! Generating overall AI summary...`;
+
+  let summaryObj = null;
+  try {
+    const summaryResponse = await fetch('/grade_summary', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chapterKey: STATE_KEY,
+        grades: currentState.aiGrades,
+        username: typeof getCurrentUsername !== 'undefined' ? getCurrentUsername() : 'anonymous'
+      })
+    });
+    if (summaryResponse.ok) {
+      summaryObj = await summaryResponse.json();
+    } else {
+      summaryObj = { summary: "Failed to fetch summary from server." };
+    }
+  } catch (err) {
+    summaryObj = { summary: `Error fetching summary: ${err.message}` };
+  }
+
+  currentState.aiSummary = summaryObj;
   saveState(currentState);
-  renderAiGrades(currentState.aiGrades);
+
+  if (statusEl) statusEl.textContent = `Summary generated!`;
+
+  renderAiGrades(currentState.aiGrades, currentState.aiSummary);
 
   setTimeout(() => {
     progressContainer.classList.add('hidden');
@@ -617,11 +695,18 @@ async function gradeWriteIns() {
   return { grades: currentState.aiGrades };
 }
 
-function renderAiGrades(grades) {
+function renderAiGrades(grades, summary = null) {
   if (!grades) return;
+
+  let totalScore = 0;
+  let maxScore = 0;
+
   Object.keys(grades).forEach(idxStr => {
     const idx = parseInt(idxStr);
     const grade = grades[idxStr];
+    totalScore += grade.score;
+    maxScore += 5;
+
     const questionDiv = document.querySelector(`.quiz-question[data-q-index="${idx}"]`);
     if (!questionDiv) return;
     
@@ -650,6 +735,62 @@ function renderAiGrades(grades) {
     
     questionDiv.appendChild(feedbackDiv);
   });
+
+  if (maxScore > 0) {
+    const header = document.querySelector('.results-header');
+    if (header) {
+      let badge = document.getElementById('llmBadge');
+      if (!badge) {
+        badge = document.createElement('div');
+        badge.id = 'llmBadge';
+        badge.className = 'results-score-item llm-score-item';
+        badge.innerHTML = `
+          <div class="score-circle llm-score-circle">
+            <span class="llm-score" id="llmScoreText" style="display: flex; flex-direction: column; align-items: center;"><span class="score-num" id="llmScoreNum"></span><span class="score-denom" id="llmScoreDenom"></span></span>
+          </div>
+          <span class="score-label llm-label">LLM Grading Score</span>
+        `;
+        header.appendChild(badge);
+      }
+
+      const numEl = document.getElementById('llmScoreNum');
+      const denomEl = document.getElementById('llmScoreDenom');
+      if (numEl && denomEl) {
+        numEl.textContent = totalScore;
+        denomEl.textContent = ` / ${maxScore}`;
+      } else {
+        const scoreTextEl = document.getElementById('llmScoreText');
+        if (scoreTextEl) {
+          scoreTextEl.textContent = `${totalScore} / ${maxScore}`;
+        }
+      }
+    }
+
+    if (summary) {
+      const resultsContainer = document.getElementById('quizResults');
+      if (resultsContainer) {
+        let summaryPanel = document.getElementById('aiSummaryPanel');
+        if (!summaryPanel) {
+          summaryPanel = document.createElement('div');
+          summaryPanel.id = 'aiSummaryPanel';
+          summaryPanel.className = 'ai-summary-panel';
+          resultsContainer.appendChild(summaryPanel);
+        }
+
+        const formatText = (text) => text ? text.replace(/\n/g, '<br>') : '';
+        let html = `<h3 class="summary-title">🌟 AI Grading Summary</h3>`;
+        if (summary.strengths) {
+          html += `<div class="summary-content"><strong>What went well:</strong><br>${formatText(summary.strengths)}</div><br>`;
+        }
+        if (summary.weaknesses) {
+          html += `<div class="summary-content"><strong>What could have been better:</strong><br>${formatText(summary.weaknesses)}</div><br>`;
+        }
+        html += `<div class="summary-content"><strong>TL;DR Summary:</strong><br>${formatText(summary.summary)}</div>`;
+
+        summaryPanel.innerHTML = html;
+      }
+    }
+  }
 }
 
 function setupLLMGrading() {

@@ -682,7 +682,7 @@ function renderQuiz() {
     showQuizResultsPanel(loadState());
     const cachedState = loadState();
     if (cachedState.aiGrades) {
-      renderAiGrades(cachedState.aiGrades);
+      renderAiGrades(cachedState.aiGrades, cachedState.aiSummary);
     }
   } else {
     // Render submit row
@@ -722,6 +722,38 @@ function gradeQuiz() {
 }
 
 function showQuizResultsPanel(state) {
+  // Restructure results-header for uniform results circles if not already done
+  const header = document.querySelector('.results-header');
+  if (header) {
+    const mcContainer = header.querySelector('.results-score');
+    if (mcContainer) {
+      mcContainer.className = 'results-score-item mc-score-item';
+    }
+    const writeInBadge = header.querySelector('.results-writein-badge');
+    if (writeInBadge) {
+      const writeInContainer = document.createElement('div');
+      writeInContainer.className = 'results-score-item writein-score-item';
+
+      const writeInCircle = document.createElement('div');
+      writeInCircle.className = 'score-circle writein-score-circle';
+
+      const countSpan = document.getElementById('writeinCount') || writeInBadge.querySelector('.writein-count');
+      if (countSpan) {
+        countSpan.className = 'score-num';
+        writeInCircle.appendChild(countSpan);
+      }
+
+      writeInContainer.appendChild(writeInCircle);
+
+      const labelSpan = document.createElement('span');
+      labelSpan.className = 'score-label';
+      labelSpan.textContent = 'Write-in responses saved';
+      writeInContainer.appendChild(labelSpan);
+
+      writeInBadge.replaceWith(writeInContainer);
+    }
+  }
+
   const selections = state.quizSelections || {};
   const writeIns = state.writeInAnswers || {};
 
@@ -746,13 +778,28 @@ function showQuizResultsPanel(state) {
   const breakdown = document.getElementById('resultsBreakdown');
   const percent = Math.round((mcCorrect / mcTotal) * 100);
 
+  breakdown.innerHTML = '';
+  const p = document.createElement('p');
+  const strong = document.createElement('strong');
+  strong.textContent = `${percent}%`;
+
   if (percent >= 85) {
-    breakdown.innerHTML = `<p style="color: var(--accent-emerald);">🎯 Excellent retrieval! You scored <strong>${percent}%</strong> (${mcCorrect}/${mcTotal}) on Multiple Choice. Focus your remaining review on write-in grading below.</p>`;
+    p.style.color = 'var(--accent-emerald)';
+    p.appendChild(document.createTextNode('🎯 Excellent retrieval! You scored '));
+    p.appendChild(strong);
+    p.appendChild(document.createTextNode(` (${mcCorrect}/${mcTotal}) on Multiple Choice. Focus your remaining review on write-in grading below.`));
   } else if (percent >= 60) {
-    breakdown.innerHTML = `<p style="color: var(--accent-amber);">👍 Good job! You scored <strong>${percent}%</strong> (${mcCorrect}/${mcTotal}) on Multiple Choice. Analyze the feedback on questions you missed, and evaluate your write-in answers.</p>`;
+    p.style.color = 'var(--accent-amber)';
+    p.appendChild(document.createTextNode('👍 Good job! You scored '));
+    p.appendChild(strong);
+    p.appendChild(document.createTextNode(` (${mcCorrect}/${mcTotal}) on Multiple Choice. Analyze the feedback on questions you missed, and evaluate your write-in answers.`));
   } else {
-    breakdown.innerHTML = `<p style="color: var(--accent-rose);">📖 Retrieval gaps detected: <strong>${percent}%</strong> (${mcCorrect}/${mcTotal}) on Multiple Choice. The struggle of recalling makes re-reading the text highly effective! Use LLM grading below to check your write-in explanations.</p>`;
+    p.style.color = 'var(--accent-rose)';
+    p.appendChild(document.createTextNode('📖 Retrieval gaps detected: '));
+    p.appendChild(strong);
+    p.appendChild(document.createTextNode(` (${mcCorrect}/${mcTotal}) on Multiple Choice. The struggle of recalling makes re-reading the text highly effective! Use LLM grading below to check your write-in explanations.`));
   }
+  breakdown.appendChild(p);
 
   document.getElementById('quizResults').classList.remove('hidden');
   
@@ -894,12 +941,38 @@ async function gradeWriteIns() {
     percentEl.textContent = `${pct}%`;
   }
 
-  statusEl.textContent = `All questions graded successfully!`;
-  
   const currentState = loadState();
   currentState.aiGrades = { ...(currentState.aiGrades || {}), ...grades };
+
+  if (statusEl) statusEl.textContent = `All questions graded successfully! Generating overall AI summary...`;
+
+  let summaryText = "";
+  try {
+    const summaryResponse = await fetch('/grade_summary', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chapterKey: STATE_KEY,
+        grades: currentState.aiGrades,
+        username: typeof getCurrentUsername !== 'undefined' ? getCurrentUsername() : 'anonymous'
+      })
+    });
+    if (summaryResponse.ok) {
+      const summaryData = await summaryResponse.json();
+      summaryText = summaryData.summary || "Summary generation failed.";
+    } else {
+      summaryText = "Failed to fetch summary from server.";
+    }
+  } catch (err) {
+    summaryText = `Error fetching summary: ${err.message}`;
+  }
+
+  currentState.aiSummary = summaryText;
   saveState(currentState);
-  renderAiGrades(currentState.aiGrades);
+
+  if (statusEl) statusEl.textContent = `Summary generated!`;
+
+  renderAiGrades(currentState.aiGrades, currentState.aiSummary);
 
   setTimeout(() => {
     progressContainer.classList.add('hidden');
@@ -908,11 +981,18 @@ async function gradeWriteIns() {
   return { grades: currentState.aiGrades };
 }
 
-function renderAiGrades(grades) {
+function renderAiGrades(grades, summary = null) {
   if (!grades) return;
+
+  let totalScore = 0;
+  let maxScore = 0;
+
   Object.keys(grades).forEach(idxStr => {
     const idx = parseInt(idxStr);
     const grade = grades[idxStr];
+    totalScore += grade.score;
+    maxScore += 5;
+
     const questionDiv = document.querySelector(`.quiz-question[data-q-index="${idx}"]`);
     if (!questionDiv) return;
     
@@ -941,6 +1021,62 @@ function renderAiGrades(grades) {
     
     questionDiv.appendChild(feedbackDiv);
   });
+
+  if (maxScore > 0) {
+    const header = document.querySelector('.results-header');
+    if (header) {
+      let badge = document.getElementById('llmBadge');
+      if (!badge) {
+        badge = document.createElement('div');
+        badge.id = 'llmBadge';
+        badge.className = 'results-score-item llm-score-item';
+        badge.innerHTML = `
+          <div class="score-circle llm-score-circle">
+            <span class="llm-score" id="llmScoreText" style="display: flex; flex-direction: column; align-items: center;"><span class="score-num" id="llmScoreNum"></span><span class="score-denom" id="llmScoreDenom"></span></span>
+          </div>
+          <span class="score-label llm-label">LLM Grading Score</span>
+        `;
+        header.appendChild(badge);
+      }
+
+      const numEl = document.getElementById('llmScoreNum');
+      const denomEl = document.getElementById('llmScoreDenom');
+      if (numEl && denomEl) {
+        numEl.textContent = totalScore;
+        denomEl.textContent = ` / ${maxScore}`;
+      } else {
+        const scoreTextEl = document.getElementById('llmScoreText');
+        if (scoreTextEl) {
+          scoreTextEl.textContent = `${totalScore} / ${maxScore}`;
+        }
+      }
+    }
+
+    if (summary) {
+      const resultsContainer = document.getElementById('quizResults');
+      if (resultsContainer) {
+        let summaryPanel = document.getElementById('aiSummaryPanel');
+        if (!summaryPanel) {
+          summaryPanel = document.createElement('div');
+          summaryPanel.id = 'aiSummaryPanel';
+          summaryPanel.className = 'ai-summary-panel';
+          resultsContainer.appendChild(summaryPanel);
+        }
+
+        const formatText = (text) => text ? text.replace(/\n/g, '<br>') : '';
+        let html = `<h3 class="summary-title">🌟 AI Grading Summary</h3>`;
+        if (summary.strengths) {
+          html += `<div class="summary-content"><strong>What went well:</strong><br>${formatText(summary.strengths)}</div><br>`;
+        }
+        if (summary.weaknesses) {
+          html += `<div class="summary-content"><strong>What could have been better:</strong><br>${formatText(summary.weaknesses)}</div><br>`;
+        }
+        html += `<div class="summary-content"><strong>TL;DR Summary:</strong><br>${formatText(summary.summary)}</div>`;
+
+        summaryPanel.innerHTML = html;
+      }
+    }
+  }
 }
 
 function setupLLMGrading() {

@@ -64,7 +64,7 @@
         <button id="switchAccountBtn" class="nav-btn" style="padding: 0.5rem 1rem; font-size: 0.85rem; cursor: pointer; display: none;">
           👤 Switch Account
         </button>
-        <button id="exportStateBtn" class="nav-btn" style="padding: 0.5rem 1rem; font-size: 0.85rem; cursor: pointer;" title="Downloads your progress as 'ddia_progress.json' to run with the python grade_responses.py script for automated AI feedback.">
+        <button id="exportStateBtn" class="nav-btn" style="padding: 0.5rem 1rem; font-size: 0.85rem; cursor: pointer;" title="Downloads your progress as 'ddia_progress.db' to run with the python grade_responses.py script for automated AI feedback.">
           📥 Export Progress
         </button>
       </div>
@@ -87,7 +87,7 @@
         <div class="hub-stat-icon">📈</div>
         <div class="hub-stat-info">
           <span class="hub-stat-value" id="overall-progress-val">0%</span>
-          <span class="hub-stat-label">Overall Mastery</span>
+          <span class="hub-stat-label">Percentage Completed</span>
         </div>
       </div>
       <div class="hub-stat-card">
@@ -118,7 +118,7 @@
       <h2 style="font-size: 1.75rem; font-weight: 800; margin-bottom: 1.5rem; background: var(--gradient-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Cumulative Assessments</h2>
       <div class="hub-grid" id="examsGrid">
         <!-- Midterm Card -->
-        <div class="hub-card" style="border-color: rgba(99, 102, 241, 0.25);">
+        <a href="./exams/index.html?type=midterm" class="hub-card" style="border-color: rgba(99, 102, 241, 0.25); text-decoration: none; color: inherit; display: block;">
           <div class="hub-card-header">
             <span class="hub-card-index" style="background: rgba(99, 102, 241, 0.1); border-color: rgba(99, 102, 241, 0.2); color: var(--accent-indigo);">Midterm Exam</span>
             <span style="font-size: 1.2rem;">⏱️</span>
@@ -137,11 +137,10 @@
               <span id="midtermScoreVal" style="color: var(--text-primary); font-weight: 600;">Not Attempted</span>
             </div>
           </div>
-          <a href="./exams/index.html?type=midterm" class="hub-card-btn" style="text-decoration: none;">Launch Midterm</a>
-        </div>
+        </a>
 
         <!-- Final Card -->
-        <div class="hub-card" style="border-color: rgba(245, 158, 11, 0.25);">
+        <a href="./exams/index.html?type=final" class="hub-card" style="border-color: rgba(245, 158, 11, 0.25); text-decoration: none; color: inherit; display: block;">
           <div class="hub-card-header">
             <span class="hub-card-index" style="background: rgba(245, 158, 11, 0.1); border-color: rgba(245, 158, 11, 0.2); color: var(--accent-amber);">Final Exam</span>
             <span style="font-size: 1.2rem;">🏆</span>
@@ -160,8 +159,7 @@
               <span id="finalScoreVal" style="color: var(--text-primary); font-weight: 600;">Not Attempted</span>
             </div>
           </div>
-          <a href="./exams/index.html?type=final" class="hub-card-btn" style="text-decoration: none;">Launch Final Exam</a>
-        </div>
+        </a>
       </div>
     </section>
 
@@ -363,17 +361,45 @@
               <div class="hub-card-progress-bar-fg" style="width: ${progressPercent}%"></div>
             </div>
           </div>
-          <button class="hub-card-btn">Launch Activity</button>
+
         `;
         grid.appendChild(card);
       });
 
+
+
+
       // Update aggregate stats
       const overallAvgProgress = Math.round(overallProgressSum / CHAPTERS.length);
-      document.getElementById("overall-progress-val").textContent = `${overallAvgProgress}%`;
-      document.getElementById("total-questions-val").textContent = `${totalQuestionsAnswered} / ${totalQuestionsTarget}`;
-      document.getElementById("total-flashcards-val").textContent = totalFlashcardsReviewed;
-      document.getElementById("chapters-started-val").textContent = `${chaptersActiveCount} / ${CHAPTERS.length}`;
+      const isNewUser = totalQuestionsAnswered === 0 && totalFlashcardsReviewed === 0;
+
+      const overallProgressVal = document.getElementById("overall-progress-val");
+      const totalQuestionsVal = document.getElementById("total-questions-val");
+      const totalFlashcardsVal = document.getElementById("total-flashcards-val");
+      const chaptersStartedVal = document.getElementById("chapters-started-val");
+
+      if (isNewUser) {
+        overallProgressVal.textContent = "Let's Begin!";
+        overallProgressVal.classList.add("empty-state");
+        totalQuestionsVal.textContent = "Ready";
+        totalQuestionsVal.classList.add("empty-state");
+        totalFlashcardsVal.textContent = "Start Learning";
+        totalFlashcardsVal.classList.add("empty-state");
+        chaptersStartedVal.textContent = "Select a chapter";
+        chaptersStartedVal.classList.add("empty-state");
+      } else {
+        overallProgressVal.textContent = `${overallAvgProgress}%`;
+        overallProgressVal.classList.remove("empty-state");
+        totalQuestionsVal.textContent = `${totalQuestionsAnswered} / ${totalQuestionsTarget}`;
+        totalQuestionsVal.classList.remove("empty-state");
+        totalFlashcardsVal.textContent = totalFlashcardsReviewed;
+        totalFlashcardsVal.classList.remove("empty-state");
+        chaptersStartedVal.textContent = `${chaptersActiveCount} / ${CHAPTERS.length}`;
+        chaptersStartedVal.classList.remove("empty-state");
+      }
+
+
+
 
       // Load midterm and final states to update dashboard labels
       try {
