@@ -43,9 +43,9 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Who is primarily responsible for ensuring Consistency (the 'C' in ACID) in a database system?",
     options: [
-      "The hardware storage controller, by using RAID replication and hardware battery-backed cache systems",
-      "The operating system's filesystem layer, by performing integrity checks and crash recovery logging",
-      "The database engine's transaction manager, by automatically verifying and optimizing queries at runtime",
+      "The database transaction manager, by automatically rolling back any writes that violate declared schema constraints or foreign key rules",
+      "The replication layer, by ensuring that all replica nodes converge to the same committed state before returning success",
+      "The query planner, by choosing execution plans that preserve relational correctness and avoid invalid intermediate states",
       "The application developer, by correctly defining transactions that preserve key business invariants"
     ],
     correct: 3,
@@ -56,10 +56,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Under the Read Committed isolation level, what does a 'dirty read' refer to?",
     options: [
-      "A client reading data that has been logically deleted by another transaction but remains cached in memory",
+      "A client reading a row that has been locked by a long-running write transaction and being served an older cached version instead",
       "A client reading data that has been written by another transaction but has not yet been committed",
-      "A client reading data that was corrupted during a network transmission or due to a hardware disk failure",
-      "A client reading data that violates the schema constraints or foreign key references of the target table"
+      "A client reading an older committed version of a row because the latest version is still uncommitted by another transaction",
+      "A client reading data that was previously committed but is later rolled back by crash recovery after a node restart"
     ],
     correct: 1,
     explanation: "A dirty read occurs when a transaction sees uncommitted data from another transaction. Read Committed prevents this by only showing committed changes.",
@@ -112,7 +112,7 @@ const QUIZ_QUESTIONS = [
       "Two users concurrently booking the exact same seat on a flight, where both operations update the same row resulting in a double-booking",
       "Two doctors on call simultaneously trying to check out of their shift, leaving zero doctors on call when the rule requires at least one",
       "A banking client reading their total account balance twice and seeing two different amounts because a transfer committed in between",
-      "An analytical billing report scanning a transaction table to sum monthly revenue while concurrent threads add new invoice records"
+      "Two schedulers each query the list of doctors currently on call, both see enough coverage, and each updates a different doctor's row to mark them unavailable"
     ],
     correct: 1,
     explanation: "Write skew occurs when two transactions read a condition, make a decision, and write to different rows, invalidating the condition. Both doctors see that two are on call, so both check out, leaving none.",
@@ -129,10 +129,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is a 'phantom' in database concurrency?",
     options: [
-      "A row updated by an active transaction that subsequently aborts, leaving modified values cached in memory",
-      "A write operation that successfully propagates to a follower replica but is lost due to leader election lag",
+      "A row that appears in a transaction's later range query but was not present in an earlier execution of the same search condition",
+      "An older committed row version that remains visible under MVCC while a newer uncommitted version is still being written",
       "A write in one transaction that changes the result of a search query in another concurrent transaction",
-      "A transaction coordinator node that crashes midway through a commit protocol and is forgotten by the cluster"
+      "A serialization anomaly where two concurrent transactions overwrite the exact same row and one update disappears"
     ],
     correct: 2,
     explanation: "A phantom occurs when a write in one transaction changes the set of rows returned by a search query in another transaction. It is a key cause of write skew.",
@@ -142,12 +142,12 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is the key difference between Two-Phase Locking (2PL) and Two-Phase Commit (2PC)?",
     options: [
-      "2PL is used to synchronize follower replication across database clusters, whereas 2PC is used to optimize complex join queries",
-      "2PL is a concurrency control mechanism providing serializability; 2PC is an atomic commit protocol for distributed nodes",
-      "2PL is an isolation standard designed for non-relational document stores, whereas 2PC is a protocol exclusive to SQL systems",
-      "2PL guarantees that lock acquisition and release occur in separate phases; 2PC replicates the coordinator role across two nodes"
+      "2PL acquires and holds locks to enforce serializable execution, whereas 2PC coordinates the final commit decision across multiple participating nodes",
+      "2PL guarantees that all locks are acquired before any reads occur, whereas 2PC guarantees that all writes are replicated before any transaction begins",
+      "2PL serializes transactions by replaying write-ahead logs in order, whereas 2PC elects a coordinator leader for conflict resolution",
+      "2PL is an optimistic validation protocol for snapshot databases, whereas 2PC is a pessimistic locking protocol for relational systems"
     ],
-    correct: 1,
+    correct: 0,
     explanation: "Do not confuse them! Two-Phase Locking (2PL) ensures serializability by blocking writers when readers are active and vice versa. Two-Phase Commit (2PC) ensures atomicity across distributed nodes.",
     section: "Serializability: Two-Phase Locking"
   },
@@ -175,12 +175,12 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Serializable Snapshot Isolation (SSI) is described as an optimistic concurrency control mechanism. What does 'optimistic' mean in this context?",
     options: [
-      "It assumes that network partitions and node crashes will never occur, ensuring that coordinator recovery is never needed",
-      "It allows transactions to proceed without locks, and only aborts them at commit time if a serialization conflict is detected",
-      "It assumes that conflicting operations are rare, leaving the application layer to manually catch and resolve integrity errors",
-      "It defers write propagation by only writing transaction logs to non-volatile disk once a day to maximize raw write throughput"
+      "It assumes that transactions can proceed in parallel without blocking, and only aborts them later if serialization conflicts are detected",
+      "It assumes that conflicting operations are so rare that the application layer can safely ignore most retryable aborts",
+      "It assumes that snapshots are always equivalent to serial execution unless a node crash occurs during commit",
+      "It assumes that writes can be buffered aggressively because durability and conflict detection are both deferred until log compaction"
     ],
-    correct: 1,
+    correct: 0,
     explanation: "SSI does not block concurrent transactions. Instead, it lets them run. When a transaction tries to commit, the database checks if any race conditions occurred, aborting and retrying it if so.",
     section: "Serializability: Serializable Snapshot Isolation"
   },
@@ -195,12 +195,12 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is the primary problem that the Two-Phase Commit (2PC) protocol solves in a distributed system?",
     options: [
-      "It ensures that follower database replica nodes apply write operations in the exact same chronological order",
-      "It ensures transaction atomicity across multiple database nodes — either all nodes commit, or all nodes abort",
-      "It significantly speeds up write operations by parallelizing disk write and sync operations across all nodes",
-      "It automatically detects routing network partitions and dynamically redirects client traffic to healthy nodes"
+      "It ensures that all participants reach the same final commit-or-abort outcome for a transaction that spans multiple nodes",
+      "It ensures that synchronous replicas apply writes in the same order before a leader acknowledges the client",
+      "It prevents write skew by locking relevant rows on every shard before the transaction is allowed to execute",
+      "It guarantees that distributed deadlocks are detected and broken before any participant writes its prepare record"
     ],
-    correct: 1,
+    correct: 0,
     explanation: "2PC is designed to guarantee distributed atomicity. It ensures that a transaction spanning multiple database shards or heterogeneous databases commits on all nodes or aborts on all nodes.",
     section: "Distributed Transactions: Two-Phase Commit"
   },
@@ -228,12 +228,12 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is an XA transaction?",
     options: [
-      "A distributed transaction protocol that uses XML schemas to serialize and validate data payloads transmitted across network nodes",
-      "A highly optimized in-memory database transaction protocol that bypasses local disk writes to achieve sub-millisecond latencies",
-      "A standard specification for distributed transactions across heterogeneous systems (e.g., a database and a message broker)",
-      "An internal, proprietary consensus protocol implemented exclusively by Microsoft SQL Server to manage multi-shard transactions"
+      "A standard interface for coordinating a single atomic transaction across heterogeneous resource managers such as a database and a message broker",
+      "A vendor-specific protocol for replicating transaction logs across shards inside one distributed SQL database",
+      "An extension to SQL isolation levels that adds distributed predicate locking for multi-node serializability",
+      "A durability mechanism in which prepared transactions are mirrored to standby nodes before the coordinator can commit"
     ],
-    correct: 2,
+    correct: 0,
     explanation: "XA (eXtended Architecture) is a standard for 2PC across heterogeneous technologies, allowing databases, message queues, and cache servers to participate in a single atomic transaction.",
     section: "Distributed Transactions: Distributed Transactions Across Different Systems"
   },
@@ -248,12 +248,12 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "How can Two-Phase Commit be used to achieve 'exactly-once' message processing?",
     options: [
-      "By immediately deleting the target message from the broker queue prior to starting its processing",
       "By committing the message consumption and the database write together in a single atomic transaction",
-      "By hosting the message queue broker and the database storage engine on the same physical server node",
-      "By filtering and dropping duplicate messages at the application client layer using tracking cookie IDs"
+      "By using idempotency keys so duplicate messages can be detected and ignored after retries",
+      "By committing the consumer offset only after the database write succeeds, without any distributed transaction",
+      "By buffering messages locally until the consumer has confirmed that the downstream cache has also been updated"
     ],
-    correct: 1,
+    correct: 0,
     explanation: "To achieve exactly-once processing, the step of consuming a message from a queue (e.g., JMS) and the step of writing to the database must succeed or fail together, which can be coordinated via a 2PC transaction.",
     section: "Distributed Transactions: Exactly-Once Message Processing Revisited"
   },
@@ -261,12 +261,12 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "In modern distributed databases, how has the definition of 'durability' evolved?",
     options: [
-      "It now guarantees that transaction logs are stored in-memory across multiple highly available cache nodes",
       "It has shifted from writing to a single local disk to replicating data across a quorum of independent nodes",
-      "It focuses on encrypting data payloads at rest to prevent unauthorized access in the event of a disk breach",
-      "It refers to the operational speed at which a crashed database engine can recover and start accepting writes"
+      "It now means that every commit must be flushed from the buffer pool to all local disk pages before acknowledgment",
+      "It refers to the ability to reconstruct committed state from logs after a crash, even if no replica has yet received the write",
+      "It means that a transaction remains durable only after both local fsync and geographically remote backup archival have completed"
     ],
-    correct: 1,
+    correct: 0,
     explanation: "Historically, durability meant writing to tape or a local disk (using fsync). In replicated distributed systems, it refers to copying data to multiple nodes to tolerate single-machine failures.",
     section: "The Meaning of ACID: Durability"
   },
