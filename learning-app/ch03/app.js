@@ -44,7 +44,7 @@ const QUIZ_QUESTIONS = [
     q: "What is the primary advantage of normalizing database tables by storing a geographical region as a unique ID (e.g., 'region_id') instead of a raw text string?",
     options: [
       "It significantly increases database write performance because numeric region IDs can be inserted in parallel without lock contention.",
-      "It enables schema-on-read processing, allowing the database engine to interpret different region data structures on the fly at query time.",
+      "It reduces storage space since numeric IDs require fewer bytes than text strings, improving sequential disk I/O throughput across all records.",
       "It prevents spelling discrepancies, simplifies bulk updates, avoids naming ambiguities, and naturally supports translation and localization.",
       "It eliminates the need for running complex relational JOIN operations when retrieving and displaying user information on the frontend UI."
     ],
@@ -57,9 +57,9 @@ const QUIZ_QUESTIONS = [
     q: "What is the key difference between schema-on-write and schema-on-read?",
     options: [
       "Schema-on-write is optimized for analytical data warehouses, whereas schema-on-read is restricted to transactional relational databases.",
-      "Schema-on-write systems disable column indexing entirely, whereas schema-on-read engines index every single nested attribute automatically.",
+      "Schema-on-write generates a physical schema at insert time by inferring column types from the first observed record, whereas schema-on-read never persists any schema metadata.",
       "Schema-on-write databases validate and enforce structure upon data insertion, whereas schema-on-read databases interpret structure during queries.",
-      "Schema-on-write allows applications to store arbitrary, unvalidated JSON, whereas schema-on-read requires defining strict relational tables."
+      "Schema-on-write delays all structural validation to a background compaction job, whereas schema-on-read enforces strict column types on every read path."
     ],
     correct: 2,
     explanation: "Schema-on-write databases (like traditional relational DBs) ensure data conforms to a schema before writing. Schema-on-read (like document databases) accepts any structure and parses it when read.",
@@ -109,10 +109,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "In a data warehouse star schema, what is the purpose of the central 'fact table'?",
     options: [
-      "To store system metadata, ingestion rules, and configuration parameters for the analytical ETL pipelines.",
+      "To store slowly-changing contextual attributes like product names, customer profiles, and store locations for use in analytical queries.",
       "To log individual transaction events, containing specific numeric metric attributes and relational foreign keys.",
       "To maintain long-term, human-readable descriptions and details of products, customers, stores, and regions.",
-      "To manage and synchronize the database schemas and constraints for all secondary snowflake dimension tables."
+      "To pre-aggregate metric totals by time period, serving as a materialized summary view for BI dashboard queries."
     ],
     correct: 1,
     explanation: "The fact table contains rows representing discrete events (like sales transactions, page clicks) with numeric values (price, cost) and foreign keys mapping to dimension tables.",
@@ -122,7 +122,7 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "How does a snowflake schema differ from a star schema?",
     options: [
-      "A snowflake schema represents data using graph vertices and edges, whereas a star schema groups everything into isolated document collections.",
+      "A snowflake schema stores all dimension attributes directly inside the fact table rows, whereas a star schema keeps dimensions in separate surrounding lookup tables.",
       "A snowflake schema keeps all data tables completely denormalized, whereas a star schema enforces third normal form across all dimension fields.",
       "A snowflake schema normalizes dimension tables into subdimensions, whereas a star schema denormalizes dimensions directly into single tables.",
       "A snowflake schema distributes event transactions across multiple source tables and does not utilize a centralized analytical fact table."
@@ -178,7 +178,7 @@ const QUIZ_QUESTIONS = [
       "A single RDF triple statement consisting of a subject, a predicate, and an object formatted using semantic XML schemas.",
       "A unique identifier, a collection of incoming edges, a collection of outgoing edges, and a map of key-value properties.",
       "A simple string label and a geographic location coordinate reference without support for key-value property assignments.",
-      "A sequence of low-level memory pointers referencing the preceding and succeeding vertices in a contiguous linked list."
+      "A vertex label, a set of attached edge IDs, and a numeric weight value encoding the traversal cost to each neighbor."
     ],
     correct: 1,
     explanation: "In a property graph, a vertex (node) consists of a unique ID, a set of incoming and outgoing edges, and a set of properties (key-value pairs) describing it.",
@@ -208,10 +208,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "In a Triple-Store database, what are the three components of a triple?",
     options: [
-      "Table, Column, and Value",
-      "Vertex, Edge, and Property",
+      "Entity, Attribute, and Value",
+      "Node, Relation, and Target",
       "Subject, Predicate, and Object",
-      "Document, Key, and Field"
+      "Subject, Edge, and Metadata"
     ],
     correct: 2,
     explanation: "Triple-stores store all information in statements of three parts: Subject, Predicate, Object (e.g., `Lucy, born_in, Idaho`).",
@@ -270,8 +270,8 @@ const QUIZ_QUESTIONS = [
     options: [
       "Converting all user read queries into real-time pub/sub notification triggers at the API layer.",
       "Representing application state transitions as an append-only sequence of immutable system events.",
-      "Running automated background cron jobs to purge historical transaction events from database disks.",
-      "Configuring the storage engine to ensure database writes execute in under five milliseconds."
+      "Rebuilding the current application state from a normalized snapshot table on each application restart.",
+      "Ensuring that every state-changing command is idempotent and can be safely replayed an arbitrary number of times."
     ],
     correct: 1,
     explanation: "Event Sourcing stores all changes to application state as a sequence of immutable events appended to a log. This log acts as the system of record.",
