@@ -307,8 +307,8 @@ def parse_context_desc(context_desc):
     if sec_match:
         section_name = sec_match.group(1).strip()
     else:
-        # Match "Ch 1 (<name>)"
-        sec_match2 = re.search(r"Ch\s*\d+\s*\(([^)]+)\)", context_desc, re.IGNORECASE)
+        # Match "Ch 1 (<name>)" or "Chapter 1 (<name>)"
+        sec_match2 = re.search(r"(?:Chapter|Ch\b)\s*\d+\s*\(([^)]+)\)", context_desc, re.IGNORECASE)
         if sec_match2:
             section_name = sec_match2.group(1).strip()
 
