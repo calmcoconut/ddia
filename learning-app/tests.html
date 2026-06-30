@@ -281,10 +281,6 @@
       assertEquals(loaded, {}, "Corrupted state should fall back to empty object {}");
     });
 
-    // NOTE TO CODE REVIEWER: The actual implementation of `loadState` in `learning-app/db.js` (line 136)
-    // DOES NOT use `localStorage.getItem` as stated in the outdated issue description.
-    // It queries the global SQLite WASM instance `_db` and has a try/catch block around `JSON.parse`.
-    // These tests correctly validate the ACTUAL implementation present in the codebase.
     test("loadState DB Null Check", "loadState() should early return {} if global _db instance is null", () => {
       const originalDb = _db;
       _db = null;
