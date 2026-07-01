@@ -42,13 +42,13 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is a 'system of record' (source of truth)?",
     options: [
-      "The highest-throughput database optimized for processing transient cache and session data",
+      "A replicated read replica that serves low-latency queries while the primary handles all writes",
       "Any relational database system that enforces strict SQL schemas and ACID transaction safety",
       "The authoritative, canonical version of data where new writes are first received and stored",
-      "A cold-storage backup copy of the primary production database used solely for disaster recovery"
+      "A secondary derived store that caches aggregated query results for fast analytical access"
     ],
     correct: 2,
-    explanation: "A system of record holds the authoritative version. Each fact is represented exactly once (normalized). If there's a discrepancy, the system of record wins by definition.",
+    explanation: "A system of record holds the authoritative version. Each fact is represented exactly once (normalized). If there's a discrepancy, the system of record wins by definition. A read replica (option A) is a copy used for scaling reads, not the source of authority. Any relational DB (option B) confuses the technology with the architectural role — NoSQL stores can also be systems of record. A derived cache (option D) is the opposite concept: it is downstream of the system of record.",
     section: "System of Record"
   },
   {
@@ -56,12 +56,12 @@ const QUIZ_QUESTIONS = [
     q: "When is self-hosting often cheaper than cloud services?",
     options: [
       "When your company has already purchased physical servers and wants to avoid ongoing cloud subscription fees on top of existing hardware costs",
-      "When application workloads are highly dynamic, unpredictable, and require automatic elastic scaling",
+      "When your team has deep hardware expertise but the workload has grown too large for a single machine and requires distributed infrastructure",
       "When your team has operational expertise and system workloads are predictable and relatively stable",
       "When running as an early-stage startup with fewer than ten engineers and limited initial funding"
     ],
     correct: 2,
-    explanation: "The chapter states: if you already have operational expertise and your load is predictable (no need for elastic scaling), self-hosting is often cheaper. Owning hardware (option A) is a common intuition but misses the point — operational expertise and load predictability are the deciding factors, not whether you've already bought servers.",
+    explanation: "The chapter states: if you already have operational expertise and your load is predictable (no need for elastic scaling), self-hosting is often cheaper. Owning hardware (option A) is a common intuition but misses the point — operational expertise and load predictability are the deciding factors. Option B describes a scenario where distribution is needed, which could favor either cloud or self-hosted depending on the team. Option D (small startup) typically favors cloud because operational overhead is high relative to team size.",
     section: "Cloud vs Self-Hosting"
   },
   {
@@ -75,13 +75,13 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What does 'separation of storage and compute' mean in cloud native architecture?",
     options: [
-      "Developing the persistence layers and the business logic engines in different, isolated programming languages",
+      "Deploying database servers and application servers in separate network subnets to enforce security isolation boundaries",
       "Provisioning storage systems and compute capacity as independent resources that can be scaled and billed separately",
-      "Physically separating primary database servers from application servers by deploying them in different subnetworks",
-      "Allocating solid-state drives exclusively for data persistence and graphics processing units for execution threads"
+      "Physically separating write-optimized primary nodes from read-optimized replica nodes across availability zones",
+      "Allocating dedicated NVMe storage pools to stateful workloads while routing stateless workloads to ephemeral compute instances"
     ],
     correct: 1,
-    explanation: "Cloud native systems disaggregate storage (e.g., S3) from compute (CPU/RAM), allowing each to scale independently. Traditional systems bundle both on the same machine.",
+    explanation: "Cloud native systems disaggregate storage (e.g., S3) from compute (CPU/RAM), allowing each to scale independently. Traditional systems bundle both on the same machine. Network subnets (option A) describe security topology, not resource disaggregation. Primary/replica separation (option C) is a replication pattern, not storage/compute separation. NVMe pool allocation (option D) describes hardware provisioning strategies, not cloud-native disaggregation.",
     section: "Cloud vs Self-Hosting"
   },
   {
@@ -121,13 +121,13 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is the main reason for separating OLTP and OLAP workloads?",
     options: [
-      "They inherently rely on completely different serialization structures, such as nested JSON and XML documents",
+      "OLAP queries require columnar storage and vectorized execution engines that are fundamentally incompatible with row-oriented OLTP engines",
       "Running resource-intensive analytical queries on OLTP databases can severely degrade performance for active users",
-      "OLAP systems require columnar storage formats that are incompatible with the row-oriented engines used by OLTP databases",
+      "OLAP systems use eventually consistent replication models that would corrupt the strict transactional guarantees required by OLTP",
       "Keeping analytical queries on a read replica prevents write amplification on the primary, which is the core motivation for separation"
     ],
     correct: 1,
-    explanation: "Heavy aggregate queries in OLAP scan millions of rows and consume significant CPU/memory, which would starve resources for critical transaction operations in OLTP. While columnar vs. row storage (option C) is a real difference between OLAP and OLTP engines, it's a consequence of optimizing for different access patterns — not the primary reason for separation. Read replicas (option D) can help distribute load, but replication lag is a symptom of the solution, not the motivation.",
+    explanation: "Heavy aggregate queries in OLAP scan millions of rows and consume significant CPU/memory, which would starve resources for critical transaction operations in OLTP. While columnar vs. row storage (option A) is a real difference between OLAP and OLTP engines, it's a consequence of optimizing for different access patterns — not the primary reason for separation. Option C overstates the consistency model difference; OLAP systems can be strongly consistent. Read replicas (option D) can help distribute load, but preventing write amplification is not the primary motivation.",
     section: "OLTP vs OLAP"
   },
   {
@@ -139,28 +139,28 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "mc",
-    q: "What does ETL stand for?",
+    q: "Which best describes the role of the ETL process in a data warehousing pipeline?",
     options: [
-      "Encryption, Transmission, and Latency-limits",
-      "Elasticity, Throughput, and Load-balancing",
-      "Extraction, Transformation, and Loading",
-      "Execution, Testing, and Logging-procedures"
+      "Enforcing schema migrations on operational databases to keep them in sync with the analytical warehouse schema",
+      "Extracting data from operational systems, transforming it into a clean analytical schema, and loading it into the warehouse",
+      "Encrypting, transmitting, and load-balancing data streams between microservices in a distributed system",
+      "Incrementally exporting only changed rows from the warehouse back into the operational database to synchronize read views"
     ],
-    correct: 2,
-    explanation: "ETL is the process of extracting data from operational databases, transforming it (cleaning, restructuring), and loading it into a data warehouse.",
+    correct: 1,
+    explanation: "ETL (Extract, Transform, Load) is the process of extracting data from operational databases, transforming it (cleaning, restructuring, joining), and loading it into a data warehouse optimized for analytical queries. Option A describes schema migration tooling. Option C describes common network/security patterns, not a data pipeline stage. Option D describes Reverse ETL, which moves data in the opposite direction.",
     section: "Data Warehouses"
   },
   {
     type: "mc",
     q: "What is the primary difference between a data warehouse and a data lake?",
     options: [
-      "A warehouse stores data in flat files on cloud drives, while a lake organizes all data into relational SQL tables",
-      "A warehouse is optimized for high-volume write workloads, while a lake is built specifically for low-latency read paths",
+      "A warehouse is optimized for low-latency single-record lookups, while a lake is designed for bulk batch analytical scans",
+      "A warehouse is append-only and immutable once data is loaded, while a lake supports in-place updates and deletes",
       "A warehouse enforces a structured schema on write, while a lake stores raw files and applies a schema on read",
-      "A warehouse is exclusively deployed in public cloud platforms, while a lake is restricted to on-premise hardware"
+      "A warehouse stores only current-state snapshots, while a lake retains the full historical changelog of every record"
     ],
     correct: 2,
-    explanation: "Data warehouses store structured, cleaned, and schema-conforming data. Data lakes store raw, unstructured or semi-structured files, letting analysts choose how to parse it later.",
+    explanation: "Data warehouses store structured, cleaned, and schema-conforming data (schema-on-write). Data lakes store raw, unstructured or semi-structured files, letting analysts choose how to parse it later (schema-on-read). Option A confuses warehouse access patterns with OLTP. Option B reverses the mutability story — many lakes use append-only formats (like Parquet/Delta Lake). Option D describes event sourcing, not the warehouse vs. lake distinction.",
     section: "Data Warehouses"
   },
   {
@@ -205,28 +205,28 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "mc",
-    q: "What does HTAP stand for?",
+    q: "What distinguishes an HTAP database from traditional OLTP or OLAP systems?",
     options: [
-      "High-Throughput Application-Level Protocol",
-      "Hybrid Transactional/Analytical Processing",
-      "Hierarchical Transaction Allocation Process",
-      "Horizontal Topology Architecture Paradigm"
+      "It uses a hierarchical transaction model that provides stronger consistency guarantees than standard two-phase commit protocols",
+      "It handles both transactional (OLTP) and analytical (OLAP) workloads on the same data store concurrently",
+      "It horizontally partitions data across nodes using a topology-aware sharding algorithm to minimize cross-node queries",
+      "It achieves high throughput by batching writes into micro-transactions and flushing them asynchronously to disk"
     ],
     correct: 1,
-    explanation: "HTAP refers to database engines designed to handle both transactional (OLTP) and analytical (OLAP) workloads on the same data store concurrently.",
+    explanation: "HTAP (Hybrid Transactional/Analytical Processing) databases are designed to serve both fast transactional queries and complex analytical aggregations on the same live dataset, eliminating the need to ETL data into a separate warehouse. The other options describe plausible-sounding but incorrect concepts — none describe the HTAP design goal.",
     section: "OLTP vs OLAP"
   },
   {
     type: "mc",
-    q: "Which of the following is an example of derived data?",
+    q: "Which of the following best exemplifies 'derived data' in the DDIA sense — data that can be fully reconstructed from a system of record if lost?",
     options: [
-      "A security hash of a user's original signup password stored in the database",
-      "A transaction record generated and saved when a customer purchases an item",
-      "A search index updated automatically based on changes in the primary database",
-      "A raw, uncompressed user profile image uploaded directly to an object store"
+      "A one-way bcrypt hash of a user's password stored alongside their account record",
+      "A customer's billing address entered during checkout and stored in the orders table",
+      "A full-text search index built by indexing product descriptions from the primary database",
+      "An audit log recording every write operation applied to the user table over the past year"
     ],
     correct: 2,
-    explanation: "A search index is derived from the system of record. If lost, it can be fully rebuilt by re-processing the primary database's records. A password hash (option A) may seem derived because it is computed from the original password, but it is not 'derived data' in the DDIA sense — it cannot be used to reconstruct the original, and it is not a redundant copy of the same logical fact. Derived data must be fully reconstructable from its source.",
+    explanation: "A search index is derived from the system of record. If lost, it can be fully rebuilt by re-processing the primary database's records. A password hash (option A) is computed from the original but cannot be used to reconstruct it — it is not a redundant copy of the same logical fact and fails the 'reconstructable from source' test. The billing address (option B) is original source data, not derived. The audit log (option D) is a primary event record, not a derived view.",
     section: "System of Record"
   },
   {
@@ -238,28 +238,28 @@ const QUIZ_QUESTIONS = [
   },
   {
     type: "mc",
-    q: "What is vendor lock-in?",
+    q: "What is the core definition of vendor lock-in as an architectural risk?",
     options: [
       "The risk that a cloud provider could terminate or significantly reprice your service contract, forcing a costly and disruptive migration",
-      "The high financial cost and technical difficulty of migrating an application from one cloud provider to another",
+      "A deep dependency on proprietary, provider-specific features or APIs that makes migrating to a different platform extremely costly",
       "Adopting open-source databases like PostgreSQL instead of proprietary cloud-native ones to preserve deployment flexibility",
       "A contractual minimum monthly cloud spend commitment negotiated at enterprise pricing tiers"
     ],
     correct: 1,
-    explanation: "Vendor lock-in happens when an architecture relies on proprietary, provider-specific features (like DynamoDB or BigQuery) making a migration to a competitor extremely expensive. Option A describes a related risk (contract risk) but is a consequence of lock-in rather than its definition. Option C describes the solution to lock-in, not lock-in itself. Option D describes enterprise pricing structures, not architectural dependency.",
+    explanation: "Vendor lock-in is the architectural condition of being deeply coupled to a provider's proprietary features (like DynamoDB's API or BigQuery's SQL dialect), making migration prohibitively expensive even if the provider raises prices. Option A describes a business risk that lock-in can cause, but is a symptom rather than the definition. Option C describes the mitigation strategy, not the problem. Option D describes enterprise contract structures.",
     section: "Cloud vs Self-Hosting"
   },
   {
     type: "mc",
-    q: "Which regulatory framework is directly mentioned as impacting data system design?",
+    q: "Which privacy regulation most directly forces system architects to design for a 'right to be forgotten' capability — the ability to permanently erase all personal data about a specific user?",
     options: [
-      "CCPA (California Consumer Privacy Act)",
-      "PCI-DSS (Payment Card Security Standards)",
+      "PCI-DSS (Payment Card Industry Data Security Standard)",
+      "SOX (Sarbanes-Oxley Act)",
       "GDPR (General Data Protection Regulation)",
-      "SOX (Sarbanes-Oxley Act)"
+      "HIPAA (Health Insurance Portability and Accountability Act)"
     ],
     correct: 2,
-    explanation: "The chapter specifically discusses the GDPR (and similar laws like CCPA) under 'Data Systems, Law, and Society,' highlighting how rules like the 'right to be forgotten' affect system architecture.",
+    explanation: "GDPR Article 17 establishes the 'right to erasure' (right to be forgotten), directly requiring systems to delete all personal data about a user on request. This forces architects to design deletion capabilities into otherwise append-only or immutable systems. PCI-DSS (option A) governs payment card data security but does not mandate user erasure. SOX (option B) governs financial record-keeping and actually requires long retention. HIPAA (option D) governs medical data and has its own retention rules, but the DDIA chapter specifically highlights GDPR as the driving regulation here.",
     section: "Law and Society"
   },
   {
@@ -273,13 +273,13 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is the role of a cache in a data-intensive application?",
     options: [
-      "To store raw log files indefinitely on durable object storage for compliance auditing purposes",
+      "To act as the primary durable store for user session data, persisting it to disk so it survives process restarts",
       "To keep expensive, frequently accessed read results in memory to enable low-latency data retrieval",
-      "To execute complex analytical queries across petabytes of relational data in a distributed warehouse",
-      "To isolate microservice databases from one another in order to ensure strict security compliance"
+      "To buffer incoming write requests in memory and flush them to the primary database in background batches",
+      "To serve as a consistent read replica that applications can query without impacting the primary database write path"
     ],
     correct: 1,
-    explanation: "Caches sit in front of database layers to remember common queries, protecting downstream systems from read load and returning results in milliseconds.",
+    explanation: "Caches sit in front of database layers to remember expensive query results in memory, protecting downstream systems from read load and returning results in milliseconds. Option A (durable primary store) is a common misuse of caches — they are typically volatile and not durable. Option C describes a write-back buffer pattern, which is a real caching strategy but not the primary role described in the chapter. Option D describes a read replica, which is a full database copy — distinct from a cache.",
     section: "Introduction"
   },
   {
@@ -306,13 +306,13 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What does the term 'elasticity' mean in cloud systems?",
     options: [
-      "The capacity of a relational database schema to accommodate new columns and indices without downtime",
+      "The ability to horizontally add more fixed-size nodes to a cluster to handle a sustained increase in baseline traffic",
       "The automatic provisioning and deprovisioning of compute or storage resources to match current workload demands",
-      "The physical durability and read-write lifecycle limits of enterprise solid-state backup disk drives",
-      "The network latency buffer and package retransmission window configured when a connection is unstable"
+      "The capacity of a distributed system to maintain low latency under variable network conditions across availability zones",
+      "The property of a storage system that allows schema changes without requiring downtime or data migration"
     ],
     correct: 1,
-    explanation: "Elasticity is the cloud's ability to scale resources (e.g., spinning up new virtual machines) automatically in response to load spikes and scale them down when load decreases, saving costs.",
+    explanation: "Elasticity is the cloud's ability to scale resources (e.g., spinning up new virtual machines) automatically in response to load spikes and scale them down when load decreases, saving costs. Option A describes horizontal scaling, which is related but describes a manual or static capacity increase — not automatic, demand-driven provisioning. Option C describes latency resilience, not scaling. Option D describes schema flexibility, a separate property.",
     section: "Cloud vs Self-Hosting"
   },
   {
