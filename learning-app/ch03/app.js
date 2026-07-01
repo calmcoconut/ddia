@@ -56,8 +56,8 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is the key difference between schema-on-write and schema-on-read?",
     options: [
-      "Schema-on-write is optimized for analytical data warehouses, whereas schema-on-read is restricted to transactional relational databases.",
-      "Schema-on-write generates a physical schema at insert time by inferring column types from the first observed record, whereas schema-on-read never persists any schema metadata.",
+      "Schema-on-write is optimized for analytical data warehouses, whereas schema-on-read is designed primarily for transactional relational databases.",
+      "Schema-on-write generates a physical schema at insert time by inferring column types from the first observed record, whereas schema-on-read defers all schema metadata to the application layer.",
       "Schema-on-write databases validate and enforce structure upon data insertion, whereas schema-on-read databases interpret structure during queries.",
       "Schema-on-write delays all structural validation to a background compaction job, whereas schema-on-read enforces strict column types on every read path."
     ],
@@ -250,7 +250,7 @@ const QUIZ_QUESTIONS = [
     options: [
       "To minimize compile-time overhead and package bundle sizes when compiling frontend React, iOS, or Android client applications.",
       "Because GraphQL queries originate from untrusted client devices, so limiting complex recursive paths protects against DoS attacks.",
-      "Because GraphQL is built exclusively for column-oriented analytical datastores that do not support standard index-based lookups.",
+      "Because GraphQL is designed primarily for column-oriented analytical datastores that do not support standard index-based lookups.",
       "To enforce a programming paradigm where developers implement business logic in database procedures rather than application servers."
     ],
     correct: 1,
@@ -283,7 +283,7 @@ const QUIZ_QUESTIONS = [
     options: [
       "They are required to share the exact same relational database schema to prevent eventual consistency anomalies across nodes.",
       "The write model appends command events to a log, while separate read-optimized materialized views are updated from that log.",
-      "The read model is maintained exclusively in ephemeral cache memory and cannot be reconstructed if a server node crashes.",
+      "The read model is maintained in ephemeral cache memory and must be fully rebuilt from scratch if a server node crashes or restarts.",
       "The write path is automatically disabled by the storage controller when the read path experiences transient spikes in load."
     ],
     correct: 1,

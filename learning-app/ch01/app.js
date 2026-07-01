@@ -9,7 +9,7 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What does the term 'data-intensive' mean?",
     options: [
-      "An application whose performance is bottlenecked by raw CPU processing power, mathematical operations, or graphics rendering",
+      "An application whose performance is bottlenecked by raw CPU processing power, numerical computation, or real-time rendering workloads",
       "An application where the complexity, volume, and rate of change of data represent the primary system development challenges",
       "An application that processes large volumes of continuous sensor or telemetry data through real-time streaming pipelines",
       "An application designed specifically to store and archive massive datasets exceeding several petabytes of cold storage"
@@ -78,7 +78,7 @@ const QUIZ_QUESTIONS = [
       "Developing the persistence layers and the business logic engines in different, isolated programming languages",
       "Provisioning storage systems and compute capacity as independent resources that can be scaled and billed separately",
       "Physically separating primary database servers from application servers by deploying them in different subnetworks",
-      "Allocating solid-state drives exclusively for data persistence and graphics processing units for execution threads"
+      "Allocating dedicated block storage devices for data persistence and separate virtual machine instances for computational execution"
     ],
     correct: 1,
     explanation: "Cloud native systems disaggregate storage (e.g., S3) from compute (CPU/RAM), allowing each to scale independently. Traditional systems bundle both on the same machine.",
@@ -157,7 +157,7 @@ const QUIZ_QUESTIONS = [
       "A warehouse stores data in flat files on cloud drives, while a lake organizes all data into relational SQL tables",
       "A warehouse is optimized for high-volume write workloads, while a lake is built specifically for low-latency read paths",
       "A warehouse enforces a structured schema on write, while a lake stores raw files and applies a schema on read",
-      "A warehouse is exclusively deployed in public cloud platforms, while a lake is restricted to on-premise hardware"
+      "A warehouse is typically deployed in managed cloud environments, while a lake is better suited for on-premise object storage clusters"
     ],
     correct: 2,
     explanation: "Data warehouses store structured, cleaned, and schema-conforming data. Data lakes store raw, unstructured or semi-structured files, letting analysts choose how to parse it later.",

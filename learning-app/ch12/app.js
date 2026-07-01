@@ -12,7 +12,7 @@ const QUIZ_QUESTIONS = [
     options: [
       "Batch processing processes bounded data of a known, finite size; stream processing processes unbounded data that arrives incrementally.",
       "Batch processing handles only structured relational data; stream processing handles only semi-structured or schema-free event data.",
-      "Batch processing is always executed synchronously in single threads; stream processing is always executed asynchronously in parallel nodes.",
+      "Batch processing is typically executed synchronously in single threads; stream processing is typically executed asynchronously across parallel nodes.",
       "Batch processing requires all input data to reside in a distributed file system; stream processing reads directly from network sockets."
     ],
     correct: 0,
@@ -182,7 +182,7 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is the primary concern when performing table-table joins in stream processing?",
     options: [
-      "Table-table joins are exclusively supported inside relational databases and cannot be run on stream processor clusters.",
+      "Table-table joins are primarily supported inside relational databases and are difficult to implement efficiently on stream processor clusters.",
       "They require maintaining materialized views of both tables, where updates to either table trigger updates to the join result.",
       "They require converting all table records into binary format structures before any join attributes can be compared.",
       "They only complete successfully if both input tables contain identical partition keys, schemas, and total row counts."
@@ -205,7 +205,7 @@ const QUIZ_QUESTIONS = [
       "By writing idempotent state markers to a distributed ledger and discarding any duplicate processing tokens on retry.",
       "By treating the stream as a series of short, bounded batch jobs and saving checkpoints to a reliable filesystem.",
       "By forcing each worker to continuously synchronize in-memory state with a quorum of peer nodes before emitting output.",
-      "By dropping any out-of-order events that cannot be processed immediately by active, thread-pooled executors."
+      "By dropping any out-of-order events that are difficult to process immediately and re-requesting them from the source broker later."
     ],
     correct: 1,
     explanation: "Microbatching divides the stream into small chunks (e.g., 1-second batches). Because each microbatch is a small batch job, the engine can use traditional batch fault-tolerance mechanisms, re-running a batch if a worker node crashes.",
@@ -235,9 +235,9 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is a main limitation of log immutability when dealing with modern data regulations?",
     options: [
-      "Immutable logs cannot be replicated across geo-distributed regions without violating data sovereignty laws by default.",
+      "Immutable logs complicate geo-distributed replication because each region's data sovereignty laws may require different retention policies and redaction rules.",
       "They make it difficult to satisfy the GDPR 'right to be forgotten' because rewriting history is technically complex.",
-      "They cannot be replicated across multiple machines without triggering partition splits and split-brain scenarios.",
+      "Replicating immutable logs across multiple machines increases storage costs linearly, making long-term retention prohibitively expensive at scale.",
       "They require all downstream consumers to adopt the same schema version before any historical records can be read."
     ],
     correct: 1,

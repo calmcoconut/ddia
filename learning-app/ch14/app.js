@@ -25,7 +25,7 @@ const QUIZ_QUESTIONS = [
       "It conceals fraudulent transaction and financial records inside massive training sets to evade regulatory tax audits.",
       "It processes biased historical data through opaque algorithms to output results that appear neutral and objective.",
       "It accelerates algorithm execution by automatically identifying and deleting input data records with protected attributes.",
-      "It dynamically encrypts discriminatory variables in database tables so compliance audit processes cannot access them."
+      "It dynamically encrypts discriminatory variables in database tables so that downstream reporting dashboards display only legally compliant aggregated summaries."
     ],
     correct: 1,
     explanation: "Opaque algorithms learn from historically biased human choices. By wrapping the output in a mathematical model, the resulting discrimination appears to be objective, data-driven truth.",
@@ -237,7 +237,7 @@ const QUIZ_QUESTIONS = [
     options: [
       "Historical training data is statistically too small to represent or generalize major sociological trends.",
       "It treats statistical averages as absolute truths and ignores the inevitability of errors in individual cases.",
-      "Standard relational database systems cannot guarantee or maintain data integrity under high write concurrency.",
+      "Relational database systems struggle to maintain referential integrity when sociological survey datasets contain contradictory or incomplete records.",
       "It forces public and private organizations to allocate excessive budgets to recruit certified data scientists."
     ],
     correct: 1,

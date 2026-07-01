@@ -57,8 +57,8 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "What is the difference between response time and latency as defined in this chapter?",
     options: [
-      "Response time represents the total duration including network transit and transmission delays, whereas latency refers exclusively to the internal CPU instruction cycle time.",
-      "Response time is measured exclusively on the server backend during query execution, whereas latency is monitored solely from the user's browser or frontend application.",
+      "Response time represents the total duration including network transit and transmission delays, whereas latency refers specifically to the internal CPU instruction cycle time.",
+      "Response time is measured on the server backend during query execution, whereas latency is monitored from the user's browser or frontend application.",
       "Response time is the total client-observed time; latency is the time during which a request is waiting and not being actively processed in network queues or server buffers.",
       "Latency measures the active duration of CPU execution and thread scheduling, whereas response time measures only the idle time spent waiting on disk read/write requests."
     ],
@@ -70,7 +70,7 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Why is the arithmetic mean a poor metric for understanding typical user response times?",
     options: [
-      "It cannot be mathematically calculated over rolling time windows without buffering the entire historical stream of raw database requests",
+      "It is difficult to calculate over rolling time windows without buffering a large amount of raw request data from the database",
       "It is heavily skewed by a small number of extremely slow outlier requests, failing to represent the actual experience of most users",
       "It only yields correct statistical results if all concurrent incoming HTTP requests are processed on a single, isolated CPU core node",
       "It introduces a security vulnerability by exposing the exact microsecond-level hardware processing speed of backend server instances"
@@ -113,7 +113,7 @@ const QUIZ_QUESTIONS = [
       "Calculate the simple arithmetic average of the corresponding percentiles across all individual backend servers.",
       "Find the median value of the percentiles and use it as the representative metric for the entire cluster.",
       "Combine the underlying raw histogram data and calculate the percentiles directly from the consolidated dataset.",
-      "Avoid any aggregation as percentiles represent isolated distributions that cannot be mathematically combined."
+      "Avoid aggregation since percentiles represent isolated distributions that are unreliable when mathematically combined across servers."
     ],
     correct: 2,
     explanation: "Averaging percentiles is mathematically meaningless (e.g., the average of the 95th percentiles of two machines is not the 95th percentile of the joint workload). To aggregate percentiles, you must merge the underlying histograms, which in practice is often done efficiently using algorithms like t-digest, DDSketch, or libraries like HdrHistogram.",
@@ -231,7 +231,7 @@ const QUIZ_QUESTIONS = [
     options: [
       "Design the database for at least two orders of magnitude (100x) growth from the start to prevent expensive software rewrites later.",
       "Design for no more than one order of magnitude (10x) growth in advance, since scaling requirements and system bottlenecks will evolve.",
-      "Design for at least 50x expected peak load to ensure the architecture never becomes the bottleneck as the business scales rapidly.",
+      "Design for at least 50x expected peak load to provide ample headroom so the architecture remains performant as the business scales rapidly.",
       "Design only for current load and rely on infrastructure auto-scaling to handle any future spikes dynamically without code changes."
     ],
     correct: 1,

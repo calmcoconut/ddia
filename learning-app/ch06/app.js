@@ -154,7 +154,7 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Under read-after-write consistency, how can an application safely serve a user's own profile updates from an asynchronous follower?",
     options: [
-      "It cannot under any circumstances; a user's own profile modifications must always be read directly from the primary leader node of the cluster",
+      "It should avoid doing so in practice; a user's own profile modifications are best served by reading directly from the primary leader node of the cluster",
       "It can redirect the read to the follower, but only if the user hasn't made a write in the last few minutes (e.g., checking a write timestamp)",
       "It can read directly from any asynchronous follower node but must first acquire a shared read lock on the database row to prevent dirty reads",
       "It must coordinate a distributed two-phase commit transaction to block and synchronize the follower node prior to executing the read request"

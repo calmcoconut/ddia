@@ -43,7 +43,7 @@ const QUIZ_QUESTIONS = [
     q: "Which of the following is a significant architectural challenge when using sharding to implement a multitenant system?",
     options: [
       "Tenant datasets are consistently too small in practice to fit comfortably within the resources of single database nodes",
-      "It is technically impossible to coordinate and run isolated backup operations on individual shards on a per-tenant basis",
+      "It is technically challenging to coordinate and run isolated backup operations on individual shards on a per-tenant basis",
       "Grouped small tenants are highly difficult to migrate as they grow in size, and queries joining data across tenants become very hard",
       "It completely prevents database administrators from executing rolling schema upgrades and migrations gradually across the cluster"
     ],
@@ -55,7 +55,7 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Why are key ranges not necessarily evenly spaced in key-range sharding?",
     options: [
-      "Because non-cryptographic hash functions always produce highly skewed and non-uniform output distributions",
+      "Because non-cryptographic hash functions tend to produce skewed and non-uniform output distributions across the key space",
       "To accommodate non-uniform data distribution and prevent some database shards from becoming much larger than others",
       "Because standard B-tree index structures require key ranges to be partitioned into fixed lengths of exactly 100 values",
       "To guarantee that all alphanumeric keys starting with the same character prefix are stored within identical shard sizes"
@@ -131,7 +131,7 @@ const QUIZ_QUESTIONS = [
       "Too many logical shards slows down read queries due to scatter-gather overhead, while too few shards results in non-uniform key distribution hashes",
       "Too many shards increases management and metadata overhead, while too few shards makes shards very large and expensive to rebalance or recover",
       "Too many logical shards increases ZooKeeper/etcd metadata overhead and significantly slows down coordinator failover recovery time",
-      "Too few logical shards makes it impossible to achieve fine-grained load balancing as workload hotspot patterns shift over time"
+      "Too few logical shards limits the ability to achieve fine-grained load balancing as workload hotspot patterns shift over time"
     ],
     correct: 1,
     explanation: "If the shard count is too high, the system incurs significant management and query planning overhead. If it is too low, each shard holds a large portion of the dataset, making network transfer during rebalancing and recovery from node outages extremely slow and expensive.",
@@ -235,7 +235,7 @@ const QUIZ_QUESTIONS = [
     q: "What is the main difference between Riak's gossip protocol and ZooKeeper-based shard management?",
     options: [
       "Gossip protocols disseminate state changes peer-to-peer with eventually consistent results, allowing temporary routing mismatches",
-      "Gossip protocols are exclusively deployed in relational databases, whereas ZooKeeper-based systems are restricted to NoSQL storage",
+      "Gossip protocols are typically deployed in leaderless databases, whereas ZooKeeper-based systems are used primarily with leader-based storage engines",
       "Gossip protocols require manual partition routing table configuration by a database administrator for every single client query",
       "ZooKeeper acts as a primary database storing the actual user records, whereas gossip protocols only transmit and store backups"
     ],
@@ -300,7 +300,7 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "In DynamoDB, how are writes propagated to global secondary indexes, and what does this mean for reads?",
     options: [
-      "Synchronously via distributed transactions, ensuring reads are always strongly consistent",
+      "Synchronously via distributed transactions, ensuring reads are strongly consistent across all index shards",
       "Asynchronously, meaning reads may temporarily return stale data due to replication lag",
       "Manually, requiring client applications to write updates to both the table and the index",
       "Via a two-phase commit protocol that guarantees exactly-once delivery to all index shards"

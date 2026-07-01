@@ -26,7 +26,7 @@ const QUIZ_QUESTIONS = [
       "The transmitted data was definitely not received or processed by the remote operating system",
       "The data was successfully received, parsed, and processed by the destination application layer",
       "It is impossible to know how much of the data was received or processed by the remote node",
-      "The destination hardware server node has suffered a fatal crash and will never be recovered"
+      "The destination hardware server node has suffered a fatal crash and requires a manual restart before it can accept new connections"
     ],
     correct: 2,
     explanation: "TCP acknowledgments only confirm receipt by the remote OS kernel, not by the application itself. If the connection drops, you cannot distinguish between lost requests, remote node crashes, or lost responses.",
@@ -241,10 +241,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "Eventual consistency is which type of property?",
     options: [
-      "A safety property",
+      "A safety property, meaning it defines a condition that the system must uphold at every point in time without exception",
       "A liveness property",
-      "A consistency property guaranteeing reads always reflect the most recent write",
-      "A deterministic property"
+      "A consistency property that ensures all reads return the value of the most recently committed write across replicas",
+      "A deterministic property, meaning the final converged state is uniquely determined by the set of operations applied"
     ],
     correct: 1,
     explanation: "Eventual consistency is a liveness property because it includes 'eventually'. It guarantees that if no updates occur, all replicas will eventually agree on the value. If they disagree now, it is not a safety violation, since they might sync later.",
@@ -257,7 +257,7 @@ const QUIZ_QUESTIONS = [
       "They can only verify algorithms that are written in specific, low-level systems languages like C++ or Assembly",
       "They test the abstract mathematical model of the protocol, not the actual production code implementation",
       "They require physical access to synchronized atomic clocks or high-precision hardware timers to verify states",
-      "They are purely static analysis tools that cannot simulate complex network partitions or concurrent node crashes"
+      "They are primarily static analysis tools that have difficulty simulating complex network partitions or concurrent node crashes"
     ],
     correct: 1,
     explanation: "Model checkers verify a simplified, abstract model of the algorithm, which helps find design flaws. However, they do not run the actual production code, meaning implementation bugs can still exist.",

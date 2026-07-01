@@ -249,7 +249,7 @@ const QUIZ_QUESTIONS = [
     options: [
       "Spark executes operations eagerly to return immediate feedback to the console, whereas Pandas schedules updates asynchronously via a queue",
       "Spark translates method calls into a query plan and optimizes it before executing, while Pandas executes operations immediately in memory",
-      "Spark exclusively supports declarative SQL queries on flat files, whereas Pandas allows executing custom Python lambda functions in parallel",
+      "Spark is optimized for declarative SQL queries on flat files, whereas Pandas provides stronger support for executing custom Python lambda functions in parallel",
       "Spark caches all intermediate DataFrame operations in an external store like Redis before executing them, whereas Pandas operates directly in the Python process memory"
     ],
     correct: 1,

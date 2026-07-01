@@ -26,7 +26,7 @@ const QUIZ_QUESTIONS = [
       "To isolate concurrent transactions and prevent clients from seeing the intermediate, half-finished results of writes",
       "To guarantee that committed data has been safely written to non-volatile storage and can survive system crashes",
       "To allow a transaction to be aborted on error, discarding all its writes so the application can safely retry",
-      "To ensure that database invariants, schema constraints, and business rules are never violated by any transaction"
+      "To ensure that database invariants, schema constraints, and business rules are upheld and validated by every transaction"
     ],
     correct: 2,
     explanation: "ACID atomicity is about abortability. It guarantees that if a fault occurs during a transaction, all writes are discarded, preventing partial failures.",
@@ -162,7 +162,7 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "How does Two-Phase Locking (2PL) handle reader-writer concurrency compared to Snapshot Isolation?",
     options: [
-      "In 2PL, readers and writers run on independent snapshots and thus never block or wait for each other's operations",
+      "In 2PL, readers and writers run on independent snapshots and do not block or wait for each other's operations",
       "In 2PL, writers acquire exclusive locks that block all other transactions, completely preventing concurrent operations",
       "In 2PL, readers block writers, and writers block readers, providing strict serializability at the cost of performance",
       "In 2PL, locks are deferred during execution and are only acquired and validated when the transaction tries to commit"
@@ -177,7 +177,7 @@ const QUIZ_QUESTIONS = [
     options: [
       "It assumes that transactions can proceed in parallel without blocking, and only aborts them later if serialization conflicts are detected",
       "It assumes that conflicting operations are so rare that the application layer can safely ignore most retryable aborts",
-      "It assumes that snapshots are always equivalent to serial execution unless a node crash occurs during commit",
+      "It assumes that snapshots are generally equivalent to serial execution unless a node crash occurs during commit",
       "It assumes that writes can be buffered aggressively because durability and conflict detection are both deferred until log compaction"
     ],
     correct: 0,
@@ -283,7 +283,7 @@ const QUIZ_QUESTIONS = [
     options: [
       "They require the database engine to acquire and hold exclusive write locks throughout the entire read-modify-write cycle",
       "If the database serves reads from an outdated replica, the compare condition may check old data, failing to prevent the lost update",
-      "They are highly restricted because they can only be applied to numeric data fields and cannot handle string manipulations",
+      "They are highly restricted because they are most effective with numeric data fields and struggle to handle string manipulations or complex data types",
       "They are specialized concurrency primitives that are not supported by any modern SQL-based relational database engines"
     ],
     correct: 1,
@@ -297,7 +297,7 @@ const QUIZ_QUESTIONS = [
       "They are identical in theory, but different vendors use different names (e.g., PostgreSQL calls its snapshot isolation 'repeatable read')",
       "Snapshot isolation relies on a single shared snapshot to allow dirty reads, whereas repeatable read uses strict row locks to prevent them",
       "Repeatable read relies heavily on pessimistic locks to block writes, whereas snapshot isolation runs single-threaded without any locking",
-      "Snapshot isolation is an analytical standard restricted to OLAP systems, whereas repeatable read is designed only for OLTP workloads"
+      "Snapshot isolation is primarily an analytical standard suited for OLAP systems, whereas repeatable read is designed for OLTP workloads"
     ],
     correct: 0,
     explanation: "The SQL standard for Repeatable Read was defined before snapshot isolation existed. In practice, many databases (like PostgreSQL and MySQL) implement Snapshot Isolation but call it 'Repeatable Read' to satisfy SQL-92 compatibility.",

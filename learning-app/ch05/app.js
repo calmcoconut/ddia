@@ -123,7 +123,7 @@ const QUIZ_QUESTIONS = [
     options: [
       "They compress all archived record blocks using highly efficient, standard LZW or gzip algorithms before writing them to disk",
       "They write the writer's schema once at the beginning of the file, allowing millions of records to be decoded efficiently",
-      "They freeze schema definitions permanently at the time of creation, guaranteeing that historical data records cannot be corrupted",
+      "They freeze schema definitions permanently at the time of creation, guaranteeing that historical data records remain structurally consistent over time",
       "They automatically translate binary database table dumps into human-readable, ANSI-compliant SQL migration scripts on export"
     ],
     correct: 1,

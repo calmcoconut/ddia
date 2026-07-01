@@ -145,7 +145,7 @@ const QUIZ_QUESTIONS = [
       "Because network reordering can cause a node to receive messages out of causal order, breaking the counter's monotonicity.",
       "Because a node cannot know if its own request has the lowest timestamp without contacting all other nodes.",
       "Because they rely on highly synchronized hardware atomic clocks and GPS receivers to function correctly.",
-      "Because they are designed strictly to order sequential transactions and cannot compare concurrent events."
+      "Because they are designed to order sequential transactions but lack the ability to detect and compare concurrent events."
     ],
     correct: 1,
     explanation: "While Lamport timestamps totally order events, a node cannot immediately decide if its request won. It must wait to hear from all other nodes to ensure no lower timestamp was generated. If a node is partitioned or dead, this blocks progress, making it non-fault-tolerant.",
@@ -208,10 +208,10 @@ const QUIZ_QUESTIONS = [
     type: "mc",
     q: "The FLP impossibility result states that:",
     options: [
-      "Consensus can never be achieved under any circumstances in a packet network with variable routing delay.",
+      "Consensus is practically infeasible in packet networks with variable routing delay because message ordering is unpredictable.",
       "No deterministic consensus algorithm is guaranteed to terminate in an asynchronous system if nodes can crash.",
       "No consensus algorithm can be both safe and live in the presence of arbitrary, unbounded message delays.",
-      "Active network partitions will always cause split-brain conditions and state corruption in Raft clusters."
+      "Active network partitions frequently cause split-brain conditions and state corruption in Raft clusters."
     ],
     correct: 1,
     explanation: "The FLP result proves that in a fully asynchronous system model (no clocks or timeouts), a deterministic algorithm cannot guarantee consensus termination if even a single node can crash.",
